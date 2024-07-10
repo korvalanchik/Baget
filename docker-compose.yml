@@ -1,0 +1,8 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+    - MYSQL_DATABASE=Baget
+    - MYSQL_ROOT_PASSWORD=P4ssword!
+    ports:
+    - 3307:3306
