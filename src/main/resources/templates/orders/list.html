@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        layout:decorate="~{layout}">
+    <head>
+        <title>[[#{orders.list.headline}]]</title>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <div class="d-flex flex-wrap mb-4">
+                <h1 class="flex-grow-1">[[#{orders.list.headline}]]</h1>
+                <div>
+                    <a th:href="@{/orderss/add}" class="btn btn-primary ms-2">[[#{orders.list.createNew}]]</a>
+                </div>
+            </div>
+            <div th:if="${orderses.empty}">[[#{orders.list.empty}]]</div>
+            <div th:if="${!orderses.empty}" class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">[[#{orders.orderNo.label}]]</th>
+                            <th scope="col">[[#{orders.custNo.label}]]</th>
+                            <th scope="col">[[#{orders.factNo.label}]]</th>
+                            <th scope="col">[[#{orders.saleDate.label}]]</th>
+                            <th scope="col">[[#{orders.shipDate.label}]]</th>
+                            <th scope="col">[[#{orders.empNo.label}]]</th>
+                            <th scope="col">[[#{orders.shipToContact.label}]]</th>
+                            <th scope="col">[[#{orders.shipToAddr1.label}]]</th>
+                            <th><!-- --></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="orders : ${orderses}">
+                            <td>[[${orders.orderNo}]]</td>
+                            <td>[[${orders.custNo}]]</td>
+                            <td>[[${orders.factNo}]]</td>
+                            <td>[[${orders.saleDate}]]</td>
+                            <td>[[${orders.shipDate}]]</td>
+                            <td>[[${orders.empNo}]]</td>
+                            <td>[[${orders.shipToContact}]]</td>
+                            <td>[[${orders.shipToAddr1}]]</td>
+                            <td>
+                                <div class="float-end text-nowrap">
+                                    <a th:href="@{/orderss/edit/{orderNo}(orderNo=${orders.orderNo})}" class="btn btn-sm btn-secondary">[[#{orders.list.edit}]]</a>
+                                    <form th:action="@{/orderss/delete/{orderNo}(orderNo=${orders.orderNo})}"
+                                            th:hx-confirm="#{delete.confirm}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-secondary">[[#{orders.list.delete}]]</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
