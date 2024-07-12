@@ -1,18 +1,15 @@
 package com.example.baget.orders;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.example.baget.customer.Customer;
+import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
 
 @Entity
-@Table(name = "Orderses")
+@Table(name = "orders")
 @Getter
 @Setter
 public class Orders {
@@ -22,8 +19,9 @@ public class Orders {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderNo;
 
-    @Column
-    private Double custNo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custNo", nullable = false)
+    private Customer customer;
 
     @Column
     private Integer factNo;

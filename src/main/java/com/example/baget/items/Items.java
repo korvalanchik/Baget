@@ -5,13 +5,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
 
 @Entity
-@Table(name = "Itemses")
 @Getter
 @Setter
 public class Items {
@@ -22,10 +20,10 @@ public class Items {
     private Long orderNo;
 
     @Column(nullable = false)
-    private Double itemNo;
+    private Long itemNo;
 
     @Column
-    private Double partNo;
+    private Long partNo;
 
     @Column
     private Double profilWidth;

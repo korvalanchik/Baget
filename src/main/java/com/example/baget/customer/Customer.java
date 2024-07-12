@@ -1,18 +1,18 @@
 package com.example.baget.customer;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.example.baget.orders.Orders;
+import jakarta.persistence.*;
+
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
 
 @Entity
-@Table(name = "Customers")
+@Table (name = "customer")
 @Getter
 @Setter
 public class Customer {
@@ -60,5 +60,8 @@ public class Customer {
 
     @Column
     private Double priceLevel;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Orders> orders = new ArrayList<>();
 
 }

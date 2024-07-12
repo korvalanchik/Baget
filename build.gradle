@@ -31,11 +31,11 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-security')
     implementation('org.springframework.boot:spring-boot-starter-jdbc')
     implementation('org.flywaydb:flyway-core')
+    implementation('org.flywaydb:flyway-mysql')
     compileOnly('org.projectlombok:lombok')
     annotationProcessor('org.projectlombok:lombok')
     testCompileOnly('org.projectlombok:lombok')
     testAnnotationProcessor('org.projectlombok:lombok')
-    developmentOnly('org.springframework.boot:spring-boot-docker-compose')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 }
 
