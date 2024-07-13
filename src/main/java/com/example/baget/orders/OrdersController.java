@@ -2,15 +2,17 @@ package com.example.baget.orders;
 
 import com.example.baget.util.WebUtils;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 @Controller
@@ -24,10 +26,23 @@ public class OrdersController {
     }
 
     @GetMapping
-    public String list(final Model model) {
-        model.addAttribute("orderses", ordersService.findAll());
+//    public String list(final Model model) {
+//        model.addAttribute("orderses", ordersService.findAll());
+//        return "orders/list";
+//    }
+
+    public String list(Model model,
+                       @RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<OrdersDTO> ordersPage = ordersService.findAll(pageable);
+
+        model.addAttribute("ordersPage", ordersPage);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", ordersPage.getTotalPages());
         return "orders/list";
     }
+
 
     @GetMapping("/add")
     public String add(@ModelAttribute("orders") final OrdersDTO ordersDTO) {

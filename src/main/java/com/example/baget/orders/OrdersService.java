@@ -31,6 +31,11 @@ public class OrdersService {
 
     public Page<OrdersDTO> findAll(Pageable pageable) {
         Page<Orders> ordersPage = ordersRepository.findAll(pageable);
+        System.out.println("Has Previous: " + ordersPage.hasPrevious());
+        System.out.println("Current Page: " + ordersPage.getNumber());
+        System.out.println("Size: " + ordersPage.getSize());
+        System.out.println("Total Pages: " + ordersPage.getTotalPages());
+        System.out.println("Has Next: " + ordersPage.hasNext());
         return ordersPage.map(orders -> mapToDTO(orders, new OrdersDTO()));
     }
 
@@ -60,7 +65,6 @@ public class OrdersService {
     private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO) {
         ordersDTO.setOrderNo(orders.getOrderNo());
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
-//        ordersDTO.setCustNo(orders.getCustNo());
         ordersDTO.setFactNo(orders.getFactNo());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
@@ -93,7 +97,6 @@ public class OrdersService {
         Customer customer = customerRepository.findById(ordersDTO.getCustNo())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
         orders.setCustomer(customer);
-//        orders.setCustNo(ordersDTO.getCustNo());
         orders.setFactNo(ordersDTO.getFactNo());
         orders.setSaleDate(ordersDTO.getSaleDate());
         orders.setShipDate(ordersDTO.getShipDate());

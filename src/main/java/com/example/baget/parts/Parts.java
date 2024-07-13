@@ -41,15 +41,15 @@ public class Parts {
     private Double listPrice;
 
     @Column
-    private Double listPrice1;
+    private Double listPrice_1;
 
     @Column
-    private Double listPrice2;
+    private Double listPrice_2;
 
     @Column
     private Integer noPercent;
 
     @Column
-    private Double listPrice3;
+    private Double listPrice_3;
 
 }

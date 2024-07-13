@@ -55,10 +55,10 @@ public class PartsService {
         partsDTO.setOnOrder(parts.getOnOrder());
         partsDTO.setCost(parts.getCost());
         partsDTO.setListPrice(parts.getListPrice());
-        partsDTO.setListPrice1(parts.getListPrice1());
-        partsDTO.setListPrice2(parts.getListPrice2());
+        partsDTO.setListPrice1(parts.getListPrice_1());
+        partsDTO.setListPrice2(parts.getListPrice_2());
         partsDTO.setNoPercent(parts.getNoPercent());
-        partsDTO.setListPrice3(parts.getListPrice3());
+        partsDTO.setListPrice3(parts.getListPrice_3());
         return partsDTO;
     }
 
@@ -71,10 +71,10 @@ public class PartsService {
         parts.setOnOrder(partsDTO.getOnOrder());
         parts.setCost(partsDTO.getCost());
         parts.setListPrice(partsDTO.getListPrice());
-        parts.setListPrice1(partsDTO.getListPrice1());
-        parts.setListPrice2(partsDTO.getListPrice2());
+        parts.setListPrice_1(partsDTO.getListPrice1());
+        parts.setListPrice_2(partsDTO.getListPrice2());
         parts.setNoPercent(partsDTO.getNoPercent());
-        parts.setListPrice3(partsDTO.getListPrice3());
+        parts.setListPrice_3(partsDTO.getListPrice3());
         return parts;
     }
 
