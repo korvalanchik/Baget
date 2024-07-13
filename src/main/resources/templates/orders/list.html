@@ -78,11 +78,11 @@
                     <span class="page-link">...</span>
                 </li>
 
-                <!-- Last page -->
+                <!-- Last page
                 <li th:classappend="${ordersPage.number == totalPages - 1} ? 'page-item active' : 'page-item'"
                     th:if="${totalPages > 1}">
                     <a th:href="@{/orderss(page=${totalPages - 1}, size=${ordersPage.size})}" class="page-link">[[${totalPages}]]</a>
-                </li>
+                </li> -->
 
                 <!-- Next button -->
                 <li th:classappend="${ordersPage.hasNext()} ? 'page-item' : 'page-item disabled'">
