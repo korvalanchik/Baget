@@ -52,4 +52,7 @@ public class Parts {
     @Column
     private Double listPrice_3;
 
+    @Version
+    private Long version;
+
 }
