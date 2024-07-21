@@ -1,7 +1,13 @@
 package com.example.baget.parts;
 
+import com.example.baget.util.CustomOptimisticLockException;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
+
+import com.example.baget.vendors.Vendors;
+import com.example.baget.vendors.VendorsDTO;
+import com.example.baget.vendors.VendorsRepository;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +16,11 @@ import org.springframework.stereotype.Service;
 public class PartsService {
 
     private final PartsRepository partsRepository;
+    private final VendorsRepository vendorsRepository;
 
-    public PartsService(final PartsRepository partsRepository) {
+    public PartsService(final PartsRepository partsRepository, VendorsRepository vendorsRepository) {
         this.partsRepository = partsRepository;
+        this.vendorsRepository = vendorsRepository;
     }
 
     public List<PartsDTO> findAll() {
@@ -35,10 +43,15 @@ public class PartsService {
     }
 
     public void update(final Long partNo, final PartsDTO partsDTO) {
-        final Parts parts = partsRepository.findById(partNo)
-                .orElseThrow(NotFoundException::new);
-        mapToEntity(partsDTO, parts);
-        partsRepository.save(parts);
+        try {
+            final Parts parts = partsRepository.findById(partNo)
+                    .orElseThrow(NotFoundException::new);
+            mapToEntity(partsDTO, parts);
+            partsRepository.save(parts);
+        } catch (OptimisticLockingFailureException ex) {
+            throw new CustomOptimisticLockException("The record was updated or deleted by another transaction");
+        }
+
     }
 
     public void delete(final Long partNo) {
@@ -46,8 +59,13 @@ public class PartsService {
     }
 
     private PartsDTO mapToDTO(final Parts parts, final PartsDTO partsDTO) {
+        if (parts.getVendor() != null) {
+            partsDTO.setVendorNo(parts.getVendor().getVendorNo());
+        } else {
+            partsDTO.setVendorNo(null);
+        }
+
         partsDTO.setPartNo(parts.getPartNo());
-        partsDTO.setVendorNo(parts.getVendorNo());
         partsDTO.setDescription(parts.getDescription());
         partsDTO.setProfilWidth(parts.getProfilWidth());
         partsDTO.setInQuality(parts.getInQuality());
@@ -59,11 +77,15 @@ public class PartsService {
         partsDTO.setListPrice2(parts.getListPrice_2());
         partsDTO.setNoPercent(parts.getNoPercent());
         partsDTO.setListPrice3(parts.getListPrice_3());
+        partsDTO.setVersion(parts.getVersion());
+
         return partsDTO;
     }
 
     private Parts mapToEntity(final PartsDTO partsDTO, final Parts parts) {
-        parts.setVendorNo(partsDTO.getVendorNo());
+        Vendors vendor = vendorsRepository.findById(partsDTO.getVendorNo())
+                .orElseThrow(() -> new NotFoundException("Vendor not found"));
+        parts.setVendor(vendor);
         parts.setDescription(partsDTO.getDescription());
         parts.setProfilWidth(partsDTO.getProfilWidth());
         parts.setInQuality(partsDTO.getInQuality());
@@ -75,6 +97,7 @@ public class PartsService {
         parts.setListPrice_2(partsDTO.getListPrice2());
         parts.setNoPercent(partsDTO.getNoPercent());
         parts.setListPrice_3(partsDTO.getListPrice3());
+        parts.setVersion(partsDTO.getVersion());
         return parts;
     }
 

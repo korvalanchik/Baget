@@ -221,7 +221,8 @@ CREATE TABLE `parts`  (
                           `NoPercent` tinyint NULL DEFAULT NULL,
                           `ListPrice_3` float NULL DEFAULT NULL,
                           `Version` bigint DEFAULT 0,
-                          PRIMARY KEY (`PartNo`) USING BTREE
+                          PRIMARY KEY (`PartNo`) USING BTREE,
+                          CONSTRAINT `fk_vendor` FOREIGN KEY (`VendorNo`) REFERENCES `vendors`(`VendorNo`)
 ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------

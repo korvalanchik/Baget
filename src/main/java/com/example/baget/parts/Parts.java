@@ -1,5 +1,6 @@
 package com.example.baget.parts;
 
+import com.example.baget.vendors.Vendors;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,8 +17,12 @@ public class Parts {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long partNo;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "VendorNo", nullable = true)
+    private Vendors vendor;
+
     @Column
-    private Double vendorNo;
+    private Long vendorNo;
 
     @Column(name = "\"description\"", length = 30)
     private String description;
