@@ -10,6 +10,7 @@ import java.util.List;
 
 
 @Entity
+@Table(name = "vendors")
 @Getter
 @Setter
 public class Vendors {

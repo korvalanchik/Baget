@@ -18,7 +18,7 @@
             <thead>
             <tr>
                 <th scope="col">[[#{parts.partNo.label}]]</th>
-                <th scope="col">[[#{parts.vendorName.label}]]</th>
+                <th scope="col">[[#{parts.vendorNo.label}]]</th>
                 <th scope="col">[[#{parts.description.label}]]</th>
                 <th scope="col">[[#{parts.profilWidth.label}]]</th>
                 <th scope="col">[[#{parts.inQuality.label}]]</th>
@@ -31,7 +31,7 @@
             <tbody>
             <tr th:each="parts : ${partses}">
                 <td>[[${parts.partNo}]]</td>
-                <td>[[${parts.vendor.vendorName}]]</td> <!-- Відображаємо назву постачальника -->
+                <td>[[${parts.vendorNo}]]</td> <!-- Відображаємо назву постачальника -->
                 <td>[[${parts.description}]]</td>
                 <td>[[${parts.profilWidth}]]</td>
                 <td>[[${parts.inQuality}]]</td>
