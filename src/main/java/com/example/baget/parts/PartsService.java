@@ -10,6 +10,7 @@ import com.example.baget.vendors.VendorsRepository;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -58,11 +59,12 @@ public class PartsService {
         partsRepository.deleteById(partNo);
     }
 
-    private PartsDTO mapToDTO(final Parts parts, final PartsDTO partsDTO) {
+    @Transactional(readOnly = true)
+    public PartsDTO mapToDTO(final Parts parts, final PartsDTO partsDTO) {
         if (parts.getVendor() != null) {
-            partsDTO.setVendorNo(parts.getVendor().getVendorNo());
+            partsDTO.setVendorName(parts.getVendor().getVendorName());
         } else {
-            partsDTO.setVendorNo(null);
+            partsDTO.setVendorName(null);
         }
 
         partsDTO.setPartNo(parts.getPartNo());
@@ -82,9 +84,10 @@ public class PartsService {
         return partsDTO;
     }
 
-    private Parts mapToEntity(final PartsDTO partsDTO, final Parts parts) {
+    @Transactional
+    public Parts mapToEntity(final PartsDTO partsDTO, final Parts parts) {
         Vendors vendor = vendorsRepository.findById(partsDTO.getVendorNo())
-                .orElseThrow(() -> new NotFoundException("Vendor not found"));
+                .orElse(null);
         parts.setVendor(vendor);
         parts.setDescription(partsDTO.getDescription());
         parts.setProfilWidth(partsDTO.getProfilWidth());

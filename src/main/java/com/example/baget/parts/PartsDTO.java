@@ -14,6 +14,8 @@ public class PartsDTO {
 
     private Long vendorNo;
 
+    private String vendorName;
+
     @Size(max = 30)
     private String description;
 
