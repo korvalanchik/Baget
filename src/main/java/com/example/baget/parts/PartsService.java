@@ -24,6 +24,7 @@ public class PartsService {
         this.vendorsRepository = vendorsRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<PartsDTO> findAll() {
         final List<Parts> partses = partsRepository.findAll(Sort.by("partNo"));
         return partses.stream()
@@ -31,18 +32,21 @@ public class PartsService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public PartsDTO get(final Long partNo) {
         return partsRepository.findById(partNo)
                 .map(parts -> mapToDTO(parts, new PartsDTO()))
                 .orElseThrow(NotFoundException::new);
     }
 
+    @Transactional
     public Long create(final PartsDTO partsDTO) {
         final Parts parts = new Parts();
         mapToEntity(partsDTO, parts);
         return partsRepository.save(parts).getPartNo();
     }
 
+    @Transactional
     public void update(final Long partNo, final PartsDTO partsDTO) {
         try {
             final Parts parts = partsRepository.findById(partNo)
@@ -55,6 +59,7 @@ public class PartsService {
 
     }
 
+    @Transactional
     public void delete(final Long partNo) {
         partsRepository.deleteById(partNo);
     }
@@ -62,8 +67,10 @@ public class PartsService {
     @Transactional(readOnly = true)
     public PartsDTO mapToDTO(final Parts parts, final PartsDTO partsDTO) {
         if (parts.getVendor() != null) {
+            partsDTO.setVendorNo(parts.getVendor().getVendorNo());
             partsDTO.setVendorName(parts.getVendor().getVendorName());
         } else {
+            partsDTO.setVendorNo(null);
             partsDTO.setVendorName(null);
         }
 
