@@ -207,7 +207,7 @@ CREATE TABLE `orders`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `parts`;
 CREATE TABLE `parts`  (
-                          `PartNo` bigint NOT NULL DEFAULT 0,
+                          'partNo' bigint AUTO_INCREMENT PRIMARY KEY,
                           `VendorNo` bigint NULL DEFAULT NULL,
                           `Description` varchar(30) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
                           `ProfilWidth` float NULL DEFAULT NULL,

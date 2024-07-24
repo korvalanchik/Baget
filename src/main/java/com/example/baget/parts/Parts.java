@@ -21,9 +21,6 @@ public class Parts {
     @JoinColumn(name = "VendorNo", nullable = true)
     private Vendors vendor;
 
-    @Column
-    private Long vendorNo;
-
     @Column(name = "\"description\"", length = 30)
     private String description;
 

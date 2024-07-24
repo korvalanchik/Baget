@@ -1,6 +1,7 @@
 package com.example.baget.parts;
 
 import com.example.baget.util.WebUtils;
+import com.example.baget.vendors.VendorsService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,9 +19,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class PartsController {
 
     private final PartsService partsService;
+    private final VendorsService vendorsService;
 
-    public PartsController(final PartsService partsService) {
+    public PartsController(final PartsService partsService, VendorsService vendorsService) {
         this.partsService = partsService;
+        this.vendorsService = vendorsService;
     }
 
     @GetMapping
@@ -30,14 +33,17 @@ public class PartsController {
     }
 
     @GetMapping("/add")
-    public String add(@ModelAttribute("parts") final PartsDTO partsDTO) {
+    public String add(final Model model) {
+        model.addAttribute("parts", new PartsDTO());
+        model.addAttribute("vendors", vendorsService.findAll());
         return "parts/add";
     }
 
     @PostMapping("/add")
     public String add(@ModelAttribute("parts") @Valid final PartsDTO partsDTO,
-            final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
+                      final BindingResult bindingResult, final Model model, final RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
+            model.addAttribute("vendors", vendorsService.findAll());
             return "parts/add";
         }
         partsService.create(partsDTO);
