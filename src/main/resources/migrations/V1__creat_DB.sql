@@ -161,11 +161,11 @@ CREATE TABLE `nextord`  (
 -- ----------------------------
 -- Table structure for nextpart
 -- ----------------------------
-DROP TABLE IF EXISTS `nextpart`;
-CREATE TABLE `nextpart`  (
-                             `NewPart` bigint NOT NULL DEFAULT 0,
-                             PRIMARY KEY (`NewPart`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
+# DROP TABLE IF EXISTS `nextpart`;
+# CREATE TABLE `nextpart`  (
+#                              `NewPart` bigint NOT NULL DEFAULT 0,
+#                              PRIMARY KEY (`NewPart`) USING BTREE
+# ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for orders
@@ -206,24 +206,24 @@ CREATE TABLE `orders`  (
 -- Table structure for parts
 -- ----------------------------
 DROP TABLE IF EXISTS `parts`;
-CREATE TABLE `parts`  (
-                          'partNo' bigint AUTO_INCREMENT PRIMARY KEY,
-                          `VendorNo` bigint NULL DEFAULT NULL,
-                          `Description` varchar(30) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
-                          `ProfilWidth` float NULL DEFAULT NULL,
-                          `InQuality` float NULL DEFAULT NULL,
-                          `OnHand` float NULL DEFAULT NULL,
-                          `OnOrder` float NULL DEFAULT NULL,
-                          `Cost` float NULL DEFAULT NULL,
-                          `ListPrice` float NULL DEFAULT NULL,
-                          `ListPrice_1` float NULL DEFAULT NULL,
-                          `ListPrice_2` float NULL DEFAULT NULL,
-                          `NoPercent` tinyint NULL DEFAULT NULL,
-                          `ListPrice_3` float NULL DEFAULT NULL,
-                          `Version` bigint DEFAULT 0,
-                          PRIMARY KEY (`PartNo`) USING BTREE,
-                          CONSTRAINT `fk_vendor` FOREIGN KEY (`VendorNo`) REFERENCES `vendors`(`VendorNo`)
-) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
+CREATE TABLE `parts` (
+                         `partNo` bigint NOT NULL,
+                         `VendorNo` bigint NULL DEFAULT NULL,
+                         `Description` varchar(30) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
+                         `ProfilWidth` float NULL DEFAULT NULL,
+                         `InQuality` float NULL DEFAULT NULL,
+                         `OnHand` float NULL DEFAULT NULL,
+                         `OnOrder` float NULL DEFAULT NULL,
+                         `Cost` float NULL DEFAULT NULL,
+                         `ListPrice` float NULL DEFAULT NULL,
+                         `ListPrice_1` float NULL DEFAULT NULL,
+                         `ListPrice_2` float NULL DEFAULT NULL,
+                         `NoPercent` tinyint NULL DEFAULT NULL,
+                         `ListPrice_3` float NULL DEFAULT NULL,
+                         `Version` bigint DEFAULT 0,
+                         PRIMARY KEY (`partNo`),
+                         CONSTRAINT `fk_vendor` FOREIGN KEY (`VendorNo`) REFERENCES `vendors`(`VendorNo`)
+) ENGINE=InnoDB CHARACTER SET=cp1251 COLLATE=cp1251_general_ci ROW_FORMAT=Dynamic;
 
 -- ----------------------------
 -- Table structure for qualility

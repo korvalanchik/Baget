@@ -13,8 +13,14 @@ import lombok.Setter;
 public class Parts {
 
     @Id
-    @Column(nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "parts_gen")
+    @TableGenerator(
+            name = "parts_gen",
+            table = "nextpart",
+            pkColumnName = "NewPart",
+            valueColumnName = "NewPart",
+            allocationSize = 10
+    )
     private Long partNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
