@@ -17,8 +17,10 @@ public class Parts {
     @TableGenerator(
             name = "parts_gen",
             table = "nextpart",
-            pkColumnName = "NewPart",
             valueColumnName = "NewPart",
+            pkColumnName = "NewPart",
+            pkColumnValue = "parts_id",
+//            initialValue = 1000,
             allocationSize = 10
     )
     private Long partNo;
