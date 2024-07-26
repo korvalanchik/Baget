@@ -13,14 +13,13 @@ import lombok.Setter;
 public class Parts {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "parts_gen")
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "parts_generator")
     @TableGenerator(
-            name = "parts_gen",
+            name = "parts_generator",
             table = "nextpart",
+            pkColumnName = "sequence_name",
             valueColumnName = "NewPart",
-            pkColumnName = "NewPart",
-            pkColumnValue = "parts_id",
-//            initialValue = 1000,
+            pkColumnValue = "parts_sequence",
             allocationSize = 10
     )
     private Long partNo;

@@ -14,6 +14,8 @@ import lombok.Setter;
 public class Nextpart {
 
     @Id
+    private String sequence_name;
+
     private Long newPart;
 
 }
