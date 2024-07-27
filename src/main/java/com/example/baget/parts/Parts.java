@@ -16,9 +16,9 @@ public class Parts {
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "parts_generator")
     @TableGenerator(
             name = "parts_generator",
-            table = "nextpart",
+            table = "nextrecord",
             pkColumnName = "sequence_name",
-            valueColumnName = "NewPart",
+            valueColumnName = "new_record",
             pkColumnValue = "parts_sequence",
             allocationSize = 10
     )

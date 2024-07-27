@@ -1,8 +1,9 @@
-DROP TABLE IF EXISTS `nextpart`;
-CREATE TABLE `nextpart`  (
+DROP TABLE IF EXISTS `nextrecord`;
+CREATE TABLE `nextrecord`  (
     `sequence_name` VARCHAR(50) NOT NULL,
-    `NewPart` bigint NOT NULL DEFAULT 0,
+    `new_record` bigint NOT NULL DEFAULT 0,
     PRIMARY KEY (`sequence_name`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
 
-INSERT INTO `nextpart` (`sequence_name`, `NewPart`) VALUES ('parts_sequence', 33480);
+INSERT INTO `nextrecord` (`sequence_name`, `new_record`) VALUES ('parts_sequence', 33480);
+INSERT INTO `nextrecord` (`sequence_name`, `new_record`) VALUES ('vendors_sequence', 22000);
