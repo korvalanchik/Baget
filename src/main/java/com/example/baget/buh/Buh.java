@@ -1,16 +1,17 @@
 package com.example.baget.buh;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
 
 @Entity
+@Table(name = "Buh", indexes = {
+        @Index(name = "count_index", columnList = "count")
+})
 @Getter
 @Setter
 public class Buh {
@@ -20,8 +21,7 @@ public class Buh {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer count;
 
-    @Column(nullable = false)
-    private OffsetDateTime date;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")    private LocalDateTime date;
 
     @Column(nullable = false)
     private Integer account;
@@ -35,11 +35,7 @@ public class Buh {
     @Column(nullable = false)
     private Integer currency;
 
-    @Column(
-            nullable = false,
-            name = "\"description\"",
-            columnDefinition = "longtext"
-    )
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Column

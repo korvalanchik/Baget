@@ -1,14 +1,11 @@
 package com.example.baget.items;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 
+@Table(name = "items")
 @Entity
 @Getter
 @Setter

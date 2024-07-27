@@ -24,7 +24,7 @@ public class Orders {
     private Customer customer;
 
     @Column
-    private Integer factNo;
+    private Long factNo;
 
     @Column
     private OffsetDateTime saleDate;
@@ -33,7 +33,7 @@ public class Orders {
     private OffsetDateTime shipDate;
 
     @Column
-    private Integer empNo;
+    private Long empNo;
 
     @Column(length = 20)
     private String shipToContact;

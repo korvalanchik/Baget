@@ -18,6 +18,26 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
+-- Table structure for nextrecord
+-- ----------------------------
+DROP TABLE IF EXISTS `nextrecord`;
+CREATE TABLE `nextrecord`  (
+                               `sequence_name` VARCHAR(30) NOT NULL,
+                               `new_record` bigint NOT NULL,
+                               PRIMARY KEY (`sequence_name`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for Buh_account
+-- ----------------------------
+DROP TABLE IF EXISTS `Buh_account`;
+CREATE TABLE `Buh_account`  (
+                                `accountNo` int NOT NULL AUTO_INCREMENT,
+                                `account` text CHARACTER SET cp1251 COLLATE cp1251_ukrainian_ci NOT NULL,
+                                PRIMARY KEY (`accountNo`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = cp1251 COLLATE = cp1251_ukrainian_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for Buh
 -- ----------------------------
 DROP TABLE IF EXISTS `Buh`;
@@ -33,16 +53,6 @@ CREATE TABLE `Buh`  (
                         PRIMARY KEY (`count`) USING BTREE,
                         INDEX `count`(`count`) USING BTREE
 ) ENGINE = MyISAM AUTO_INCREMENT = 7623 CHARACTER SET = cp1251 COLLATE = cp1251_ukrainian_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for Buh_account
--- ----------------------------
-DROP TABLE IF EXISTS `Buh_account`;
-CREATE TABLE `Buh_account`  (
-                                `accountNo` int NOT NULL AUTO_INCREMENT,
-                                `account` text CHARACTER SET cp1251 COLLATE cp1251_ukrainian_ci NOT NULL,
-                                PRIMARY KEY (`accountNo`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = cp1251 COLLATE = cp1251_ukrainian_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for Buh_category
@@ -159,15 +169,6 @@ CREATE TABLE `nextord`  (
 ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for nextpart
--- ----------------------------
--- DROP TABLE IF EXISTS `nextpart`;
--- CREATE TABLE `nextpart`  (
---                              `NewPart` bigint NOT NULL DEFAULT 0,
---                              PRIMARY KEY (`NewPart`) USING BTREE
--- ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for orders
 -- ----------------------------
 DROP TABLE IF EXISTS `orders`;
@@ -218,7 +219,7 @@ CREATE TABLE `parts` (
                          `ListPrice` float NULL DEFAULT NULL,
                          `ListPrice_1` float NULL DEFAULT NULL,
                          `ListPrice_2` float NULL DEFAULT NULL,
-                         `NoPercent` tinyint NULL DEFAULT NULL,
+                         `NoPercent` int NULL DEFAULT NULL,
                          `ListPrice_3` float NULL DEFAULT NULL,
                          `Version` bigint DEFAULT 0,
                          PRIMARY KEY (`partNo`),
@@ -230,7 +231,7 @@ CREATE TABLE `parts` (
 -- ----------------------------
 DROP TABLE IF EXISTS `qualility`;
 CREATE TABLE `qualility`  (
-                              `KeyType` float NOT NULL DEFAULT 0,
+                              `KeyType` bigint NOT NULL DEFAULT 0,
                               `DescriptQuolity` varchar(15) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
                               PRIMARY KEY (`KeyType`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
@@ -284,7 +285,7 @@ CREATE TABLE `vendors`  (
                             `Country` varchar(15) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
                             `Phone` varchar(15) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
                             `FAX` varchar(15) CHARACTER SET cp1251 COLLATE cp1251_general_ci NULL DEFAULT NULL,
-                            `Preferred` tinyint NULL DEFAULT NULL,
+                            `Preferred` int NULL DEFAULT NULL,
                             PRIMARY KEY (`VendorNo`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = cp1251 COLLATE = cp1251_general_ci ROW_FORMAT = Dynamic;
 

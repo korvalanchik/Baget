@@ -15,7 +15,7 @@ public class OrdersDTO {
 
     private Long custNo;
 
-    private Integer factNo;
+    private Long factNo;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime saleDate;
@@ -23,7 +23,7 @@ public class OrdersDTO {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime shipDate;
 
-    private Integer empNo;
+    private Long empNo;
 
     @Size(max = 20)
     private String shipToContact;
