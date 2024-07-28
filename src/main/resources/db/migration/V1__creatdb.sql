@@ -122,7 +122,8 @@ CREATE TABLE `items`  (
                           `Discount` float NULL DEFAULT NULL,
                           `OnHand` float NULL DEFAULT NULL,
                           `Cost` float NULL DEFAULT NULL,
-                          PRIMARY KEY (`OrderNo`, `ItemNo`) USING BTREE
+                          PRIMARY KEY (`OrderNo`, `ItemNo`) USING BTREE,
+                          FOREIGN KEY (`OrderNo`) REFERENCES `orders`(`OrderNo`) ON DELETE CASCADE
 ) ENGINE = InnoDB CHARACTER SET = cp866 COLLATE = cp866_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------

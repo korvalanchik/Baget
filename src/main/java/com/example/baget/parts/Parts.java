@@ -20,8 +20,7 @@ public class Parts {
             pkColumnName = "sequence_name",
             valueColumnName = "new_record",
             pkColumnValue = "parts_sequence",
-            allocationSize = 10,
-            initialValue = 10
+            allocationSize = 1
     )
     private Long partNo;
 

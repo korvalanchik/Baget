@@ -19,7 +19,15 @@ public class Customer {
 
     @Id
     @Column(nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "customer_generator")
+    @TableGenerator(
+            name = "customer_generator",
+            table = "nextrecord",
+            pkColumnName = "sequence_name",
+            valueColumnName = "new_record",
+            pkColumnValue = "customer_sequence",
+            allocationSize = 1
+    )
     private Long custNo;
 
     @Column(length = 30)

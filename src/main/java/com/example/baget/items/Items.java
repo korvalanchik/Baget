@@ -1,5 +1,6 @@
 package com.example.baget.items;
 
+import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,10 +15,11 @@ public class Items {
     @Id
     @Column(nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long orderNo;
-
-    @Column(nullable = false)
     private Long itemNo;
+
+    @ManyToOne
+    @JoinColumn(name = "orderNo", nullable = false)
+    private Orders order;
 
     @Column
     private Long partNo;

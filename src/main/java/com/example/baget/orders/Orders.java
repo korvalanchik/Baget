@@ -1,9 +1,12 @@
 package com.example.baget.orders;
 
 import com.example.baget.customer.Customer;
+import com.example.baget.items.Items;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,12 +19,23 @@ public class Orders {
 
     @Id
     @Column(nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "orders_generator")
+    @TableGenerator(
+            name = "orders_generator",
+            table = "nextrecord",
+            pkColumnName = "sequence_name",
+            valueColumnName = "new_record",
+            pkColumnValue = "orders_sequence",
+            allocationSize = 1
+    )
     private Long orderNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "custNo", nullable = false)
     private Customer customer;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Items> items;
 
     @Column
     private Long factNo;

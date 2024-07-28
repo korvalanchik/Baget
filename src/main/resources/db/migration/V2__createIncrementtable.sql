@@ -1,6 +1,8 @@
 SET NAMES UTF8MB4;
 INSERT INTO `nextrecord` VALUES
     ('parts_sequence', 33479),
+    (`customer_sequence`, 9),
+    (`orders_sequence`, 9)
     ('vendors_sequence', 21999);
 
 DELIMITER //
