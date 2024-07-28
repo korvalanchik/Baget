@@ -259,7 +259,7 @@ CREATE TABLE `users`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `vendors`;
 CREATE TABLE `vendors`  (
-                            `VendorNo` bigint NOT NULL DEFAULT 0,
+                            `VendorNo` bigint NOT NULL,
                             `VendorName` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                             `Address1` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                             `Address2` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,

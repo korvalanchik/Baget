@@ -2,14 +2,20 @@ package com.example.baget.vendors;
 
 import com.example.baget.util.NotFoundException;
 import java.util.List;
+
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
+import jakarta.persistence.PersistenceContext;
 
 @Service
 public class VendorsService {
 
     private final VendorsRepository vendorsRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public VendorsService(final VendorsRepository vendorsRepository) {
         this.vendorsRepository = vendorsRepository;
@@ -28,10 +34,13 @@ public class VendorsService {
                 .orElseThrow(NotFoundException::new);
     }
 
+    @Transactional
     public Long create(final VendorsDTO vendorsDTO) {
         final Vendors vendors = new Vendors();
         mapToEntity(vendorsDTO, vendors);
-        return vendorsRepository.save(vendors).getVendorNo();
+        Long vendorNo = vendorsRepository.save(vendors).getVendorNo();
+        entityManager.createNativeQuery("CALL increment_vendor_id()").executeUpdate();
+        return vendorNo;
     }
 
     public void update(final Long vendorNo, final VendorsDTO vendorsDTO) {

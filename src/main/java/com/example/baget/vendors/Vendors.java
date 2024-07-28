@@ -23,8 +23,7 @@ public class Vendors {
             pkColumnName = "sequence_name",
             valueColumnName = "new_record",
             pkColumnValue = "vendors_sequence",
-            allocationSize = 1000,
-            initialValue = 1000
+            allocationSize = 1
     )
     private Long vendorNo;
 
