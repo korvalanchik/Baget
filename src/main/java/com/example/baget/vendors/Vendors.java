@@ -16,15 +16,8 @@ import java.util.List;
 public class Vendors {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "vendors_generator")
-    @TableGenerator(
-            name = "vendors_generator",
-            table = "nextrecord",
-            pkColumnName = "sequence_name",
-            valueColumnName = "new_record",
-            pkColumnValue = "vendors_sequence",
-            allocationSize = 1
-    )
+    @Column(nullable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long vendorNo;
 
     @Column(length = 30)

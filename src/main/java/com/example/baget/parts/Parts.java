@@ -13,15 +13,8 @@ import lombok.Setter;
 public class Parts {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "parts_generator")
-    @TableGenerator(
-            name = "parts_generator",
-            table = "nextrecord",
-            pkColumnName = "sequence_name",
-            valueColumnName = "new_record",
-            pkColumnValue = "parts_sequence",
-            allocationSize = 1
-    )
+    @Column(nullable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long partNo;
 
     @ManyToOne(fetch = FetchType.LAZY)

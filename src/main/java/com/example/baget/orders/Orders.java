@@ -19,15 +19,7 @@ public class Orders {
 
     @Id
     @Column(nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "orders_generator")
-    @TableGenerator(
-            name = "orders_generator",
-            table = "nextrecord",
-            pkColumnName = "sequence_name",
-            valueColumnName = "new_record",
-            pkColumnValue = "orders_sequence",
-            allocationSize = 1
-    )
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderNo;
 
     @ManyToOne(fetch = FetchType.LAZY)

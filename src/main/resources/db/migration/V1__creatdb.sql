@@ -2,16 +2,6 @@ SET NAMES UTF8MB4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for nextrecord
--- ----------------------------
--- DROP TABLE IF EXISTS `nextrecord`;
-CREATE TABLE `nextrecord`  (
-                               `sequence_name` VARCHAR(30) NOT NULL,
-                               `new_record` bigint NOT NULL,
-                               PRIMARY KEY (`sequence_name`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for Buh_account
 -- ----------------------------
 -- DROP TABLE IF EXISTS `Buh_account`;
@@ -24,7 +14,7 @@ CREATE TABLE `Buh_account`  (
 -- ----------------------------
 -- Table structure for Buh
 -- ----------------------------
-DROP TABLE IF EXISTS `Buh`;
+-- DROP TABLE IF EXISTS `Buh`;
 CREATE TABLE `Buh`  (
                         `count` int NOT NULL AUTO_INCREMENT,
                         `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -41,7 +31,7 @@ CREATE TABLE `Buh`  (
 -- ----------------------------
 -- Table structure for Buh_category
 -- ----------------------------
-DROP TABLE IF EXISTS `Buh_category`;
+-- DROP TABLE IF EXISTS `Buh_category`;
 CREATE TABLE `Buh_category`  (
                                  `categoryNo` int NOT NULL AUTO_INCREMENT,
                                  `category` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -52,7 +42,7 @@ CREATE TABLE `Buh_category`  (
 -- ----------------------------
 -- Table structure for Buh_currency
 -- ----------------------------
-DROP TABLE IF EXISTS `Buh_currency`;
+-- DROP TABLE IF EXISTS `Buh_currency`;
 CREATE TABLE `Buh_currency`  (
                                  `currencyNo` int NOT NULL,
                                  `currency` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -62,7 +52,7 @@ CREATE TABLE `Buh_currency`  (
 -- ----------------------------
 -- Table structure for TradeLevel
 -- ----------------------------
-DROP TABLE IF EXISTS `TradeLevel`;
+-- DROP TABLE IF EXISTS `TradeLevel`;
 CREATE TABLE `TradeLevel`  (
                                `NoLevel` int NOT NULL DEFAULT 0,
                                `Level` varchar(22) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
@@ -72,9 +62,9 @@ CREATE TABLE `TradeLevel`  (
 -- ----------------------------
 -- Table structure for customer
 -- ----------------------------
-DROP TABLE IF EXISTS `customer`;
+-- DROP TABLE IF EXISTS `customer`;
 CREATE TABLE `customer`  (
-                             `CustNo` bigint NOT NULL,
+                             `CustNo` bigint NOT NULL AUTO_INCREMENT,
                              `Company` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '',
                              `Addr1` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '',
                              `Addr2` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT '',
@@ -94,9 +84,9 @@ CREATE TABLE `customer`  (
 -- ----------------------------
 -- Table structure for employee
 -- ----------------------------
-DROP TABLE IF EXISTS `employee`;
+-- DROP TABLE IF EXISTS `employee`;
 CREATE TABLE `employee`  (
-                             `EmpNo` int NOT NULL DEFAULT 0,
+                             `EmpNo` int NOT NULL AUTO_INCREMENT,
                              `LastName` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                              `FirstName` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                              `PhoneExt` varchar(4) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
@@ -108,9 +98,9 @@ CREATE TABLE `employee`  (
 -- ----------------------------
 -- Table structure for items
 -- ----------------------------
-DROP TABLE IF EXISTS `items`;
+-- DROP TABLE IF EXISTS `items`;
 CREATE TABLE `items`  (
-                          `OrderNo` bigint NOT NULL DEFAULT 0,
+                          `OrderNo` bigint NOT NULL AUTO_INCREMENT,
                           `ItemNo` bigint NOT NULL DEFAULT 0,
                           `PartNo` bigint NULL DEFAULT NULL,
                           `ProfilWidth` float NULL DEFAULT NULL,
@@ -127,38 +117,11 @@ CREATE TABLE `items`  (
 ) ENGINE = InnoDB CHARACTER SET = cp866 COLLATE = cp866_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Table structure for nextcust
--- ----------------------------
-DROP TABLE IF EXISTS `nextcust`;
-CREATE TABLE `nextcust`  (
-                             `NewCust` bigint NOT NULL DEFAULT 0,
-                             PRIMARY KEY (`NewCust`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for nextitem
--- ----------------------------
-DROP TABLE IF EXISTS `nextitem`;
-CREATE TABLE `nextitem`  (
-                             `NewKey` bigint NOT NULL DEFAULT 0,
-                             PRIMARY KEY (`NewKey`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
--- Table structure for nextord
--- ----------------------------
-DROP TABLE IF EXISTS `nextord`;
-CREATE TABLE `nextord`  (
-                            `NewKey` bigint NOT NULL DEFAULT 0,
-                            PRIMARY KEY (`NewKey`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
-
--- ----------------------------
 -- Table structure for orders
 -- ----------------------------
-DROP TABLE IF EXISTS `orders`;
+-- DROP TABLE IF EXISTS `orders`;
 CREATE TABLE `orders`  (
-                           `OrderNo` bigint NOT NULL DEFAULT 0,
+                           `OrderNo` bigint NOT NULL AUTO_INCREMENT,
                            `CustNo` bigint NULL DEFAULT NULL,
                            `FactNo` bigint NULL DEFAULT 0,
                            `SaleDate` datetime NULL DEFAULT NULL,
@@ -191,9 +154,9 @@ CREATE TABLE `orders`  (
 -- ----------------------------
 -- Table structure for parts
 -- ----------------------------
-DROP TABLE IF EXISTS `parts`;
+-- DROP TABLE IF EXISTS `parts`;
 CREATE TABLE `parts` (
-                         `partNo` bigint NOT NULL,
+                         `partNo` bigint NOT NULL AUTO_INCREMENT,
                          `VendorNo` bigint NULL DEFAULT NULL,
                          `Description` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                          `ProfilWidth` float NULL DEFAULT NULL,
@@ -214,7 +177,7 @@ CREATE TABLE `parts` (
 -- ----------------------------
 -- Table structure for qualility
 -- ----------------------------
-DROP TABLE IF EXISTS `qualility`;
+-- DROP TABLE IF EXISTS `qualility`;
 CREATE TABLE `qualility`  (
                               `KeyType` bigint NOT NULL DEFAULT 0,
                               `DescriptQuolity` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
@@ -224,7 +187,7 @@ CREATE TABLE `qualility`  (
 -- ----------------------------
 -- Table structure for rahfact
 -- ----------------------------
-DROP TABLE IF EXISTS `rahfact`;
+-- DROP TABLE IF EXISTS `rahfact`;
 CREATE TABLE `rahfact`  (
                             `NumRahFact` bigint NOT NULL,
                             `NumOrders` bigint NULL DEFAULT NULL,
@@ -235,7 +198,7 @@ CREATE TABLE `rahfact`  (
 -- ----------------------------
 -- Table structure for status
 -- ----------------------------
-DROP TABLE IF EXISTS `status`;
+-- DROP TABLE IF EXISTS `status`;
 CREATE TABLE `status`  (
                            `StatusNo` int NOT NULL,
                            `StatusName` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
@@ -245,7 +208,7 @@ CREATE TABLE `status`  (
 -- ----------------------------
 -- Table structure for users
 -- ----------------------------
-DROP TABLE IF EXISTS `users`;
+-- DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users`  (
                           `id` bigint NOT NULL AUTO_INCREMENT,
                           `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -258,9 +221,9 @@ CREATE TABLE `users`  (
 -- ----------------------------
 -- Table structure for vendors
 -- ----------------------------
-DROP TABLE IF EXISTS `vendors`;
+-- DROP TABLE IF EXISTS `vendors`;
 CREATE TABLE `vendors`  (
-                            `VendorNo` bigint NOT NULL,
+                            `VendorNo` bigint NOT NULL AUTO_INCREMENT,
                             `VendorName` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                             `Address1` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                             `Address2` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
