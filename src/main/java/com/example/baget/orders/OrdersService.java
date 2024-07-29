@@ -2,8 +2,13 @@ package com.example.baget.orders;
 
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
+import com.example.baget.items.Items;
+import com.example.baget.items.ItemsDTO;
+import com.example.baget.items.ItemsRepository;
+import com.example.baget.items.ItemsService;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,10 +21,13 @@ public class OrdersService {
 
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
-
-    public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository) {
+    private final ItemsRepository itemsRepository;
+    private final ItemsService itemsService;
+    public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository, ItemsRepository itemsRepository, ItemsService itemsService) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
+        this.itemsRepository = itemsRepository;
+        this.itemsService = itemsService;
     }
 
     public List<OrdersDTO> findAll() {
@@ -48,7 +56,9 @@ public class OrdersService {
     public Long create(final OrdersDTO ordersDTO) {
         final Orders orders = new Orders();
         mapToEntity(ordersDTO, orders);
-        return ordersRepository.save(orders).getOrderNo();
+        ordersRepository.save(orders);
+        saveItems(ordersDTO, orders);
+        return orders.getOrderNo();
     }
 
     public void update(final Long orderNo, final OrdersDTO ordersDTO) {
@@ -56,6 +66,7 @@ public class OrdersService {
                 .orElseThrow(NotFoundException::new);
         mapToEntity(ordersDTO, orders);
         ordersRepository.save(orders);
+        saveItems(ordersDTO, orders);
     }
 
     public void delete(final Long orderNo) {
@@ -65,6 +76,9 @@ public class OrdersService {
     private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO) {
         ordersDTO.setOrderNo(orders.getOrderNo());
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
+        ordersDTO.setItems(orders.getItems().stream()
+                .map(item -> itemsService.mapToDTO(item, new ItemsDTO()))
+                .collect(Collectors.toList()));
         ordersDTO.setFactNo(orders.getFactNo());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
@@ -125,4 +139,24 @@ public class OrdersService {
         return orders;
     }
 
+    private void saveItems(final OrdersDTO ordersDTO, final Orders orders) {
+        List<ItemsDTO> itemsDTOList = ordersDTO.getItems();
+        for (ItemsDTO itemsDTO : itemsDTOList) {
+            Items item = new Items();
+            item.setOrder(orders);
+            item.setItemNo(itemsDTO.getItemNo());
+            item.setPartNo(itemsDTO.getPartNo());
+            item.setProfilWidth(itemsDTO.getProfilWidth());
+            item.setWidth(itemsDTO.getWidth());
+            item.setHeight(itemsDTO.getHeight());
+            item.setQty(itemsDTO.getQty());
+            item.setQuantity(itemsDTO.getQuantity());
+            item.setSellPrice(itemsDTO.getSellPrice());
+            item.setDiscount(itemsDTO.getDiscount());
+            item.setOnHand(itemsDTO.getOnHand());
+            item.setCost(itemsDTO.getCost());
+
+            itemsRepository.save(item);
+        }
+    }
 }

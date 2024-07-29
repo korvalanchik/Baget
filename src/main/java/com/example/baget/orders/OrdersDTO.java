@@ -1,7 +1,10 @@
 package com.example.baget.orders;
 
+import com.example.baget.items.ItemsDTO;
 import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,6 +17,8 @@ public class OrdersDTO {
     private Long orderNo;
 
     private Long custNo;
+
+    private List<ItemsDTO> items;
 
     private Long factNo;
 

@@ -1,0 +1,37 @@
+package com.example.baget.items;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
+
+@Getter
+@Setter
+public class ItemsDTO {
+
+    private Long orderNo;
+
+    @NotNull
+    private Long itemNo;
+
+    private Long partNo;
+
+    private Double profilWidth;
+
+    private Double width;
+
+    private Double height;
+
+    private Double qty;
+
+    private Double quantity;
+
+    private Double sellPrice;
+
+    private Double discount;
+
+    private Double onHand;
+
+    private Double cost;
+
+}
