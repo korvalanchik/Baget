@@ -100,8 +100,8 @@ CREATE TABLE `employee`  (
 -- ----------------------------
 -- DROP TABLE IF EXISTS `items`;
 CREATE TABLE `items`  (
-                          `OrderNo` bigint NOT NULL AUTO_INCREMENT,
-                          `ItemNo` bigint NOT NULL DEFAULT 0,
+                          `OrderNo` bigint NOT NULL,
+                          `ItemNo` bigint NOT NULL,
                           `PartNo` bigint NULL DEFAULT NULL,
                           `ProfilWidth` float NULL DEFAULT NULL,
                           `Width` float NULL DEFAULT NULL,
