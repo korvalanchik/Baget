@@ -61,7 +61,7 @@ public class ItemsService {
         return itemsDTO;
     }
 
-    private Items mapToEntity(final ItemsDTO itemsDTO, final Items items) {
+    public Items mapToEntity(final ItemsDTO itemsDTO, final Items items) {
         items.setItemNo(itemsDTO.getItemNo());
         items.setPartNo(itemsDTO.getPartNo());
         items.setProfilWidth(itemsDTO.getProfilWidth());

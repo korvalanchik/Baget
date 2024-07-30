@@ -1,5 +1,6 @@
 package com.example.baget.orders;
 
+import com.example.baget.items.ItemsDTO;
 import com.example.baget.util.WebUtils;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -11,12 +12,13 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
 @Controller
-@RequestMapping("/orderss")
+@RequestMapping("/orders")
 public class OrdersController {
 
     private final OrdersService ordersService;
@@ -46,18 +48,22 @@ public class OrdersController {
 
     @GetMapping("/add")
     public String add(@ModelAttribute("orders") final OrdersDTO ordersDTO) {
+        if (ordersDTO.getItems() == null || ordersDTO.getItems().isEmpty()) {
+            ordersDTO.setItems(new ArrayList<>());
+            ordersDTO.getItems().add(new ItemsDTO());
+        }
         return "orders/add";
     }
 
     @PostMapping("/add")
     public String add(@ModelAttribute("orders") @Valid final OrdersDTO ordersDTO,
-            final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
+                      final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             return "orders/add";
         }
         ordersService.create(ordersDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("orders.create.success"));
-        return "redirect:/orderss";
+        return "redirect:/orders";
     }
 
     @GetMapping("/edit/{orderNo}")
@@ -75,7 +81,7 @@ public class OrdersController {
         }
         ordersService.update(orderNo, ordersDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("orders.update.success"));
-        return "redirect:/orderss";
+        return "redirect:/orders";
     }
 
     @PostMapping("/delete/{orderNo}")
@@ -83,7 +89,7 @@ public class OrdersController {
             final RedirectAttributes redirectAttributes) {
         ordersService.delete(orderNo);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("orders.delete.success"));
-        return "redirect:/orderss";
+        return "redirect:/orders";
     }
 
 }

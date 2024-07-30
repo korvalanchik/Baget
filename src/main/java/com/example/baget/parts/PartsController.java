@@ -15,7 +15,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
-@RequestMapping("/partss")
+@RequestMapping("/parts")
 public class PartsController {
 
     private final PartsService partsService;
@@ -48,7 +48,7 @@ public class PartsController {
         }
         partsService.create(partsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("parts.create.success"));
-        return "redirect:/partss";
+        return "redirect:/parts";
     }
 
     @GetMapping("/edit/{partNo}")
@@ -66,7 +66,7 @@ public class PartsController {
         }
         partsService.update(partNo, partsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("parts.update.success"));
-        return "redirect:/partss";
+        return "redirect:/parts";
     }
 
     @PostMapping("/delete/{partNo}")
@@ -74,7 +74,7 @@ public class PartsController {
             final RedirectAttributes redirectAttributes) {
         partsService.delete(partNo);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("parts.delete.success"));
-        return "redirect:/partss";
+        return "redirect:/parts";
     }
 
 }

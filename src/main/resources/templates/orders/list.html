@@ -10,7 +10,7 @@
     <div class="d-flex flex-wrap mb-4">
         <h1 class="flex-grow-1">[[#{orders.list.headline}]]</h1>
         <div>
-            <a th:href="@{/orderss/add}" class="btn btn-primary ms-2">[[#{orders.list.createNew}]]</a>
+            <a th:href="@{/orders/add}" class="btn btn-primary ms-2">[[#{orders.list.createNew}]]</a>
         </div>
     </div>
     <div th:if="${ordersPage.content.empty}">[[#{orders.list.empty}]]</div>
@@ -41,9 +41,9 @@
                 <td>[[${orders.shipToAddr1}]]</td>
                 <td>
                     <div class="float-end text-nowrap">
-                        <a th:href="@{/orderss/edit/{orderNo}(orderNo=${orders.orderNo})}"
+                        <a th:href="@{/orders/edit/{orderNo}(orderNo=${orders.orderNo})}"
                            class="btn btn-sm btn-secondary">[[#{orders.list.edit}]]</a>
-                        <form th:action="@{/orderss/delete/{orderNo}(orderNo=${orders.orderNo})}"
+                        <form th:action="@{/orders/delete/{orderNo}(orderNo=${orders.orderNo})}"
                               th:hx-confirm="#{delete.confirm}" method="post" class="d-inline">
                             <button type="submit" class="btn btn-sm btn-secondary">[[#{orders.list.delete}]]</button>
                         </form>
@@ -58,19 +58,19 @@
             <ul class="pagination justify-content-center">
                 <!-- First page button -->
                 <li th:classappend="${!ordersPage.first} ? 'page-item' : 'page-item disabled'">
-                    <a th:href="@{/orderss(page=0, size=${ordersPage.size})}" class="page-link">&laquo;</a>
+                    <a th:href="@{/orders(page=0, size=${ordersPage.size})}" class="page-link">&laquo;</a>
                 </li>
 
                 <!-- Previous button -->
                 <li th:classappend="${ordersPage.hasPrevious()} ? 'page-item' : 'page-item disabled'">
-                    <a th:href="@{/orderss(page=${ordersPage.number - 1}, size=${ordersPage.size})}" class="page-link">Previous</a>
+                    <a th:href="@{/orders(page=${ordersPage.number - 1}, size=${ordersPage.size})}" class="page-link">Previous</a>
                 </li>
 
                 <!-- Page numbers -->
                 <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                     th:classappend="${i == currentPage} ? 'page-item active' : 'page-item'"
                     th:if="${currentPage >= i - 2 and currentPage <= i + 2}">
-                    <a th:href="@{/orderss(page=${i}, size=${ordersPage.size})}" class="page-link">[[${i + 1}]]</a>
+                    <a th:href="@{/orders(page=${i}, size=${ordersPage.size})}" class="page-link">[[${i + 1}]]</a>
                 </li>
 
                 <!-- Ellipsis before the last page -->
@@ -81,17 +81,17 @@
                 <!-- Last page
                 <li th:classappend="${ordersPage.number == totalPages - 1} ? 'page-item active' : 'page-item'"
                     th:if="${totalPages > 1}">
-                    <a th:href="@{/orderss(page=${totalPages - 1}, size=${ordersPage.size})}" class="page-link">[[${totalPages}]]</a>
+                    <a th:href="@{/orders(page=${totalPages - 1}, size=${ordersPage.size})}" class="page-link">[[${totalPages}]]</a>
                 </li> -->
 
                 <!-- Next button -->
                 <li th:classappend="${ordersPage.hasNext()} ? 'page-item' : 'page-item disabled'">
-                    <a th:href="@{/orderss(page=${ordersPage.number + 1}, size=${ordersPage.size})}" class="page-link">Next</a>
+                    <a th:href="@{/orders(page=${ordersPage.number + 1}, size=${ordersPage.size})}" class="page-link">Next</a>
                 </li>
 
                 <!-- Last page button -->
                 <li th:classappend="${!ordersPage.last} ? 'page-item' : 'page-item disabled'">
-                    <a th:href="@{/orderss(page=${totalPages - 1}, size=${ordersPage.size})}" class="page-link">&raquo;</a>
+                    <a th:href="@{/orders(page=${totalPages - 1}, size=${ordersPage.size})}" class="page-link">&raquo;</a>
                 </li>
             </ul>
         </nav>

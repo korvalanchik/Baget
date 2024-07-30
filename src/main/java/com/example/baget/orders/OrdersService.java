@@ -62,11 +62,11 @@ public class OrdersService {
     }
 
     public void update(final Long orderNo, final OrdersDTO ordersDTO) {
-        final Orders orders = ordersRepository.findById(orderNo)
-                .orElseThrow(NotFoundException::new);
-        mapToEntity(ordersDTO, orders);
-        ordersRepository.save(orders);
-        saveItems(ordersDTO, orders);
+        final Orders existingOrder = ordersRepository.findById(orderNo)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+        mapToEntity(ordersDTO, existingOrder);
+        ordersRepository.save(existingOrder);
+        updateItems(existingOrder, ordersDTO.getItems());
     }
 
     public void delete(final Long orderNo) {
@@ -156,6 +156,27 @@ public class OrdersService {
             item.setOnHand(itemsDTO.getOnHand());
             item.setCost(itemsDTO.getCost());
 
+            itemsRepository.save(item);
+        }
+    }
+
+    private void updateItems(final Orders order, final List<ItemsDTO> newItemsDTOList) {
+        List<Items> existingItems = itemsRepository.findByOrder(order);
+
+        List<Long> newItemNos = newItemsDTOList.stream()
+                .map(ItemsDTO::getItemNo)
+                .toList();
+        existingItems.stream()
+                .filter(item -> !newItemNos.contains(item.getItemNo()))
+                .forEach(item -> itemsRepository.delete(item));
+
+        for (ItemsDTO itemsDTO : newItemsDTOList) {
+            Items item = existingItems.stream()
+                    .filter(existingItem -> existingItem.getItemNo().equals(itemsDTO.getItemNo()))
+                    .findFirst()
+                    .orElse(new Items());
+            item.setOrder(order);
+            itemsService.mapToEntity(itemsDTO, item);
             itemsRepository.save(item);
         }
     }

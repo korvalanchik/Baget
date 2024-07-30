@@ -9,7 +9,7 @@
             <div class="d-flex flex-wrap mb-4">
                 <h1 class="flex-grow-1">[[#{vendors.list.headline}]]</h1>
                 <div>
-                    <a th:href="@{/vendorss/add}" class="btn btn-primary ms-2">[[#{vendors.list.createNew}]]</a>
+                    <a th:href="@{/vendors/add}" class="btn btn-primary ms-2">[[#{vendors.list.createNew}]]</a>
                 </div>
             </div>
             <div th:if="${vendorses.empty}">[[#{vendors.list.empty}]]</div>
@@ -40,8 +40,8 @@
                             <td>[[${vendors.country}]]</td>
                             <td>
                                 <div class="float-end text-nowrap">
-                                    <a th:href="@{/vendorss/edit/{vendorNo}(vendorNo=${vendors.vendorNo})}" class="btn btn-sm btn-secondary">[[#{vendors.list.edit}]]</a>
-                                    <form th:action="@{/vendorss/delete/{vendorNo}(vendorNo=${vendors.vendorNo})}"
+                                    <a th:href="@{/vendors/edit/{vendorNo}(vendorNo=${vendors.vendorNo})}" class="btn btn-sm btn-secondary">[[#{vendors.list.edit}]]</a>
+                                    <form th:action="@{/vendors/delete/{vendorNo}(vendorNo=${vendors.vendorNo})}"
                                             th:hx-confirm="#{delete.confirm}" method="post" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-secondary">[[#{vendors.list.delete}]]</button>
                                     </form>

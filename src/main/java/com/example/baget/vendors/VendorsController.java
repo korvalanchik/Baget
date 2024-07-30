@@ -14,7 +14,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
-@RequestMapping("/vendorss")
+@RequestMapping("/vendors")
 public class VendorsController {
 
     private final VendorsService vendorsService;
@@ -42,7 +42,7 @@ public class VendorsController {
         }
         vendorsService.create(vendorsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("vendors.create.success"));
-        return "redirect:/vendorss";
+        return "redirect:/vendors";
     }
 
     @GetMapping("/edit/{vendorNo}")
@@ -60,7 +60,7 @@ public class VendorsController {
         }
         vendorsService.update(vendorNo, vendorsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("vendors.update.success"));
-        return "redirect:/vendorss";
+        return "redirect:/vendors";
     }
 
     @PostMapping("/delete/{vendorNo}")
@@ -68,7 +68,7 @@ public class VendorsController {
             final RedirectAttributes redirectAttributes) {
         vendorsService.delete(vendorNo);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("vendors.delete.success"));
-        return "redirect:/vendorss";
+        return "redirect:/vendors";
     }
 
 }
