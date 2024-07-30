@@ -1,6 +1,6 @@
 package com.example.baget.orders;
 
-import com.example.baget.items.ItemsDTO;
+import com.example.baget.customer.CustomerService;
 import com.example.baget.util.WebUtils;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -12,19 +12,17 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 
 @Controller
 @RequestMapping("/orders")
 public class OrdersController {
 
     private final OrdersService ordersService;
+    private final CustomerService customerService;
 
-    public OrdersController(final OrdersService ordersService) {
+    public OrdersController(final OrdersService ordersService, CustomerService customerService) {
         this.ordersService = ordersService;
+        this.customerService = customerService;
     }
 
     @GetMapping
@@ -47,11 +45,9 @@ public class OrdersController {
 
 
     @GetMapping("/add")
-    public String add(@ModelAttribute("orders") final OrdersDTO ordersDTO) {
-        if (ordersDTO.getItems() == null || ordersDTO.getItems().isEmpty()) {
-            ordersDTO.setItems(new ArrayList<>());
-            ordersDTO.getItems().add(new ItemsDTO());
-        }
+    public String add(Model model, final OrdersDTO ordersDTO) {
+        model.addAttribute("orders", ordersDTO);
+        model.addAttribute("customers", customerService.findAll());
         return "orders/add";
     }
 

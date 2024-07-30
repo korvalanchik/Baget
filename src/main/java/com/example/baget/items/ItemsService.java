@@ -16,7 +16,7 @@ public class ItemsService {
     }
 
     public List<ItemsDTO> findAll() {
-        final List<Items> itemses = itemsRepository.findAll(Sort.by("orderNo"));
+        final List<Items> itemses = itemsRepository.findAll(Sort.by("order.orderNo"));
         return itemses.stream()
                 .map(items -> mapToDTO(items, new ItemsDTO()))
                 .toList();
