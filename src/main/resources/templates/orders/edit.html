@@ -16,7 +16,7 @@
             <form th:action="${requestUri}" method="post">
                 <input type="submit" th:value="#{orders.edit.headline}" class="btn btn-primary mt-4 mb-4" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='orderNo', disabled=true, type='number')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='custNo', type='number')}" />
+                <div th:replace="~{fragments/forms::inputRow(object='customers', field='company')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='factNo', type='number')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='saleDate')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipDate')}" />
@@ -42,6 +42,17 @@
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='priceLevel', type='number')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='statusOrder', type='number')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='rahFacNo', type='number')}" />
+
+                <div>
+                    <h2>Items</h2>
+                    <div th:each="item, iterStat : ${items}">
+<!--                        <div th:replace="~{fragments/forms::inputRow(object='items', field='PartNo', type='text', disabled=true)}" />     -->
+                        <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='quantity', type='number')}" />
+                        <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='cost', type='number')}" />
+                        <!-- Add other fields for items here -->
+                    </div>
+                </div>
+
                 <input type="submit" th:value="#{orders.edit.headline}" class="btn btn-primary mt-4" />
             </form>
         </div>

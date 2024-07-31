@@ -1,6 +1,7 @@
 package com.example.baget.orders;
 
 import com.example.baget.customer.CustomerService;
+import com.example.baget.items.ItemsService;
 import com.example.baget.util.WebUtils;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -19,10 +20,12 @@ public class OrdersController {
 
     private final OrdersService ordersService;
     private final CustomerService customerService;
+    private final ItemsService itemsService;
 
-    public OrdersController(final OrdersService ordersService, CustomerService customerService) {
+    public OrdersController(final OrdersService ordersService, CustomerService customerService, ItemsService itemsService) {
         this.ordersService = ordersService;
         this.customerService = customerService;
+        this.itemsService = itemsService;
     }
 
     @GetMapping
@@ -48,6 +51,7 @@ public class OrdersController {
     public String add(Model model, final OrdersDTO ordersDTO) {
         model.addAttribute("orders", ordersDTO);
         model.addAttribute("customers", customerService.findAll());
+        model.addAttribute("items", itemsService.findAll());
         return "orders/add";
     }
 
@@ -65,6 +69,8 @@ public class OrdersController {
     @GetMapping("/edit/{orderNo}")
     public String edit(@PathVariable(name = "orderNo") final Long orderNo, final Model model) {
         model.addAttribute("orders", ordersService.get(orderNo));
+        model.addAttribute("customers", customerService.get(ordersService.get(orderNo).getCustNo()));
+        model.addAttribute("items", itemsService.findByOrderNo(orderNo));
         return "orders/edit";
     }
 

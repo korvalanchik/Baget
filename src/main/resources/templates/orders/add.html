@@ -3,6 +3,7 @@
       layout:decorate="~{layout}">
 <head>
     <title>[[#{orders.add.headline}]]</title>
+    <script th:src="@{/js/dynamicItems.js}"></script>
 </head>
 <body>
 <div layout:fragment="content">
@@ -17,7 +18,7 @@
         <div class="mb-3">
             <label for="custNo" class="form-label">[[#{orders.custNo.label}]]</label>
             <select id="custNo" name="custNo" class="form-select">
-                <option th:each="customer : ${customers}" th:value="${customer.custNo}"></option>
+                <option th:each="customer : ${customers}" th:value="${customer.custNo}" th:text="${customer.company}"></option>
             </select>
         </div>
         <div th:replace="~{fragments/forms::inputRow(object='orders', field='factNo', type='number')}" />
@@ -45,8 +46,48 @@
         <div th:replace="~{fragments/forms::inputRow(object='orders', field='priceLevel', type='number')}" />
         <div th:replace="~{fragments/forms::inputRow(object='orders', field='statusOrder', type='number')}" />
         <div th:replace="~{fragments/forms::inputRow(object='orders', field='rahFacNo', type='number')}" />
+
+        <!-- Items Section -->
+        <h2>Items</h2>
+        <div id="items-container">
+            <div th:each="item, iterStat : ${orders.items}">
+                <div th:fragment="itemRow">
+                    <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='partNo', type='number')}" />
+                    <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='quantity', type='number')}" />
+                    <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='price', type='number')}" />
+                    <button type="button" onclick="removeItem(this)">Remove</button>
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="addItem()">Add Item</button>
+        <!-- End Items Section -->
+
         <input type="submit" th:value="#{orders.add.headline}" class="btn btn-primary mt-4" />
     </form>
 </div>
 </body>
 </html>
+<script>
+    let itemIndex = 1;
+
+    function addItem() {
+        const itemsContainer = document.getElementById('items-container');
+        const newItem = document.createElement('div');
+        newItem.classList.add('item-row');
+        newItem.setAttribute('data-index', itemIndex);
+        newItem.innerHTML = `
+        <div th:replace="~{fragments/forms::inputRow(object='items[' + ${itemIndex} + ']', field='partNo', type='number')}" />
+        <div th:replace="~{fragments/forms::inputRow(object='items[' + ${itemIndex} + ']', field='quantity', type='number')}" />
+        <div th:replace="~{fragments/forms::inputRow(object='items[' + ${itemIndex} + ']', field='price', type='number')}" />
+        <button type="button" onclick="removeItem(this)">Remove</button>
+    `;
+        itemsContainer.appendChild(newItem);
+        itemIndex++;
+    }
+
+    function removeItem(button) {
+        const itemRow = button.parentNode;
+        itemRow.parentNode.removeChild(itemRow);
+    }
+
+</script>

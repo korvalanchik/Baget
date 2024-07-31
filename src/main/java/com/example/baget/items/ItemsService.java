@@ -1,5 +1,6 @@
 package com.example.baget.items;
 
+import com.example.baget.orders.Orders;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
 import org.springframework.data.domain.Sort;
@@ -19,6 +20,13 @@ public class ItemsService {
         final List<Items> itemses = itemsRepository.findAll(Sort.by("order.orderNo"));
         return itemses.stream()
                 .map(items -> mapToDTO(items, new ItemsDTO()))
+                .toList();
+    }
+
+    public List<ItemsDTO> findByOrderNo(Long orderNo) {
+        final List<Items> items = itemsRepository.findByOrderOrderNo(orderNo);
+        return items.stream()
+                .map(item -> mapToDTO(item, new ItemsDTO()))
                 .toList();
     }
 
