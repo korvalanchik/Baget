@@ -17,7 +17,7 @@
         <div class="mb-3">
             <label for="custNo" class="form-label">[[#{orders.custNo.label}]]</label>
             <select id="custNo" name="custNo" class="form-select">
-                <option th:each="customer : ${customers}" th:value="${customer.custNo}" th:text="${customer.name}"></option>
+                <option th:each="customer : ${customers}" th:value="${customer.custNo}"></option>
             </select>
         </div>
         <div th:replace="~{fragments/forms::inputRow(object='orders', field='factNo', type='number')}" />
