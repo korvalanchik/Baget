@@ -20,7 +20,7 @@
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='factNo', type='number')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='saleDate')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipDate')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='empNo', type='number')}" />
+<!--                <div th:replace="~{fragments/forms::inputRow(object='orders', field='empNo', type='number')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToContact')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToAddr1')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToAddr2')}" />
@@ -35,7 +35,7 @@
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='paymentMethod')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='itemsTotal')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='taxRate')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='freight')}" />
+                <div th:replace="~{fragments/forms::inputRow(object='orders', field='freight')}" />     -->
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='amountPaid')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='amountDueN')}" />
                 <div th:replace="~{fragments/forms::inputRow(object='orders', field='income')}" />
@@ -46,9 +46,11 @@
                 <div>
                     <h2>Items</h2>
                     <div th:each="item, iterStat : ${items}">
-<!--                        <div th:replace="~{fragments/forms::inputRow(object='items', field='PartNo', type='text', disabled=true)}" />     -->
-                        <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='quantity', type='number')}" />
-                        <div th:replace="~{fragments/forms::inputRow(object='items[__${iterStat.index}__]', field='cost', type='number')}" />
+                        ;fghierogvneroiumgoirmutgoremgor gergoergoemugpoerg
+                        ${items}
+                        <div th:replace="~{fragments/forms::inputRow(object='item', field='PartNo', type='text', disabled=true)}" />
+                        <div th:replace="~{fragments/forms::inputRow(object='item[__${iterStat.index}__]', field='quantity', type='number')}" />
+                        <div th:replace="~{fragments/forms::inputRow(object='item[__${iterStat.index}__]', field='cost', type='number')}" />
                         <!-- Add other fields for items here -->
                     </div>
                 </div>

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
     <body>
-        <div th:fragment="inputRow(object, field)" th:with="type=${type} ?: 'text', required=${required}, disabled=${disabled},
-                inputClassappend=${#fields.hasErrors(field) || (type == 'textarea' && #fields.hasErrors(field + '*')) ? 'is-invalid ' : ''} + ${inputClass ?: ''}"
+        <div th:fragment="inputRow(object, field)" th:with="type=${type != null ? type : 'text'}, required=${required}, disabled=${disabled},
+            inputClassappend=${#fields.hasErrors(field) || (type == 'textarea' && #fields.hasErrors(field + '*')) ? 'is-invalid ' : ''} + ${inputClass ?: ''}"
                 th:object="${__${object}__}" class="row mb-3">
             <div th:if="${type == 'checkbox'}" class="col-md-10 offset-md-2">
                 <div class="form-check">
