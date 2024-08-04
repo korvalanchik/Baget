@@ -2,14 +2,13 @@ package com.example.baget.orders;
 
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
-import com.example.baget.items.Items;
-import com.example.baget.items.ItemsDTO;
-import com.example.baget.items.ItemsRepository;
-import com.example.baget.items.ItemsService;
+import com.example.baget.items.*;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -53,6 +52,7 @@ public class OrdersService {
                 .orElseThrow(NotFoundException::new);
     }
 
+    @Transactional
     public Long create(final OrdersDTO ordersDTO) {
         final Orders orders = new Orders();
         mapToEntity(ordersDTO, orders);
@@ -61,12 +61,13 @@ public class OrdersService {
         return orders.getOrderNo();
     }
 
+    @Transactional
     public void update(final Long orderNo, final OrdersDTO ordersDTO) {
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         mapToEntity(ordersDTO, existingOrder);
-        ordersRepository.save(existingOrder);
         updateItems(existingOrder, ordersDTO.getItems());
+        ordersRepository.save(existingOrder);
     }
 
     public void delete(final Long orderNo) {
@@ -140,11 +141,12 @@ public class OrdersService {
     }
 
     private void saveItems(final OrdersDTO ordersDTO, final Orders orders) {
-        List<ItemsDTO> itemsDTOList = ordersDTO.getItems();
-        for (ItemsDTO itemsDTO : itemsDTOList) {
+        int itemNo = 1;
+        for (ItemsDTO itemsDTO : ordersDTO.getItems()) {
             Items item = new Items();
+            ItemId itemId = new ItemId(orders.getOrderNo(), (long) itemNo);
+            item.setId(itemId);
             item.setOrder(orders);
-            item.setItemNo(itemsDTO.getItemNo());
             item.setPartNo(itemsDTO.getPartNo());
             item.setProfilWidth(itemsDTO.getProfilWidth());
             item.setWidth(itemsDTO.getWidth());
@@ -157,27 +159,33 @@ public class OrdersService {
             item.setCost(itemsDTO.getCost());
 
             itemsRepository.save(item);
+            itemNo++;
         }
     }
 
     private void updateItems(final Orders order, final List<ItemsDTO> newItemsDTOList) {
-        List<Items> existingItems = itemsRepository.findByOrder(order);
+        List<Items> currentItems = itemsRepository.findByOrder(order);
 
-        List<Long> newItemNos = newItemsDTOList.stream()
-                .map(ItemsDTO::getItemNo)
-                .toList();
-        existingItems.stream()
-                .filter(item -> !newItemNos.contains(item.getItemNo()))
-                .forEach(item -> itemsRepository.delete(item));
+        Map<Long, Items> currentItemsMap = currentItems.stream()
+                .collect(Collectors.toMap(item -> item.getId().getItemNo(), item -> item));
 
-        for (ItemsDTO itemsDTO : newItemsDTOList) {
-            Items item = existingItems.stream()
-                    .filter(existingItem -> existingItem.getItemNo().equals(itemsDTO.getItemNo()))
-                    .findFirst()
-                    .orElse(new Items());
-            item.setOrder(order);
-            itemsService.mapToEntity(itemsDTO, item);
-            itemsRepository.save(item);
+        for (ItemsDTO newItemDTO : newItemsDTOList) {
+            Items existingItem = currentItemsMap.remove(newItemDTO.getItemNo());
+            if (existingItem != null) {
+                ItemsService.mapToEntity(newItemDTO, existingItem);
+            } else {
+                Items newItem = new Items();
+                ItemsService.mapToEntity(newItemDTO, newItem);
+                newItem.setOrder(order);
+                order.getItems().add(newItem);
+            }
         }
+
+        for (Items itemToRemove : currentItemsMap.values()) {
+            itemsRepository.delete(itemToRemove);
+        }
+
+        itemsRepository.saveAll(order.getItems());
+
     }
 }

@@ -12,12 +12,11 @@ import lombok.Setter;
 @Setter
 public class Items {
 
-    @Id
-    @Column(nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long itemNo;
+    @EmbeddedId
+    private ItemId id;
 
     @ManyToOne
+    @MapsId("orderNo")
     @JoinColumn(name = "orderNo", nullable = false)
     private Orders order;
 

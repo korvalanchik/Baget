@@ -54,8 +54,11 @@ public class ItemsService {
     }
 
     public ItemsDTO mapToDTO(final Items items, final ItemsDTO itemsDTO) {
-        itemsDTO.setOrderNo(items.getOrder().getOrderNo());
-        itemsDTO.setItemNo(items.getItemNo());
+        if (items == null) {
+            return null;
+        }
+        itemsDTO.setItemNo(items.getId().getItemNo());
+        itemsDTO.setOrderNo(items.getId().getOrderNo());
         itemsDTO.setPartNo(items.getPartNo());
         itemsDTO.setProfilWidth(items.getProfilWidth());
         itemsDTO.setWidth(items.getWidth());
@@ -69,8 +72,12 @@ public class ItemsService {
         return itemsDTO;
     }
 
-    public Items mapToEntity(final ItemsDTO itemsDTO, final Items items) {
-        items.setItemNo(itemsDTO.getItemNo());
+    public static Items mapToEntity(final ItemsDTO itemsDTO, final Items items) {
+        if (itemsDTO == null) {
+            return null;
+        }
+        ItemId itemId = new ItemId(itemsDTO.getOrderNo(), itemsDTO.getItemNo());
+        items.setId(itemId); // Встановлюємо складний первинний ключ
         items.setPartNo(itemsDTO.getPartNo());
         items.setProfilWidth(itemsDTO.getProfilWidth());
         items.setWidth(itemsDTO.getWidth());
