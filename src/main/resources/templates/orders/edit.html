@@ -1,62 +1,99 @@
-<!DOCTYPE HTML>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-        layout:decorate="~{layout}">
-    <head>
-        <title>[[#{orders.edit.headline}]]</title>
-    </head>
-    <body>
-        <div layout:fragment="content">
-            <div class="d-flex flex-wrap mb-4">
-                <h1 class="flex-grow-1">[[#{orders.edit.headline}]]</h1>
-                <div>
-                    <a th:href="@{/orders}" class="btn btn-secondary">[[#{orders.edit.back}]]</a>
-                </div>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Editing order</title>
+</head>
+<body>
+<h1>Editing order</h1>
+<form th:action="@{/orders/edit}" th:object="${orders}" method="post">
+    <!-- Основні деталі замовлення -->
+    <div>
+        <label for="custNo">Customer:</label>
+        <select id="custNo" th:field="*{custNo}">
+            <option th:each="customer : ${customers}"
+                    th:value="${customer.custNo}"
+                    th:text="${customer.company}">Customer Name</option>
+        </select>
+    </div>
+    <!-- Поля для інших деталей замовлення -->
+
+    <!-- Контейнер для items -->
+    <div id="itemsContainer">
+        <!-- Вкладена форма для існуючих Items -->
+        <div th:each="item, iter : ${orders.items}" th:object="${item}" class="item-container">
+            <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
+            <div>
+                <label for="items${iter.index}.partNo">Part No:</label>
+                <input type="text" id="items${iter.index}.partNo" name="items[${iter.index}].partNo" />
             </div>
-            <div th:replace="~{fragments/forms::globalErrors('orders')}" />
-            <form th:action="${requestUri}" method="post">
-                <input type="submit" th:value="#{orders.edit.headline}" class="btn btn-primary mt-4 mb-4" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='orderNo', disabled=true, type='number')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='customers', field='company')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='factNo', type='number')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='saleDate')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipDate')}" />
-<!--                <div th:replace="~{fragments/forms::inputRow(object='orders', field='empNo', type='number')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToContact')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToAddr1')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToAddr2')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToCity')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToState')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToZip')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToCountry')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipToPhone')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='shipVia')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='po')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='terms')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='paymentMethod')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='itemsTotal')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='taxRate')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='freight')}" />     -->
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='amountPaid')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='amountDueN')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='income')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='priceLevel', type='number')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='statusOrder', type='number')}" />
-                <div th:replace="~{fragments/forms::inputRow(object='orders', field='rahFacNo', type='number')}" />
-
-                <div>
-                    <h2>Items</h2>
-                    <div th:each="item, iterStat : ${items}">
-                        ;fghierogvneroiumgoirmutgoremgor gergoergoemugpoerg
-                        ${items}
-                        <div th:replace="~{fragments/forms::inputRow(object='item', field='PartNo', type='text', disabled=true)}" />
-                        <div th:replace="~{fragments/forms::inputRow(object='item[__${iterStat.index}__]', field='quantity', type='number')}" />
-                        <div th:replace="~{fragments/forms::inputRow(object='item[__${iterStat.index}__]', field='cost', type='number')}" />
-                        <!-- Add other fields for items here -->
-                    </div>
-                </div>
-
-                <input type="submit" th:value="#{orders.edit.headline}" class="btn btn-primary mt-4" />
-            </form>
+            <div>
+                <label for="items${iter.index}.quantity">Quantity:</label>
+                <input type="number" id="items${iter.index}.quantity" name="items[${iter.index}].quantity" />
+            </div>
+            <div>
+                <label for="items${iter.index}.cost">Cost:</label>
+                <input type="text" id="items${iter.index}.cost" name="items[${iter.index}].cost" />
+            </div>
+            <button type="button" onclick="removeItem(this)">Remove Item</button>
         </div>
-    </body>
+    </div>
+
+    <button type="button" onclick="addItem()">Add Item</button>
+
+    <div>
+        <button type="submit">Update Order</button>
+    </div>
+</form>
+<script>
+    let itemNum = document.querySelectorAll('.item-container').length;
+
+    function addItem() {
+        const itemContainer = document.createElement('div');
+        itemContainer.classList.add('item-container');
+
+        itemContainer.innerHTML = `
+                <h3>Item ${itemNum + 1}</h3>
+                <div>
+                    <label for="items${itemNum}.partNo">Part No:</label>
+                    <input type="text" id="items${itemNum}.partNo" name="items[${itemNum}].partNo" />
+                </div>
+                <div>
+                    <label for="items${itemNum}.quantity">Quantity:</label>
+                    <input type="number" id="items${itemNum}.quantity" name="items[${itemNum}].quantity" />
+                </div>
+                <div>
+                    <label for="items${itemNum}.cost">Cost:</label>
+                    <input type="text" id="items${itemNum}.cost" name="items[${itemNum}].cost" />
+                </div>
+                <button type="button" onclick="removeItem(this)">Remove Item</button>
+            `;
+        document.getElementById('itemsContainer').appendChild(itemContainer);
+        itemNum++;
+    }
+
+    function removeItem(button) {
+        const itemContainer = button.closest('.item-container');
+        itemContainer.remove();
+        itemNum--;
+        updateItemsIndexes();
+    }
+
+    function updateItemsIndexes() {
+        const itemContainers = document.querySelectorAll('.item-container');
+        itemContainers.forEach((container, index) => {
+            container.querySelector('h3 span').textContent = index + 1;
+            container.querySelectorAll('input, label').forEach((element) => {
+                const id = element.getAttribute('id');
+                const name = element.getAttribute('name');
+                if (id) {
+                    element.setAttribute('id', id.replace(/\d+/, index));
+                }
+                if (name) {
+                    element.setAttribute('name', name.replace(/\d+/, index));
+                }
+            });
+        });
+    }
+</script>
+</body>
 </html>

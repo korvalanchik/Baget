@@ -51,7 +51,7 @@ public class OrdersController {
     public String add(Model model, final OrdersDTO ordersDTO) {
         model.addAttribute("orders", ordersDTO);
         model.addAttribute("customers", customerService.findAll());
-        model.addAttribute("items", itemsService.findAll());
+//        model.addAttribute("items", itemsService.findAll());
         return "orders/add";
     }
 
@@ -70,7 +70,7 @@ public class OrdersController {
     public String edit(@PathVariable(name = "orderNo") final Long orderNo, final Model model) {
         model.addAttribute("orders", ordersService.get(orderNo));
         model.addAttribute("customers", customerService.get(ordersService.get(orderNo).getCustNo()));
-        model.addAttribute("items", itemsService.findByOrderNo(orderNo));
+//        model.addAttribute("items", itemsService.findByOrderNo(orderNo));
         return "orders/edit";
     }
 
