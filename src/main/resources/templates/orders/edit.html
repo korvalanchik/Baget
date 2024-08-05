@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Editing order</title>
+    <title>Редагувати Замовлення</title>
 </head>
 <body>
-<h1>Editing order</h1>
-<form th:action="@{/orders/edit}" th:object="${orders}" method="post">
+<h1>Редагувати Замовлення</h1>
+<form th:action="@{/orders/update}" th:object="${orders}" method="post">
     <!-- Основні деталі замовлення -->
     <div>
         <label for="custNo">Customer:</label>
@@ -23,16 +23,16 @@
         <div th:each="item, iter : ${orders.items}" th:object="${item}" class="item-container">
             <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
             <div>
-                <label for="items${iter.index}.partNo">Part No:</label>
-                <input type="text" id="items${iter.index}.partNo" name="items[${iter.index}].partNo" />
+                <label th:for="|items${iter.index}.partNo|">Part No:</label>
+                <input type="text" field="*{partNo}" th:id="|items${iter.index}.partNo|" th:name="|items[${iter.index}].partNo|" />
             </div>
             <div>
-                <label for="items${iter.index}.quantity">Quantity:</label>
-                <input type="number" id="items${iter.index}.quantity" name="items[${iter.index}].quantity" />
+                <label th:for="|items${iter.index}.quantity|">Quantity:</label>
+                <input type="number" field="*{quantity}" th:id="|items${iter.index}.quantity|" th:name="|items[${iter.index}].quantity|" />
             </div>
             <div>
-                <label for="items${iter.index}.cost">Cost:</label>
-                <input type="text" id="items${iter.index}.cost" name="items[${iter.index}].cost" />
+                <label th:for="|items${iter.index}.cost|">Cost:</label>
+                <input type="text" field="*{cost}" th:id="|items${iter.index}.cost|" th:name="|items[${iter.index}].cost|" />
             </div>
             <button type="button" onclick="removeItem(this)">Remove Item</button>
         </div>
@@ -41,58 +41,42 @@
     <button type="button" onclick="addItem()">Add Item</button>
 
     <div>
-        <button type="submit">Update Order</button>
+        <button type="submit">Submit Order</button>
     </div>
 </form>
+
+<!-- Скрипт для управління items -->
 <script>
-    let itemNum = document.querySelectorAll('.item-container').length;
+    let itemsNumber = document.querySelectorAll('.item-container').length;
 
     function addItem() {
         const itemContainer = document.createElement('div');
         itemContainer.classList.add('item-container');
 
         itemContainer.innerHTML = `
-                <h3>Item ${itemNum + 1}</h3>
-                <div>
-                    <label for="items${itemNum}.partNo">Part No:</label>
-                    <input type="text" id="items${itemNum}.partNo" name="items[${itemNum}].partNo" />
-                </div>
-                <div>
-                    <label for="items${itemNum}.quantity">Quantity:</label>
-                    <input type="number" id="items${itemNum}.quantity" name="items[${itemNum}].quantity" />
-                </div>
-                <div>
-                    <label for="items${itemNum}.cost">Cost:</label>
-                    <input type="text" id="items${itemNum}.cost" name="items[${itemNum}].cost" />
-                </div>
-                <button type="button" onclick="removeItem(this)">Remove Item</button>
-            `;
+            <h3>Item ${itemsNumber + 1}</h3>
+            <div>
+                <label for="items${itemsNumber}.partNo">Part No:</label>
+                <input type="text" id="items${itemsNumber}.partNo" name="items[${itemsNumber}].partNo" />
+            </div>
+            <div>
+                <label for="items${itemsNumber}.quantity">Quantity:</label>
+                <input type="number" id="items${itemsNumber}.quantity" name="items[${itemsNumber}].quantity" />
+            </div>
+            <div>
+                <label for="items${itemsNumber}.cost">Cost:</label>
+                <input type="text" id="items${itemsNumber}.cost" name="items[${itemsNumber}].cost" />
+            </div>
+            <button type="button" onclick="removeItem(this)">Remove Item</button>
+        `;
         document.getElementById('itemsContainer').appendChild(itemContainer);
-        itemNum++;
+        itemsNumber++;
     }
 
     function removeItem(button) {
         const itemContainer = button.closest('.item-container');
         itemContainer.remove();
-        itemNum--;
-        updateItemsIndexes();
-    }
-
-    function updateItemsIndexes() {
-        const itemContainers = document.querySelectorAll('.item-container');
-        itemContainers.forEach((container, index) => {
-            container.querySelector('h3 span').textContent = index + 1;
-            container.querySelectorAll('input, label').forEach((element) => {
-                const id = element.getAttribute('id');
-                const name = element.getAttribute('name');
-                if (id) {
-                    element.setAttribute('id', id.replace(/\d+/, index));
-                }
-                if (name) {
-                    element.setAttribute('name', name.replace(/\d+/, index));
-                }
-            });
-        });
+        itemsNumber--;
     }
 </script>
 </body>
