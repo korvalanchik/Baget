@@ -20,19 +20,19 @@
     <!-- Контейнер для items -->
     <div id="itemsContainer">
         <!-- Вкладена форма для існуючих Items -->
-        <div th:each="item, iter : ${orders.items}" th:object="${item}" class="item-container">
+        <div th:each="item, iter : ${orders.items}" class="item-container">
             <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
             <div>
-                <label for="items${itemIndex}.partNo">Part No:</label>
-                <input type="text" id="items${itemIndex}.partNo" name="items[${itemIndex}].partNo" />
+                <label th:for="|items[${iter.index}].partNo|">Part No:</label>
+                <input type="text" th:field="*{items[__${iter.index}__].partNo}" th:id="|items${iter.index}.partNo|" th:name="|items[${iter.index}].partNo|" />
             </div>
             <div>
-                <label for="items${itemIndex}.quantity">Quantity:</label>
-                <input type="number" id="items${itemIndex}.quantity" name="items[${itemIndex}].quantity" />
+                <label th:for="|items[${iter.index}].quantity|">Quantity:</label>
+                <input type="number" th:field="*{items[__${iter.index}__].quantity}" th:id="|items${iter.index}.quantity|" th:name="|items[${iter.index}].quantity|" />
             </div>
             <div>
-                <label for="items${itemIndex}.cost">Cost:</label>
-                <input type="text" id="items${itemIndex}.cost" name="items[${itemIndex}].cost" />
+                <label th:for="|items[${iter.index}].cost|">Cost:</label>
+                <input type="text" th:field="*{items[__${iter.index}__].cost}" th:id="|items${iter.index}.cost|" th:name="|items[${iter.index}].cost|" />
             </div>
             <button type="button" onclick="removeItem(this)">Remove Item</button>
         </div>
@@ -45,7 +45,10 @@
     </div>
 </form>
 <script>
-    let itemsN = 0;
+    if (typeof itemsN !== 'undefined') {
+        delete window.itemsN;
+    }
+    itemsN = 0;
 
     function addItem() {
         const itemContainer = document.createElement('div');

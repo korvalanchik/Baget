@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Редагувати Замовлення</title>
+    <title>Editing Order</title>
 </head>
 <body>
-<h1>Редагувати Замовлення</h1>
-<form th:action="@{/orders/update}" th:object="${orders}" method="post">
-    <!-- Основні деталі замовлення -->
+<h1>Editing Order</h1>
+<form th:action="@{/orders/edit/{orderNo}(orderNo=${orders.orderNo})}" th:object="${orders}" method="post">
+    <input type="hidden" th:field="*{orderNo}" />
+
+    <!-- РћСЃРЅРѕРІРЅС– РґРµС‚Р°Р»С– Р·Р°РјРѕРІР»РµРЅРЅСЏ -->
     <div>
         <label for="custNo">Customer:</label>
         <select id="custNo" th:field="*{custNo}">
@@ -15,24 +17,24 @@
                     th:text="${customer.company}">Customer Name</option>
         </select>
     </div>
-    <!-- Поля для інших деталей замовлення -->
+    <!-- РџРѕР»СЏ РґР»СЏ С–РЅС€РёС… РґРµС‚Р°Р»РµР№ Р·Р°РјРѕРІР»РµРЅРЅСЏ -->
 
-    <!-- Контейнер для items -->
+    <!-- РљРѕРЅС‚РµР№РЅРµСЂ РґР»СЏ items -->
     <div id="itemsContainer">
-        <!-- Вкладена форма для існуючих Items -->
-        <div th:each="item, iter : ${orders.items}" th:object="${item}" class="item-container">
+        <!-- Р’РєР»Р°РґРµРЅР° С„РѕСЂРјР° РґР»СЏ С–СЃРЅСѓСЋС‡РёС… Items -->
+        <div th:each="item, iter : ${orders.items}" class="item-container">
             <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
             <div>
-                <label th:for="|items${iter.index}.partNo|">Part No:</label>
-                <input type="text" field="*{partNo}" th:id="|items${iter.index}.partNo|" th:name="|items[${iter.index}].partNo|" />
+                <label th:for="|items[${iter.index}].partNo|">Part No:</label>
+                <input type="text" th:field="*{items[__${iter.index}__].partNo}" th:id="|items${iter.index}.partNo|" th:name="|items[${iter.index}].partNo|" />
             </div>
             <div>
-                <label th:for="|items${iter.index}.quantity|">Quantity:</label>
-                <input type="number" field="*{quantity}" th:id="|items${iter.index}.quantity|" th:name="|items[${iter.index}].quantity|" />
+                <label th:for="|items[${iter.index}].quantity|">Quantity:</label>
+                <input type="number" th:field="*{items[__${iter.index}__].quantity}" th:id="|items${iter.index}.quantity|" th:name="|items[${iter.index}].quantity|" />
             </div>
             <div>
-                <label th:for="|items${iter.index}.cost|">Cost:</label>
-                <input type="text" field="*{cost}" th:id="|items${iter.index}.cost|" th:name="|items[${iter.index}].cost|" />
+                <label th:for="|items[${iter.index}].cost|">Cost:</label>
+                <input type="text" th:field="*{items[__${iter.index}__].cost}" th:id="|items${iter.index}.cost|" th:name="|items[${iter.index}].cost|" />
             </div>
             <button type="button" onclick="removeItem(this)">Remove Item</button>
         </div>
@@ -45,9 +47,9 @@
     </div>
 </form>
 
-<!-- Скрипт для управління items -->
+<!-- РЎРєСЂРёРїС‚ РґР»СЏ СѓРїСЂР°РІР»С–РЅРЅСЏ items -->
 <script>
-    let itemsNumber = document.querySelectorAll('.item-container').length;
+    itemsNumber = document.querySelectorAll('.item-container').length;
 
     function addItem() {
         const itemContainer = document.createElement('div');
