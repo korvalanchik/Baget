@@ -94,4 +94,20 @@ public class OrdersController {
         return "redirect:/orders";
     }
 
+    @PostMapping("/addItem")
+    public String addItem(@ModelAttribute("orders") OrdersDTO order, Model model) {
+        // Логіка додавання Item та перерахунку порядкових номерів
+        order.addItem(new Item());
+        model.addAttribute("orders", order);
+        return "orders/itemList :: itemsFragment"; // Повернення оновленого фрагменту з Item
+    }
+
+    @PostMapping("/removeItem")
+    public String removeItem(@RequestParam("id") int itemId, @ModelAttribute("order") OrderDTO order, Model model) {
+        // Логіка видалення Item та перерахунку порядкових номерів
+        order.removeItem(itemId);
+        model.addAttribute("order", order);
+        return "orders/itemList :: itemsFragment"; // Повернення оновленого фрагменту з Item
+    }
+
 }

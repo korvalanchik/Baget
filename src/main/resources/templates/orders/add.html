@@ -45,38 +45,30 @@
     </div>
 </form>
 <script>
-    if (typeof itemsN !== 'undefined') {
-        delete window.itemsN;
-    }
-    itemsN = 0;
-
+    // AJAX-запит на додавання Item
     function addItem() {
-        const itemContainer = document.createElement('div');
-        itemContainer.classList.add('item-container');
-
-        itemContainer.innerHTML = `
-                <h3>Item ${itemsN + 1}</h3>
-                <div>
-                    <label for="items[${itemsN}].partNo">Part No:</label>
-                    <input type="text" id="items[${itemsN}].partNo" name="items[${itemsN}].partNo" />
-                </div>
-                <div>
-                    <label for="items[${itemsN}].quantity">Quantity:</label>
-                    <input type="number" id="items[${itemsN}].quantity" name="items[${itemsN}].quantity" />
-                </div>
-                <div>
-                    <label for="items[${itemsN}].cost">Cost:</label>
-                    <input type="text" id="items[${itemsN}].cost" name="items[${itemsN}].cost" />
-                </div>
-                <button type="button" onclick="removeItem(this)">Remove Item</button>
-            `;
-        document.getElementById('itemsContainer').appendChild(itemContainer);
-        itemsN++;
+        $.ajax({
+            url: '/orders/addItem',
+            method: 'POST',
+            data: {},  // Необхідні дані
+            success: function(response) {
+                // Оновлення списку Item на сторінці
+                $('#itemsContainer').html(response);
+            }
+        });
     }
 
-    function removeItem(button) {
-        const itemContainer = button.closest('.item-container');
-        itemContainer.remove();
+    // AJAX-запит на видалення Item
+    function removeItem(itemId) {
+        $.ajax({
+            url: '/orders/removeItem',
+            method: 'POST',
+            data: { id: itemId },
+            success: function(response) {
+                // Оновлення списку Item на сторінці
+                $('#itemsContainer').html(response);
+            }
+        });
     }
 </script>
 </body>
