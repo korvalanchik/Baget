@@ -1,6 +1,8 @@
 package com.example.baget.orders;
 
 import com.example.baget.customer.CustomerService;
+import com.example.baget.items.Items;
+import com.example.baget.items.ItemsDTO;
 import com.example.baget.items.ItemsService;
 import com.example.baget.util.WebUtils;
 import jakarta.validation.Valid;
@@ -95,19 +97,35 @@ public class OrdersController {
     }
 
     @PostMapping("/addItem")
-    public String addItem(@ModelAttribute("orders") OrdersDTO order, Model model) {
-        // Логіка додавання Item та перерахунку порядкових номерів
-        order.addItem(new Item());
+    public String addItem(@RequestParam("orderNo") Long orderNo, @ModelAttribute ItemsDTO itemDTO, Model model) {
+        // Р—РЅР°Р№С‚Рё Р·Р°РјРѕРІР»РµРЅРЅСЏ Р·Р° orderNo
+        OrdersDTO order = ordersService.get(orderNo);
+        order.getItems().add(itemDTO);
+
+        // Р—Р±РµСЂРµРіС‚Рё РѕРЅРѕРІР»РµРЅРµ Р·Р°РјРѕРІР»РµРЅРЅСЏ
+        ordersService.update(orderNo, order);
+
+        // РћРЅРѕРІРёС‚Рё РјРѕРґРµР»СЊ С– РїРѕРІРµСЂРЅСѓС‚Рё РѕРЅРѕРІР»РµРЅРёР№ СЃРїРёСЃРѕРє РµР»РµРјРµРЅС‚С–РІ
         model.addAttribute("orders", order);
-        return "orders/itemList :: itemsFragment"; // Повернення оновленого фрагменту з Item
+        return "orders/items :: itemsContainer";
     }
 
+
+
     @PostMapping("/removeItem")
-    public String removeItem(@RequestParam("id") int itemId, @ModelAttribute("order") OrderDTO order, Model model) {
-        // Логіка видалення Item та перерахунку порядкових номерів
-        order.removeItem(itemId);
-        model.addAttribute("order", order);
-        return "orders/itemList :: itemsFragment"; // Повернення оновленого фрагменту з Item
+    public String removeItem(@RequestParam("orderNo") Long orderNo, @RequestParam("itemIndex") int itemIndex, Model model) {
+        OrdersDTO order = ordersService.get(orderNo);
+
+        // Remove the item by its index
+        if (itemIndex >= 0 && itemIndex < order.getItems().size()) {
+            order.getItems().remove(itemIndex);
+        }
+
+        // Add the updated order to the model
+        model.addAttribute("orders", order);
+
+        // Return the fragment of HTML that represents the updated items list
+        return "orders/edit :: itemRow";
     }
 
 }

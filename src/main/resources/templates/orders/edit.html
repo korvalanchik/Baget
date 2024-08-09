@@ -2,11 +2,12 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Editing Order</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 <h1>Editing Order</h1>
 <form th:action="@{/orders/edit/{orderNo}(orderNo=${orders.orderNo})}" th:object="${orders}" method="post">
-    <input type="hidden" th:field="*{orderNo}" />
+    <input type="hidden" th:field="*{orderNo}" id="orderNo" />
 
     <!-- Основні деталі замовлення -->
     <div>
@@ -17,68 +18,86 @@
                     th:text="${customer.company}">Customer Name</option>
         </select>
     </div>
-    <!-- Поля для інших деталей замовлення -->
 
-    <!-- Контейнер для items -->
+    <!-- Поля введення для нового Item -->
+    <div>
+        <label for="partNoInput">Part No:</label>
+        <input type="text" id="partNoInput" />
+    </div>
+    <div>
+        <label for="quantityInput">Quantity:</label>
+        <input type="number" id="quantityInput" />
+    </div>
+    <div>
+        <label for="costInput">Cost:</label>
+        <input type="text" id="costInput" />
+    </div>
+
+    <!-- Item container where items will be added dynamically -->
     <div id="itemsContainer">
-        <!-- Вкладена форма для існуючих Items -->
-        <div th:each="item, iter : ${orders.items}" class="item-container">
+        <div th:fragment="itemRow" th:each="item, iter : ${orders.items}" class="item-container">
             <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
             <div>
-                <label th:for="|items[${iter.index}].partNo|">Part No:</label>
+                <label th:for="|items${iter.index}.partNo|">Part No:</label>
                 <input type="text" th:field="*{items[__${iter.index}__].partNo}" th:id="|items${iter.index}.partNo|" th:name="|items[${iter.index}].partNo|" />
             </div>
             <div>
-                <label th:for="|items[${iter.index}].quantity|">Quantity:</label>
+                <label th:for="|items${iter.index}.quantity|">Quantity:</label>
                 <input type="number" th:field="*{items[__${iter.index}__].quantity}" th:id="|items${iter.index}.quantity|" th:name="|items[${iter.index}].quantity|" />
             </div>
             <div>
-                <label th:for="|items[${iter.index}].cost|">Cost:</label>
+                <label th:for="|items${iter.index}.cost|">Cost:</label>
                 <input type="text" th:field="*{items[__${iter.index}__].cost}" th:id="|items${iter.index}.cost|" th:name="|items[${iter.index}].cost|" />
             </div>
             <button type="button" onclick="removeItem(this)">Remove Item</button>
         </div>
     </div>
 
-    <button type="button" onclick="addItem()">Add Item</button>
-
+    <!-- Buttons to add and submit -->
     <div>
+        <button type="button" onclick="addItem()">Add Item</button>
         <button type="submit">Submit Order</button>
     </div>
 </form>
 
 <!-- Скрипт для управління items -->
 <script>
-    itemsNumber = document.querySelectorAll('.item-container').length;
-
     function addItem() {
-        const itemContainer = document.createElement('div');
-        itemContainer.classList.add('item-container');
+        const partNo = $('#partNoInput').val();
+        const quantity = $('#quantityInput').val();
+        const cost = $('#costInput').val();
+        const orderNo = $('#orderNo').val(); // Отримуємо значення orderNo з прихованого поля
 
-        itemContainer.innerHTML = `
-            <h3>Item ${itemsNumber + 1}</h3>
-            <div>
-                <label for="items${itemsNumber}.partNo">Part No:</label>
-                <input type="text" id="items${itemsNumber}.partNo" name="items[${itemsNumber}].partNo" />
-            </div>
-            <div>
-                <label for="items${itemsNumber}.quantity">Quantity:</label>
-                <input type="number" id="items${itemsNumber}.quantity" name="items[${itemsNumber}].quantity" />
-            </div>
-            <div>
-                <label for="items${itemsNumber}.cost">Cost:</label>
-                <input type="text" id="items${itemsNumber}.cost" name="items[${itemsNumber}].cost" />
-            </div>
-            <button type="button" onclick="removeItem(this)">Remove Item</button>
-        `;
-        document.getElementById('itemsContainer').appendChild(itemContainer);
-        itemsNumber++;
+        $.ajax({
+            url: '/orders/addItem',
+            method: 'POST',
+            data: {
+                partNo: partNo,
+                quantity: quantity,
+                cost: cost,
+                orderNo: orderNo  // Передаємо orderNo на сервер
+            },
+            success: function(response) {
+                // Оновлення списку Item на сторінці
+                $('#itemsContainer').html(response);
+            },
+            error: function(xhr, status, error) {
+                console.error("Error occurred while adding item: ", error);
+            }
+        });
     }
 
     function removeItem(button) {
-        const itemContainer = button.closest('.item-container');
-        itemContainer.remove();
-        itemsNumber--;
+        const orderNo = document.getElementById('orderNo').value;
+        const itemIndex = $(button).closest('.item-container').index();
+        $.ajax({
+            url: '/orders/removeItem',
+            method: 'POST',
+            data: { orderNo: orderNo, itemIndex: itemIndex },
+            success: function(response) {
+                $('#itemsContainer').html(response);
+            }
+        });
     }
 </script>
 </body>

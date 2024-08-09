@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Додати Замовлення</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
 <h1>Додати Замовлення</h1>
@@ -45,30 +46,36 @@
     </div>
 </form>
 <script>
-    // AJAX-запит на додавання Item
+    itemsNumber = 0;
+
     function addItem() {
-        $.ajax({
-            url: '/orders/addItem',
-            method: 'POST',
-            data: {},  // Необхідні дані
-            success: function(response) {
-                // Оновлення списку Item на сторінці
-                $('#itemsContainer').html(response);
-            }
-        });
+        const itemContainer = document.createElement('div');
+        itemContainer.classList.add('item-container');
+
+        itemContainer.innerHTML = `
+            <h3>Item ${itemsNumber + 1}</h3>
+            <div>
+                <label for="items${itemsNumber}.partNo">Part No:</label>
+                <input type="text" id="items${itemsNumber}.partNo" name="items[${itemsNumber}].partNo" />
+            </div>
+            <div>
+                <label for="items${itemsNumber}.quantity">Quantity:</label>
+                <input type="number" id="items${itemsNumber}.quantity" name="items[${itemsNumber}].quantity" />
+            </div>
+            <div>
+                <label for="items${itemsNumber}.cost">Cost:</label>
+                <input type="text" id="items${itemsNumber}.cost" name="items[${itemsNumber}].cost" />
+            </div>
+            <button type="button" onclick="removeItem(this)">Remove Item</button>
+        `;
+        document.getElementById('itemsContainer').appendChild(itemContainer);
+        itemsNumber++;
     }
 
-    // AJAX-запит на видалення Item
-    function removeItem(itemId) {
-        $.ajax({
-            url: '/orders/removeItem',
-            method: 'POST',
-            data: { id: itemId },
-            success: function(response) {
-                // Оновлення списку Item на сторінці
-                $('#itemsContainer').html(response);
-            }
-        });
+    function removeItem(button) {
+        const itemContainer = button.closest('.item-container');
+        itemContainer.remove();
+        itemsNumber--;
     }
 </script>
 </body>
