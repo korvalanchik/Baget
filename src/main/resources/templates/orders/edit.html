@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Editing Order</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <!-- Load Axios library -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
 <h1>Editing Order</h1>
@@ -19,23 +22,27 @@
         </select>
     </div>
 
-    <!-- Поля введення для нового Item -->
-    <div>
-        <label for="partNoInput">Part No:</label>
-        <input type="text" id="partNoInput" />
-    </div>
-    <div>
-        <label for="quantityInput">Quantity:</label>
-        <input type="number" id="quantityInput" />
-    </div>
-    <div>
-        <label for="costInput">Cost:</label>
-        <input type="text" id="costInput" />
+    <!-- Поля для нового Item, приховані за замовчуванням -->
+    <div id="newItemFields" style="display: none;">
+        <div>
+            <label for="partNoInput">Part No:</label>
+            <input type="text" id="partNoInput" />
+        </div>
+        <div>
+            <label for="quantityInput">Quantity:</label>
+            <input type="number" id="quantityInput" />
+        </div>
+        <div>
+            <label for="costInput">Cost:</label>
+            <input type="text" id="costInput" />
+        </div>
+        <!-- Кнопка для підтвердження додавання Item -->
+        <button type="button" onclick="addItem()">Confirm Add Item</button>
     </div>
 
     <!-- Item container where items will be added dynamically -->
     <div id="itemsContainer">
-        <div th:fragment="itemRow" th:each="item, iter : ${orders.items}" class="item-container">
+        <div th:each="item, iter : ${orders.items}" class="item-container">
             <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
             <div>
                 <label th:for="|items${iter.index}.partNo|">Part No:</label>
@@ -55,50 +62,78 @@
 
     <!-- Buttons to add and submit -->
     <div>
-        <button type="button" onclick="addItem()">Add Item</button>
+        <button type="button" onclick="showAddItemFields()">Add Item</button>
         <button type="submit">Submit Order</button>
     </div>
 </form>
-
-<!-- Скрипт для управління items -->
-<script>
-    function addItem() {
-        const partNo = $('#partNoInput').val();
-        const quantity = $('#quantityInput').val();
-        const cost = $('#costInput').val();
-        const orderNo = $('#orderNo').val(); // Отримуємо значення orderNo з прихованого поля
-
-        $.ajax({
-            url: '/orders/addItem',
-            method: 'POST',
-            data: {
-                partNo: partNo,
-                quantity: quantity,
-                cost: cost,
-                orderNo: orderNo  // Передаємо orderNo на сервер
-            },
-            success: function(response) {
-                // Оновлення списку Item на сторінці
-                $('#itemsContainer').html(response);
-            },
-            error: function(xhr, status, error) {
-                console.error("Error occurred while adding item: ", error);
-            }
-        });
-    }
-
-    function removeItem(button) {
-        const orderNo = document.getElementById('orderNo').value;
-        const itemIndex = $(button).closest('.item-container').index();
-        $.ajax({
-            url: '/orders/removeItem',
-            method: 'POST',
-            data: { orderNo: orderNo, itemIndex: itemIndex },
-            success: function(response) {
-                $('#itemsContainer').html(response);
-            }
-        });
-    }
-</script>
 </body>
 </html>
+
+<!-- Скрипт для управління items за допомогою Axios -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
+        if (csrfTokenMeta) {
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfTokenMeta.getAttribute('content');
+        } else {
+            console.error('CSRF token meta tag not found.');
+        }
+
+        function showAddItemFields() {
+            document.getElementById('newItemFields').style.display = 'block';
+        }
+
+        function addItem() {
+            const partNo = document.getElementById('partNoInput').value;
+            const quantity = document.getElementById('quantityInput').value;
+            const cost = document.getElementById('costInput').value;
+            const orderNo = document.getElementById('orderNo').value;
+
+            // Simple validation
+            if (!partNo || !quantity || !cost) {
+                alert('Please fill in all fields before adding an item.');
+                return;
+            }
+
+            axios.post('/orders/addItem', { partNo: partNo, quantity: quantity, cost: cost, orderNo: orderNo})
+                .then(function (response) {
+                    document.getElementById('itemsContainer').innerHTML = response.data;
+                    // Hide the fields again after adding
+                    document.getElementById('newItemFields').style.display = 'none';
+                    // Clear the input fields
+                    document.getElementById('partNoInput').value = '';
+                    document.getElementById('quantityInput').value = '';
+                    document.getElementById('costInput').value = '';
+                })
+                .catch(function (error) {
+                    console.error("Error occurred while adding item: ", error);
+                });
+        }
+
+        window.addItem = addItem; // Expose to global scope if needed
+        window.showAddItemFields = showAddItemFields; // Expose to global scope if needed
+
+        function removeItem(button) {
+            const itemContainer = button.closest('.item-container');
+            if (!itemContainer) {
+                console.error('Item container not found.');
+                return;
+            }
+            const itemIndex = Array.from(itemContainer.parentNode.children).indexOf(itemContainer);
+            const orderNo = document.getElementById('orderNo').value;
+
+            axios.post('/orders/removeItem', {
+                orderNo: orderNo,
+                itemIndex: itemIndex
+            })
+                .then(function (response) {
+                    document.getElementById('itemsContainer').innerHTML = response.data;
+                })
+                .catch(function (error) {
+                    console.error("Error occurred while removing item: ", error);
+                });
+        }
+
+        window.removeItem = removeItem; // Expose to global scope if needed
+    });
+</script>
