@@ -66,8 +66,6 @@
         <button type="submit">Submit Order</button>
     </div>
 </form>
-</body>
-</html>
 
 <!-- Скрипт для управління items за допомогою Axios -->
 <script>
@@ -79,17 +77,20 @@
             console.error('CSRF token meta tag not found.');
         }
 
-        function showAddItemFields() {
+        // Визначаємо функції та додаємо їх в глобальний об'єкт window
+        window.showAddItemFields = function() {
             document.getElementById('newItemFields').style.display = 'block';
-        }
+        };
 
-        function addItem() {
+        window.addItem = function() {
             const partNo = document.getElementById('partNoInput').value;
             const quantity = document.getElementById('quantityInput').value;
             const cost = document.getElementById('costInput').value;
             const orderNo = document.getElementById('orderNo').value;
 
-            // Simple validation
+            console.log(partNo, quantity, cost, orderNo);
+
+            // Простий валідаційний блок
             if (!partNo || !quantity || !cost) {
                 alert('Please fill in all fields before adding an item.');
                 return;
@@ -98,9 +99,9 @@
             axios.post('/orders/addItem', { partNo: partNo, quantity: quantity, cost: cost, orderNo: orderNo})
                 .then(function (response) {
                     document.getElementById('itemsContainer').innerHTML = response.data;
-                    // Hide the fields again after adding
+                    // Сховати поля після додавання
                     document.getElementById('newItemFields').style.display = 'none';
-                    // Clear the input fields
+                    // Очистити поля введення
                     document.getElementById('partNoInput').value = '';
                     document.getElementById('quantityInput').value = '';
                     document.getElementById('costInput').value = '';
@@ -108,12 +109,9 @@
                 .catch(function (error) {
                     console.error("Error occurred while adding item: ", error);
                 });
-        }
+        };
 
-        window.addItem = addItem; // Expose to global scope if needed
-        window.showAddItemFields = showAddItemFields; // Expose to global scope if needed
-
-        function removeItem(button) {
+        window.removeItem = function(button) {
             const itemContainer = button.closest('.item-container');
             if (!itemContainer) {
                 console.error('Item container not found.');
@@ -132,8 +130,8 @@
                 .catch(function (error) {
                     console.error("Error occurred while removing item: ", error);
                 });
-        }
-
-        window.removeItem = removeItem; // Expose to global scope if needed
+        };
     });
 </script>
+</body>
+</html>
