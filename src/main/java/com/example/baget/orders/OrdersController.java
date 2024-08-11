@@ -97,7 +97,7 @@ public class OrdersController {
     }
 
     @PostMapping("/addItem")
-    public String addItem(@RequestParam("orderNo") Long orderNo, @RequestBody ItemsDTO itemDTO, Model model) {
+    public String addItem(@RequestParam("orderNo") Long orderNo, @RequestBody final ItemsDTO itemDTO, Model model) {
         // Знайти замовлення за orderNo
         OrdersDTO order = ordersService.get(orderNo);
         order.getItems().add(itemDTO);

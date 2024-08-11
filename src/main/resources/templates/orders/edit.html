@@ -1,137 +1,70 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Editing Order</title>
-    <meta name="_csrf" th:content="${_csrf.token}"/>
-    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <!-- Load Axios library -->
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-</head>
-<body>
-<h1>Editing Order</h1>
-<form th:action="@{/orders/edit/{orderNo}(orderNo=${orders.orderNo})}" th:object="${orders}" method="post">
-    <input type="hidden" th:field="*{orderNo}" id="orderNo" />
-
-    <!-- Основні деталі замовлення -->
-    <div>
-        <label for="custNo">Customer:</label>
-        <select id="custNo" th:field="*{custNo}">
-            <option th:each="customer : ${customers}"
-                    th:value="${customer.custNo}"
-                    th:text="${customer.company}">Customer Name</option>
-        </select>
-    </div>
-
-    <!-- Поля для нового Item, приховані за замовчуванням -->
-    <div id="newItemFields" style="display: none;">
-        <div>
-            <label for="partNoInput">Part No:</label>
-            <input type="text" id="partNoInput" />
-        </div>
-        <div>
-            <label for="quantityInput">Quantity:</label>
-            <input type="number" id="quantityInput" />
-        </div>
-        <div>
-            <label for="costInput">Cost:</label>
-            <input type="text" id="costInput" />
-        </div>
-        <!-- Кнопка для підтвердження додавання Item -->
-        <button type="button" onclick="addItem()">Confirm Add Item</button>
-    </div>
-
-    <!-- Item container where items will be added dynamically -->
-    <div id="itemsContainer">
-        <div th:each="item, iter : ${orders.items}" class="item-container">
-            <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+    <head>
+        <title>[[#{orders.edit.headline}]]</title>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <meta name="_csrf" th:content="${_csrf.token}"/>
+        <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    </head>
+    <body>
+        <div layout:fragment="content">
+            <h1>Editing Order</h1>
+            <!-- Основні деталі замовлення -->
+            <input type="hidden" id="orderNo" th:value="${orders.orderNo}" />
             <div>
-                <label th:for="|items${iter.index}.partNo|">Part No:</label>
-                <input type="text" th:field="*{items[__${iter.index}__].partNo}" th:id="|items${iter.index}.partNo|" th:name="|items[${iter.index}].partNo|" />
+                <label for="custNo">Customer:</label>
+                <select id="custNo">
+                    <option th:each="customer : ${customers}"
+                            th:value="${customer.custNo}"
+                            th:text="${customer.company}">Customer Name</option>
+                </select>
             </div>
+
+            <!-- Поля для нового Item, приховані за замовчуванням -->
+            <div id="newItemFields" style="display: none;">
+                <div>
+                    <label for="partNoInput">Part No:</label>
+                    <input type="text" id="partNoInput" />
+                </div>
+                <div>
+                    <label for="quantityInput">Quantity:</label>
+                    <input type="number" id="quantityInput" />
+                </div>
+                <div>
+                    <label for="costInput">Cost:</label>
+                    <input type="text" id="costInput" />
+                </div>
+                <!-- Кнопка для підтвердження додавання Item -->
+                <button type="button" onclick="addItem()">Confirm Add Item</button>
+            </div>
+
+            <!-- Item container where items will be added dynamically -->
+            <div id="itemsContainer">
+                <div th:each="item, iter : ${orders.items}" class="item-container">
+                    <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
+                    <div>
+                        <label th:for="|items${iter.index}.partNo|">Part No:</label>
+                        <input type="text" th:value="${item.partNo}" readonly />
+                    </div>
+                    <div>
+                        <label th:for="|items${iter.index}.quantity|">Quantity:</label>
+                        <input type="number" th:value="${item.quantity}" readonly />
+                    </div>
+                    <div>
+                        <label th:for="|items${iter.index}.cost|">Cost:</label>
+                        <input type="text" th:value="${item.cost}" readonly />
+                    </div>
+                    <button type="button" onclick="removeItem(this)">Remove Item</button>
+                </div>
+            </div>
+
+            <!-- Buttons to add and submit -->
             <div>
-                <label th:for="|items${iter.index}.quantity|">Quantity:</label>
-                <input type="number" th:field="*{items[__${iter.index}__].quantity}" th:id="|items${iter.index}.quantity|" th:name="|items[${iter.index}].quantity|" />
+                <button type="button" onclick="showAddItemFields()">Add Item</button>
+                <button type="button" onclick="submitOrder()">Submit Order</button>
             </div>
-            <div>
-                <label th:for="|items${iter.index}.cost|">Cost:</label>
-                <input type="text" th:field="*{items[__${iter.index}__].cost}" th:id="|items${iter.index}.cost|" th:name="|items[${iter.index}].cost|" />
-            </div>
-            <button type="button" onclick="removeItem(this)">Remove Item</button>
         </div>
-    </div>
 
-    <!-- Buttons to add and submit -->
-    <div>
-        <button type="button" onclick="showAddItemFields()">Add Item</button>
-        <button type="submit">Submit Order</button>
-    </div>
-</form>
-
-<!-- Скрипт для управління items за допомогою Axios -->
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
-        if (csrfTokenMeta) {
-            axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfTokenMeta.getAttribute('content');
-        } else {
-            console.error('CSRF token meta tag not found.');
-        }
-
-        // Визначаємо функції та додаємо їх в глобальний об'єкт window
-        window.showAddItemFields = function() {
-            document.getElementById('newItemFields').style.display = 'block';
-        };
-
-        window.addItem = function() {
-            const partNo = document.getElementById('partNoInput').value;
-            const quantity = document.getElementById('quantityInput').value;
-            const cost = document.getElementById('costInput').value;
-            const orderNo = document.getElementById('orderNo').value;
-
-            console.log(partNo, quantity, cost, orderNo);
-
-            // Простий валідаційний блок
-            if (!partNo || !quantity || !cost) {
-                alert('Please fill in all fields before adding an item.');
-                return;
-            }
-
-            axios.post('/orders/addItem', { partNo: partNo, quantity: quantity, cost: cost, orderNo: orderNo})
-                .then(function (response) {
-                    document.getElementById('itemsContainer').innerHTML = response.data;
-                    // Сховати поля після додавання
-                    document.getElementById('newItemFields').style.display = 'none';
-                    // Очистити поля введення
-                    document.getElementById('partNoInput').value = '';
-                    document.getElementById('quantityInput').value = '';
-                    document.getElementById('costInput').value = '';
-                })
-                .catch(function (error) {
-                    console.error("Error occurred while adding item: ", error);
-                });
-        };
-
-        window.removeItem = function(button) {
-            const itemContainer = button.closest('.item-container');
-            if (!itemContainer) {
-                console.error('Item container not found.');
-                return;
-            }
-            const itemIndex = Array.from(itemContainer.parentNode.children).indexOf(itemContainer);
-            const orderNo = document.getElementById('orderNo').value;
-
-            axios.post('/orders/removeItem', {
-                orderNo: orderNo,
-                itemIndex: itemIndex
-            })
-                .then(function (response) {
-                    document.getElementById('itemsContainer').innerHTML = response.data;
-                })
-                .catch(function (error) {
-                    console.error("Error occurred while removing item: ", error);
-                });
-        };
-    });
-</script>
-</body>
+    </body>
 </html>
