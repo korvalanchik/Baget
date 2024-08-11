@@ -100,6 +100,8 @@ public class OrdersController {
     public String addItem(@RequestParam("orderNo") Long orderNo, @RequestBody final ItemsDTO itemDTO, Model model) {
         // Знайти замовлення за orderNo
         OrdersDTO order = ordersService.get(orderNo);
+        itemDTO.setOrderNo(orderNo);
+        itemDTO.setItemNo(order.getItems().stream().count()+1);
         order.getItems().add(itemDTO);
 
         // Зберегти оновлене замовлення
@@ -107,7 +109,7 @@ public class OrdersController {
 
         // Оновити модель і повернути оновлений список елементів
         model.addAttribute("orders", order);
-        return "orders/items :: itemsContainer";
+        return "orders/edit :: itemsContainer";
     }
 
 

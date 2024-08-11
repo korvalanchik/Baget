@@ -1,5 +1,5 @@
 <!-- Скрипт для управління items за допомогою Axios -->
-document.addEventListener('DOMContentLoaded', function() {
+function updateCsrfToken() {
     const csrfTokenMeta = document.querySelector('meta[name="_csrf"]');
     const csrfHeaderMeta = document.querySelector('meta[name="_csrf_header"]');
 
@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('CSRF token or header meta tag not found.');
     }
-});
+}
+
 function showAddItemFields () {
     document.getElementById('newItemFields').style.display = 'block';
 }
@@ -38,7 +39,7 @@ function addItem() {
         quantity: quantity,
         cost: cost
     };
-
+    updateCsrfToken();
     axios.post(`/orders/addItem?orderNo=${orderNo}`, itemDTO)
         .then(function (response) {
             // Оновлення контейнера items
@@ -63,7 +64,7 @@ function removeItem(button) {
     }
     const itemIndex = Array.from(itemContainer.parentNode.children).indexOf(itemContainer);
     const orderNo = document.getElementById('orderNo').value;
-
+    updateCsrfToken();
     axios.post('/orders/removeItem', {
         orderNo: orderNo,
         itemIndex: itemIndex
@@ -80,7 +81,7 @@ function submitOrder() {
     // Налаштуйте свій код для відправки замовлення
     // Приклад:
     const orderNo = document.getElementById('orderNo').value;
-
+    updateCsrfToken();
     axios.post(`/orders/edit/${orderNo}`)
         .then(function (response) {
             alert('Order submitted successfully!');
