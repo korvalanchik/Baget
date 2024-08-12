@@ -45,10 +45,10 @@ public class ItemsController {
         return "redirect:/items";
     }
 
-    @GetMapping("/edit/{orderNo}")
-    public String edit(@PathVariable(name = "orderNo") final Long orderNo, final Model model) {
-        model.addAttribute("items", itemsService.get(orderNo));
-        return "items/edit";
+    @GetMapping("/edit/{orderNo}/{itemNo}")
+    public String edit(@PathVariable(name = "orderNo") final Long orderNo, @PathVariable(name = "itemNo") final Long itemNo, final Model model) {
+        model.addAttribute("items", itemsService.get(orderNo, itemNo));
+        return "orders/edit";
     }
 
     @PostMapping("/edit/{orderNo}")
@@ -58,15 +58,15 @@ public class ItemsController {
         if (bindingResult.hasErrors()) {
             return "items/edit";
         }
-        itemsService.update(orderNo, itemsDTO);
+        itemsService.update(orderNo, itemsDTO.getItemNo(), itemsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("items.update.success"));
         return "redirect:/items";
     }
 
-    @PostMapping("/delete/{orderNo}")
-    public String delete(@PathVariable(name = "orderNo") final Long orderNo,
+    @PostMapping("/delete/{orderNo}/{itemNo}")
+    public String delete(@PathVariable(name = "orderNo") final Long orderNo, @PathVariable(name = "itemNo") final Long itemNo,
             final RedirectAttributes redirectAttributes) {
-        itemsService.delete(orderNo);
+        itemsService.delete(orderNo, itemNo);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("items.delete.success"));
         return "redirect:/items";
     }

@@ -32,8 +32,9 @@ public class ItemsResource {
     }
 
     @GetMapping("/{orderNo}")
-    public ResponseEntity<ItemsDTO> getItems(@PathVariable(name = "orderNo") final Long orderNo) {
-        return ResponseEntity.ok(itemsService.get(orderNo));
+    public ResponseEntity<ItemsDTO> getItems(@PathVariable(name = "orderNo") final Long orderNo,
+                                             @PathVariable(name = "itemNo") final Long itemNo) {
+        return ResponseEntity.ok(itemsService.get(orderNo, itemNo));
     }
 
     @PostMapping
@@ -45,15 +46,17 @@ public class ItemsResource {
 
     @PutMapping("/{orderNo}")
     public ResponseEntity<Long> updateItems(@PathVariable(name = "orderNo") final Long orderNo,
+                                            @PathVariable(name = "itemNo") final Long itemNo,
             @RequestBody @Valid final ItemsDTO itemsDTO) {
-        itemsService.update(orderNo, itemsDTO);
+        itemsService.update(orderNo, itemNo, itemsDTO);
         return ResponseEntity.ok(orderNo);
     }
 
     @DeleteMapping("/{orderNo}")
     @ApiResponse(responseCode = "204")
-    public ResponseEntity<Void> deleteItems(@PathVariable(name = "orderNo") final Long orderNo) {
-        itemsService.delete(orderNo);
+    public ResponseEntity<Void> deleteItems(@PathVariable(name = "orderNo") final Long orderNo,
+                                            @PathVariable(name = "itemNo") final Long itemNo) {
+        itemsService.delete(orderNo, itemNo);
         return ResponseEntity.noContent().build();
     }
 

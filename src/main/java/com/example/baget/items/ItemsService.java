@@ -30,8 +30,9 @@ public class ItemsService {
                 .toList();
     }
 
-    public ItemsDTO get(final Long orderNo) {
-        return itemsRepository.findById(orderNo)
+    public ItemsDTO get(final Long orderNo, final Long itemNo) {
+        ItemId itemId = new ItemId(orderNo, itemNo);
+        return itemsRepository.findById(itemId)
                 .map(items -> mapToDTO(items, new ItemsDTO()))
                 .orElseThrow(NotFoundException::new);
     }
@@ -42,15 +43,18 @@ public class ItemsService {
         return itemsRepository.save(items).getOrder().getOrderNo();
     }
 
-    public void update(final Long orderNo, final ItemsDTO itemsDTO) {
-        final Items items = itemsRepository.findById(orderNo)
+    public void update(final Long orderNo, final Long itemNo, final ItemsDTO itemsDTO) {
+        ItemId itemId = new ItemId(orderNo, itemNo);
+        final Items items = itemsRepository.findById(itemId)
                 .orElseThrow(NotFoundException::new);
         mapToEntity(itemsDTO, items);
         itemsRepository.save(items);
     }
 
-    public void delete(final Long orderNo) {
-        itemsRepository.deleteById(orderNo);
+    public void delete(final Long orderNo, final Long itemNo) {
+        ItemId itemId = new ItemId(orderNo, itemNo);
+
+        itemsRepository.deleteById(itemId);
     }
 
     public ItemsDTO mapToDTO(final Items items, final ItemsDTO itemsDTO) {
@@ -77,7 +81,7 @@ public class ItemsService {
             return null;
         }
         ItemId itemId = new ItemId(itemsDTO.getOrderNo(), itemsDTO.getItemNo());
-        items.setId(itemId); // Встановлюємо складний первинний ключ
+        items.setId(itemId);
         items.setPartNo(itemsDTO.getPartNo());
         items.setProfilWidth(itemsDTO.getProfilWidth());
         items.setWidth(itemsDTO.getWidth());

@@ -72,7 +72,7 @@ public class OrdersController {
     public String edit(@PathVariable(name = "orderNo") final Long orderNo, final Model model) {
         model.addAttribute("orders", ordersService.get(orderNo));
         model.addAttribute("customers", customerService.get(ordersService.get(orderNo).getCustNo()));
-//        model.addAttribute("items", itemsService.findByOrderNo(orderNo));
+        model.addAttribute("items", itemsService.findByOrderNo(orderNo));
         return "orders/edit";
     }
 
