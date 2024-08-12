@@ -51,7 +51,7 @@ public class ItemsController {
         return "items/edit";
     }
 
-    @PostMapping("/edit/{orderNo}")
+    @PostMapping("/edit/{orderNo}/{itemNo}")
     public String edit(@PathVariable(name = "orderNo") final Long orderNo,
             @ModelAttribute("items") @Valid final ItemsDTO itemsDTO,
             final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
@@ -60,7 +60,7 @@ public class ItemsController {
         }
         itemsService.update(orderNo, itemsDTO.getItemNo(), itemsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("items.update.success"));
-        return "redirect:/items";
+        return "redirect:/orders/edit/" + orderNo;
     }
 
     @PostMapping("/delete/{orderNo}/{itemNo}")
@@ -68,7 +68,7 @@ public class ItemsController {
             final RedirectAttributes redirectAttributes) {
         itemsService.delete(orderNo, itemNo);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("items.delete.success"));
-        return "redirect:/items";
+        return "redirect:/orders/edit/" + orderNo;
     }
 
 }

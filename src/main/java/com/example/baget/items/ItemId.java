@@ -12,13 +12,27 @@ import java.util.Objects;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+//@EqualsAndHashCode
 public class ItemId implements Serializable {
 
-    @Column(name = "orderNo")
+//    @Column(name = "orderNo")
     private Long orderNo;
 
-    @Column(name = "itemNo")
+//    @Column(name = "itemNo")
     private Long itemNo;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ItemId itemId = (ItemId) o;
+        return Objects.equals(orderNo, itemId.orderNo) &&
+                Objects.equals(itemNo, itemId.itemNo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(orderNo, itemNo);
+    }
 
 }

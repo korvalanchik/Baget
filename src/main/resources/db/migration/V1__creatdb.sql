@@ -108,13 +108,13 @@ CREATE TABLE `items`  (
                           `Height` float NULL DEFAULT NULL,
                           `Qty` float NULL DEFAULT NULL,
                           `Quantity` float NULL DEFAULT NULL,
-                          `SellPrice` float NULL DEFAULT NULL,
+                          `SellPrice` decimal NULL DEFAULT NULL,
                           `Discount` float NULL DEFAULT NULL,
                           `OnHand` float NULL DEFAULT NULL,
-                          `Cost` float NULL DEFAULT NULL,
+                          `Cost` decimal NULL DEFAULT NULL,
                           PRIMARY KEY (`OrderNo`, `ItemNo`) USING BTREE,
                           FOREIGN KEY (`OrderNo`) REFERENCES `orders`(`OrderNo`) ON DELETE CASCADE
-) ENGINE = InnoDB CHARACTER SET = cp866 COLLATE = cp866_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for orders

@@ -3,6 +3,8 @@ package com.example.baget.items;
 import com.example.baget.orders.Orders;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
+
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +53,7 @@ public class ItemsService {
         itemsRepository.save(items);
     }
 
+    @Transactional
     public void delete(final Long orderNo, final Long itemNo) {
         ItemId itemId = new ItemId(orderNo, itemNo);
 
