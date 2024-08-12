@@ -48,7 +48,7 @@ public class ItemsController {
     @GetMapping("/edit/{orderNo}/{itemNo}")
     public String edit(@PathVariable(name = "orderNo") final Long orderNo, @PathVariable(name = "itemNo") final Long itemNo, final Model model) {
         model.addAttribute("items", itemsService.get(orderNo, itemNo));
-        return "orders/edit";
+        return "items/edit";
     }
 
     @PostMapping("/edit/{orderNo}")
