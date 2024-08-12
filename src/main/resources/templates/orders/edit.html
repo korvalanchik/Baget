@@ -9,7 +9,7 @@
         <div layout:fragment="content">
             <h1>Editing Order</h1>
             <!-- Основні деталі замовлення -->
-            <input type="hidden" id="orderNo" th:value="${orders.orderNo}" />
+<!--            <input type="hidden" id="orderNo" th:value="${orders.orderNo}" />     -->
             <div>
                 <label for="custNo">Customer:</label>
                 <select id="custNo">
@@ -27,7 +27,7 @@
                         <a th:href="@{/items/add}" class="btn btn-primary ms-2">[[#{items.list.createNew}]]</a>
                     </div>
                 </div>
-                <div th:if="${items.isEmpty()}">[[#{items.list.empty}]]</div>
+                <div th:if="${items != null and items.isEmpty()}">[[#{items.list.empty}]]</div>
                 <div th:if="${!items.isEmpty()}" class="table-responsive">
                     <table class="table table-striped table-hover align-middle">
                         <thead>
