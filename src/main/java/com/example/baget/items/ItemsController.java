@@ -25,7 +25,7 @@ public class ItemsController {
 
     @GetMapping
     public String list(final Model model) {
-        model.addAttribute("itemses", itemsService.findAll());
+        model.addAttribute("items", itemsService.findAll());
         return "items/list";
     }
 

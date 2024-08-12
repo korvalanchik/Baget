@@ -43,15 +43,15 @@
                     <h3>Item <span th:text="${iter.index + 1}">1</span></h3>
                     <div>
                         <label th:for="|items${iter.index}.partNo|">Part No:</label>
-                        <input type="text" th:value="${item.partNo}" readonly />
+                        <input type="text" th:value="${item.partNo}" />
                     </div>
                     <div>
                         <label th:for="|items${iter.index}.quantity|">Quantity:</label>
-                        <input type="number" th:value="${item.quantity}" readonly />
+                        <input type="number" th:value="${item.quantity}" />
                     </div>
                     <div>
                         <label th:for="|items${iter.index}.cost|">Cost:</label>
-                        <input type="text" th:value="${item.cost}" readonly />
+                        <input type="text" th:value="${item.cost}" />
                     </div>
                     <button type="button" onclick="removeItem(this)">Remove Item</button>
                 </div>
