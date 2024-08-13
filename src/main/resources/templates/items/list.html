@@ -40,8 +40,8 @@
                             <td>[[${item.quantity}]]</td>
                             <td>
                                 <div class="float-end text-nowrap">
-                                    <a th:href="@{/items/delete/{orderNo}/{itemNo}(orderNo=${item.orderNo}, itemNo=${item.itemNo})}" class="btn btn-sm btn-secondary">[[#{items.list.edit}]]</a>
-                                    <form th:action="@{/items/delete/{orderNo}/{itemNo}(orderNo=${item.orderNo}, itemNo=${item.itemNo})}"
+                                    <a th:href="@{/items/edit/{orderNo}/{itemNo}(orderNo=${item.orderNo}, itemNo=${item.itemNo})}" class="btn btn-sm btn-secondary">[[#{items.list.edit}]]</a>
+                                    <form th:action="@{/items/deleteitem/{orderNo}/{itemNo}(orderNo=${item.orderNo}, itemNo=${item.itemNo})}"
                                             th:hx-confirm="#{delete.confirm}" method="post" class="d-inline">
                                         <button type="submit" class="btn btn-sm btn-secondary">[[#{items.list.delete}]]</button>
                                     </form>

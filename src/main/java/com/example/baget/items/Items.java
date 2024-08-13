@@ -2,6 +2,7 @@ package com.example.baget.items;
 
 import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,41 +14,42 @@ import lombok.Setter;
 public class Items {
 
     @EmbeddedId
+    @NotNull
     private ItemId id;
 
     @ManyToOne
     @MapsId("orderNo")
-    @JoinColumn(name = "orderNo", nullable = false)
+    @JoinColumn(name = "OrderNo", nullable = false)
     private Orders order;
 
-    @Column
+    @Column(name = "PartNo")
     private Long partNo;
 
-    @Column
+    @Column(name = "ProfilWidth")
     private Double profilWidth;
 
-    @Column
+    @Column(name = "Width")
     private Double width;
 
-    @Column
+    @Column(name = "Height")
     private Double height;
 
-    @Column
+    @Column(name = "Qty")
     private Double qty;
 
-    @Column
+    @Column(name = "Quantity")
     private Double quantity;
 
-    @Column
+    @Column(name = "SellPrice")
     private Double sellPrice;
 
-    @Column
+    @Column(name = "Discount")
     private Double discount;
 
-    @Column
+    @Column(name = "OnHand")
     private Double onHand;
 
-    @Column
+    @Column(name = "Cost")
     private Double cost;
 
 }

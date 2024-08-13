@@ -1,6 +1,7 @@
 package com.example.baget.items;
 
 import com.example.baget.util.WebUtils;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -69,6 +70,14 @@ public class ItemsController {
         itemsService.delete(orderNo, itemNo);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("items.delete.success"));
         return "redirect:/orders/edit/" + orderNo;
+    }
+
+    @PostMapping("/deleteitem/{orderNo}/{itemNo}")
+    public String deleteitem(@PathVariable(name = "orderNo") final Long orderNo, @PathVariable(name = "itemNo") final Long itemNo,
+                         final RedirectAttributes redirectAttributes) {
+        itemsService.delete(orderNo, itemNo);
+        redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("items.delete.success"));
+        return "redirect:/items";
     }
 
 }

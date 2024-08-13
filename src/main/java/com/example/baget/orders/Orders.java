@@ -18,90 +18,90 @@ import lombok.Setter;
 public class Orders {
 
     @Id
-    @Column(nullable = false, updatable = false)
+    @Column(name = "OrderNo", nullable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "custNo", nullable = false)
+    @JoinColumn(name = "CustNo", nullable = false)
     private Customer customer;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Items> items;
 
-    @Column
+    @Column(name = "FactNo")
     private Long factNo;
 
-    @Column
+    @Column(name = "SaleDate")
     private OffsetDateTime saleDate;
 
-    @Column
+    @Column(name = "ShipDate")
     private OffsetDateTime shipDate;
 
-    @Column
+    @Column(name = "EmpNo")
     private Long empNo;
 
-    @Column(length = 20)
+    @Column(name = "ShipToContact", length = 20)
     private String shipToContact;
 
-    @Column(length = 30)
+    @Column(name = "ShipToAddr1", length = 30)
     private String shipToAddr1;
 
-    @Column(length = 30)
+    @Column(name = "ShipToAddr2", length = 30)
     private String shipToAddr2;
 
-    @Column(length = 15)
+    @Column(name = "ShipToCity", length = 15)
     private String shipToCity;
 
-    @Column(length = 20)
+    @Column(name = "ShipToState", length = 20)
     private String shipToState;
 
-    @Column(length = 10)
+    @Column(name = "ShipToZip", length = 10)
     private String shipToZip;
 
-    @Column(length = 20)
+    @Column(name = "ShipToCountry", length = 20)
     private String shipToCountry;
 
-    @Column(length = 15)
+    @Column(name = "ShipToPhone", length = 15)
     private String shipToPhone;
 
-    @Column(length = 7)
+    @Column(name = "ShipVia", length = 7)
     private String shipVia;
 
-    @Column(length = 15)
+    @Column(name = "Po", length = 15)
     private String po;
 
-    @Column(length = 6)
+    @Column(name = "Terms", length = 6)
     private String terms;
 
-    @Column(length = 7)
+    @Column(name = "PaymentMethod", length = 7)
     private String paymentMethod;
 
-    @Column
+    @Column(name = "ItemsTotal")
     private Double itemsTotal;
 
-    @Column
+    @Column(name = "TaxRate")
     private Double taxRate;
 
-    @Column
+    @Column(name = "Freight")
     private Double freight;
 
-    @Column
+    @Column(name = "AmountPaid")
     private Double amountPaid;
 
-    @Column
+    @Column(name = "AmountDueN")
     private Double amountDueN;
 
-    @Column
+    @Column(name = "Income")
     private Double income;
 
-    @Column
+    @Column(name = "PriceLevel")
     private Integer priceLevel;
 
-    @Column
+    @Column(name = "StatusOrder")
     private Integer statusOrder;
 
-    @Column
+    @Column(name = "RahFacNo")
     private Long rahFacNo;
 
 }
