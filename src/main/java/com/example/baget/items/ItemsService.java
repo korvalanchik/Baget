@@ -55,9 +55,7 @@ public class ItemsService {
 
     @Transactional
     public void delete(final Long orderNo, final Long itemNo) {
-        ItemId itemId = new ItemId(orderNo, itemNo);
-
-        itemsRepository.deleteById(itemId);
+        itemsRepository.deleteItemByOrderNoAndItemNo(orderNo, itemNo);
     }
 
     public ItemsDTO mapToDTO(final Items items, final ItemsDTO itemsDTO) {
