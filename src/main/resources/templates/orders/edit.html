@@ -24,7 +24,7 @@
                 <div class="d-flex flex-wrap mb-4">
                     <h1 class="flex-grow-1">[[#{items.list.headline}]]</h1>
                     <div>
-                        <a th:href="@{/items/add}" class="btn btn-primary ms-2">[[#{items.list.createNew}]]</a>
+                        <a th:href="@{/items/add/{orderNo}(orderNo=${orderNo})}" class="btn btn-primary ms-2">[[#{items.list.createNew}]]</a>
                     </div>
                 </div>
                 <div th:if="${items.isEmpty()}">[[#{items.list.empty}]]</div>

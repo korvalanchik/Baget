@@ -30,20 +30,21 @@ public class ItemsController {
         return "items/list";
     }
 
-    @GetMapping("/add")
-    public String add(@ModelAttribute("items") final ItemsDTO itemsDTO) {
+    @GetMapping("/add/{orderNo}")
+    public String add(@PathVariable(name = "orderNo") final Long orderNo, @ModelAttribute("items") final ItemsDTO itemsDTO) {
         return "items/add";
     }
 
-    @PostMapping("/add")
-    public String add(@ModelAttribute("items") @Valid final ItemsDTO itemsDTO,
+    @PostMapping("/add/{orderNo}")
+    public String add(@PathVariable(name = "orderNo") final Long orderNo, @ModelAttribute("items") @Valid final ItemsDTO itemsDTO,
             final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            return "items/add";
+            return "items/add/" + orderNo;
         }
+        itemsDTO.setOrderNo(orderNo);
         itemsService.create(itemsDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("items.create.success"));
-        return "redirect:/items";
+        return "redirect:/orders/edit/" + orderNo;
     }
 
     @GetMapping("/edit/{orderNo}/{itemNo}")

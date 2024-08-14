@@ -40,6 +40,10 @@ public class ItemsService {
     }
 
     public Long create(final ItemsDTO itemsDTO) {
+        Long orderNo = itemsDTO.getOrderNo();
+        Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(orderNo);
+        Long newItemNo = (maxItemNo != null) ? maxItemNo + 1 : 1L;
+        itemsDTO.setItemNo(newItemNo);
         final Items items = new Items();
         mapToEntity(itemsDTO, items);
         return itemsRepository.save(items).getOrder().getOrderNo();
