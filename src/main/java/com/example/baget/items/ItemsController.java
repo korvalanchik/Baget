@@ -36,10 +36,10 @@ public class ItemsController {
     }
 
     @PostMapping("/add/{orderNo}")
-    public String add(@PathVariable(name = "orderNo") final Long orderNo, @ModelAttribute("items") @Valid final ItemsDTO itemsDTO,
+    public String add(@PathVariable(name = "orderNo") final Long orderNo, @ModelAttribute("items") final ItemsDTO itemsDTO,
             final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            return "items/add/" + orderNo;
+            return "items/add";
         }
         itemsDTO.setOrderNo(orderNo);
         itemsService.create(itemsDTO);

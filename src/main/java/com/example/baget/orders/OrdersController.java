@@ -68,6 +68,25 @@ public class OrdersController {
         return "redirect:/orders";
     }
 
+    @GetMapping("/add/new")
+    public String addNew(Model model, final OrdersDTO ordersDTO) {
+        model.addAttribute("orders", ordersDTO);
+        model.addAttribute("customers", customerService.findAll());
+        model.addAttribute("requestUri", "/orders/add/new");
+        return "orders/add_new";
+    }
+
+    @PostMapping("/add/new")
+    public String addNew(@ModelAttribute("orders") @Valid final OrdersDTO ordersDTO,
+                      final BindingResult bindingResult, final RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            return "orders/add_new";
+        }
+        ordersService.create(ordersDTO);
+        redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("orders.create.success"));
+        return "redirect:/orders";
+    }
+
     @GetMapping("/edit/{orderNo}")
     public String edit(@PathVariable(name = "orderNo") final Long orderNo, final Model model) {
         model.addAttribute("orders", ordersService.get(orderNo));

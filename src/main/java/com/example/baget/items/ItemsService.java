@@ -1,9 +1,11 @@
 package com.example.baget.items;
 
 import com.example.baget.orders.Orders;
+import com.example.baget.orders.OrdersRepository;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -13,9 +15,11 @@ import org.springframework.stereotype.Service;
 public class ItemsService {
 
     private final ItemsRepository itemsRepository;
+    private final OrdersRepository ordersRepository;
 
-    public ItemsService(final ItemsRepository itemsRepository) {
+    public ItemsService(final ItemsRepository itemsRepository, OrdersRepository ordersRepository) {
         this.itemsRepository = itemsRepository;
+        this.ordersRepository = ordersRepository;
     }
 
     public List<ItemsDTO> findAll() {
@@ -39,20 +43,24 @@ public class ItemsService {
                 .orElseThrow(NotFoundException::new);
     }
 
-    public Long create(final ItemsDTO itemsDTO) {
+    public void create(final ItemsDTO itemsDTO) {
         Long orderNo = itemsDTO.getOrderNo();
         Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(orderNo);
         Long newItemNo = (maxItemNo != null) ? maxItemNo + 1 : 1L;
         itemsDTO.setItemNo(newItemNo);
         final Items items = new Items();
+        Orders order = ordersRepository.findById(orderNo).orElseThrow(() -> new EntityNotFoundException("Order not found"));
+        items.setOrder(order);
+
         mapToEntity(itemsDTO, items);
-        return itemsRepository.save(items).getOrder().getOrderNo();
+        itemsRepository.save(items);
     }
 
     public void update(final Long orderNo, final Long itemNo, final ItemsDTO itemsDTO) {
         ItemId itemId = new ItemId(orderNo, itemNo);
-        final Items items = itemsRepository.findById(itemId)
-                .orElseThrow(NotFoundException::new);
+        final Items items = itemsRepository.findById(itemId).orElseThrow(NotFoundException::new);
+        Orders order = ordersRepository.findById(orderNo).orElseThrow(() -> new EntityNotFoundException("Order not found"));
+        items.setOrder(order);
         mapToEntity(itemsDTO, items);
         itemsRepository.save(items);
     }

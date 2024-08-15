@@ -40,8 +40,8 @@ public class ItemsResource {
     @PostMapping
     @ApiResponse(responseCode = "201")
     public ResponseEntity<Long> createItems(@RequestBody @Valid final ItemsDTO itemsDTO) {
-        final Long createdOrderNo = itemsService.create(itemsDTO);
-        return new ResponseEntity<>(createdOrderNo, HttpStatus.CREATED);
+        itemsService.create(itemsDTO);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
     @PutMapping("/{orderNo}")

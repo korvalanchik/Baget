@@ -108,7 +108,7 @@ public class OrdersService {
         return ordersDTO;
     }
 
-    private Orders mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
+    private void mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
         Customer customer = customerRepository.findById(ordersDTO.getCustNo())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
         orders.setCustomer(customer);
@@ -137,29 +137,30 @@ public class OrdersService {
         orders.setPriceLevel(ordersDTO.getPriceLevel());
         orders.setStatusOrder(ordersDTO.getStatusOrder());
         orders.setRahFacNo(ordersDTO.getRahFacNo());
-        return orders;
     }
 
     private void saveItems(final OrdersDTO ordersDTO, final Orders orders) {
-        int itemNo = 1;
-        for (ItemsDTO itemsDTO : ordersDTO.getItems()) {
-            Items item = new Items();
-            ItemId itemId = new ItemId(orders.getOrderNo(), (long) itemNo);
-            item.setId(itemId);
-            item.setOrder(orders);
-            item.setPartNo(itemsDTO.getPartNo());
-            item.setProfilWidth(itemsDTO.getProfilWidth());
-            item.setWidth(itemsDTO.getWidth());
-            item.setHeight(itemsDTO.getHeight());
-            item.setQty(itemsDTO.getQty());
-            item.setQuantity(itemsDTO.getQuantity());
-            item.setSellPrice(itemsDTO.getSellPrice());
-            item.setDiscount(itemsDTO.getDiscount());
-            item.setOnHand(itemsDTO.getOnHand());
-            item.setCost(itemsDTO.getCost());
+        if(ordersDTO.getItems() != null) {
+            int itemNo = 1;
+            for (ItemsDTO itemsDTO : ordersDTO.getItems()) {
+                Items item = new Items();
+                ItemId itemId = new ItemId(orders.getOrderNo(), (long) itemNo);
+                item.setId(itemId);
+                item.setOrder(orders);
+                item.setPartNo(itemsDTO.getPartNo());
+                item.setProfilWidth(itemsDTO.getProfilWidth());
+                item.setWidth(itemsDTO.getWidth());
+                item.setHeight(itemsDTO.getHeight());
+                item.setQty(itemsDTO.getQty());
+                item.setQuantity(itemsDTO.getQuantity());
+                item.setSellPrice(itemsDTO.getSellPrice());
+                item.setDiscount(itemsDTO.getDiscount());
+                item.setOnHand(itemsDTO.getOnHand());
+                item.setCost(itemsDTO.getCost());
 
-            itemsRepository.save(item);
-            itemNo++;
+                itemsRepository.save(item);
+                itemNo++;
+            }
         }
     }
 

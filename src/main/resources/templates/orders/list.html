@@ -10,7 +10,7 @@
     <div class="d-flex flex-wrap mb-4">
         <h1 class="flex-grow-1">[[#{orders.list.headline}]]</h1>
         <div>
-            <a th:href="@{/orders/add}" class="btn btn-primary ms-2">[[#{orders.list.createNew}]]</a>
+            <a th:href="@{/orders/add/new}" class="btn btn-primary ms-2">[[#{orders.list.createNew}]]</a>
         </div>
     </div>
     <div th:if="${ordersPage.content.empty}">[[#{orders.list.empty}]]</div>

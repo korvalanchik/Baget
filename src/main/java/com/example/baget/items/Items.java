@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 
 @Table(name = "items")
@@ -20,6 +21,7 @@ public class Items {
     @ManyToOne
     @MapsId("orderNo")
     @JoinColumn(name = "OrderNo", nullable = false)
+    @ToString.Exclude
     private Orders order;
 
     @Column(name = "PartNo")
