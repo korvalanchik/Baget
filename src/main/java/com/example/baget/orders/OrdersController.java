@@ -82,9 +82,9 @@ public class OrdersController {
         if (bindingResult.hasErrors()) {
             return "orders/add_new";
         }
-        ordersService.create(ordersDTO);
+        Long orderNo = ordersService.create(ordersDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("orders.create.success"));
-        return "redirect:/orders";
+        return "redirect:/orders/edit/" + orderNo;
     }
 
     @GetMapping("/edit/{orderNo}")

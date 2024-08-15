@@ -9,7 +9,7 @@
             <div class="d-flex flex-wrap mb-4">
                 <h1 class="flex-grow-1">[[#{items.add.headline}]]</h1>
                 <div>
-                    <a th:href="@{/items}" class="btn btn-secondary">[[#{items.add.back}]]</a>
+                    <a th:href="@{/orders/edit/{orderNo}(orderNo=${items.orderNo})}" class="btn btn-secondary">[[#{items.add.back}]]</a>
                 </div>
             </div>
             <div th:replace="~{fragments/forms::globalErrors('items')}" />
