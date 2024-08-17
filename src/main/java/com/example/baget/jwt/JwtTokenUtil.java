@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.io.Serial;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
@@ -30,8 +31,8 @@ public class JwtTokenUtil implements Serializable {
 
     @Value("${jwt.secret}")
     private String secret;
-    byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
-    Key key = Keys.hmacShaKeyFor(keyBytes);
+//    byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+//    Key key = Keys.hmacShaKeyFor(keyBytes);
     // отримання юзернейму з токену
 
     private Key getSigningKey() {
@@ -43,17 +44,7 @@ public class JwtTokenUtil implements Serializable {
 
         Key signingKey = getSigningKey();
 
-        JwtParser parser = Jwts.parser()
-                .setSigningKey(signingKey) // Використовуйте getSigningKey для отримання Key
-                .build();
-
-        return parser.parseClaimsJws(token).getBody();
-
-        return Jwts.parser()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        return Jwts.parser().verifyWith((SecretKey) signingKey).build().parseSignedClaims(token).getPayload();
     }
 
     public String getUsernameFromToken(String token) {
@@ -69,16 +60,6 @@ public class JwtTokenUtil implements Serializable {
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
     }
-
-    // для отримання інформації з токену потрібен секретний ключ
-//    private Claims getAllClaimsFromToken(String token) {
-//        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
-//    }
-
-//    private Claims getAllClaimsFromToken(String token) {
-//        return Jwts.parser().setSigningKey(key).build().parseC;
-////        return Jwts.parser().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-//    }
 
     // перевірка чи не закінчився термін дії токену
     private Boolean isTokenExpired(String token) {
@@ -97,10 +78,10 @@ public class JwtTokenUtil implements Serializable {
     // 2. Підписуємо JWT з використанням HS512 алгоритму і секретного ключа
     // 3. Compact JWT до URL-safe рядка
     private String doGenerateToken(Map<String, Object> claims, String subject) {
-
-        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
-                .signWith(SignatureAlgorithm.HS512, secret).compact();
+        Key signingKey = getSigningKey();
+        return Jwts.builder().claims(claims).subject(subject).issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY * 1000))
+                .signWith((SecretKey) signingKey, Jwts.SIG.HS512).compact();
     }
 
     // перевірка токену
