@@ -32,6 +32,8 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-jdbc')
     implementation('org.flywaydb:flyway-core')
     implementation('org.flywaydb:flyway-mysql')
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    implementation('org.springframework.boot:spring-boot-starter-actuator')
     compileOnly('org.projectlombok:lombok')
     annotationProcessor('org.projectlombok:lombok')
     testCompileOnly('org.projectlombok:lombok')
