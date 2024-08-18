@@ -1,7 +1,7 @@
 package com.example.baget.jwt;
 
 import com.example.baget.users.Role;
-import com.example.baget.users.UserRepository;
+import com.example.baget.users.UsersRepository;
 import com.example.baget.users.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,14 +17,14 @@ import java.util.stream.Collectors;
 @Service
 public class MyUserDetailsService implements UserDetailsService {
     @Autowired
-    private UserRepository userRepository;
+    private UsersRepository userRepository;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username);
         if(user == null) {
             throw new UsernameNotFoundException("User not found with username: " + username);
         }
-        // Перетворення об'єкта User на UserDetails
+        // РџРµСЂРµС‚РІРѕСЂРµРЅРЅСЏ РѕР±'С”РєС‚Р° User РЅР° UserDetails
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
@@ -32,7 +32,7 @@ public class MyUserDetailsService implements UserDetailsService {
         );
     }
 
-    // Метод для перетворення ролей у authorities
+    // РњРµС‚РѕРґ РґР»СЏ РїРµСЂРµС‚РІРѕСЂРµРЅРЅСЏ СЂРѕР»РµР№ Сѓ authorities
     private Collection<? extends GrantedAuthority> mapRolesToAuthorities(Collection<Role> roles) {
         return roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))

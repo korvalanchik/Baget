@@ -33,7 +33,7 @@ public class JwtTokenUtil implements Serializable {
     private String secret;
 //    byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
 //    Key key = Keys.hmacShaKeyFor(keyBytes);
-    // отримання юзернейму з токену
+    // РѕС‚СЂРёРјР°РЅРЅСЏ СЋР·РµСЂРЅРµР№РјСѓ Р· С‚РѕРєРµРЅСѓ
 
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
@@ -51,7 +51,7 @@ public class JwtTokenUtil implements Serializable {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
-    // отримання дати закінчення терміну дії з токену
+    // РѕС‚СЂРёРјР°РЅРЅСЏ РґР°С‚Рё Р·Р°РєС–РЅС‡РµРЅРЅСЏ С‚РµСЂРјС–РЅСѓ РґС–С— Р· С‚РѕРєРµРЅСѓ
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
@@ -61,22 +61,22 @@ public class JwtTokenUtil implements Serializable {
         return claimsResolver.apply(claims);
     }
 
-    // перевірка чи не закінчився термін дії токену
+    // РїРµСЂРµРІС–СЂРєР° С‡Рё РЅРµ Р·Р°РєС–РЅС‡РёРІСЃСЏ С‚РµСЂРјС–РЅ РґС–С— С‚РѕРєРµРЅСѓ
     private Boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());
     }
 
-    // генерація токену для користувача
+    // РіРµРЅРµСЂР°С†С–СЏ С‚РѕРєРµРЅСѓ РґР»СЏ РєРѕСЂРёСЃС‚СѓРІР°С‡Р°
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         return doGenerateToken(claims, userDetails.getUsername());
     }
 
-    // під час створення токену -
-    // 1. Визначаємо claims (емітент, термін дії, підпис і т.д.)
-    // 2. Підписуємо JWT з використанням HS512 алгоритму і секретного ключа
-    // 3. Compact JWT до URL-safe рядка
+    // РїС–Рґ С‡Р°СЃ СЃС‚РІРѕСЂРµРЅРЅСЏ С‚РѕРєРµРЅСѓ -
+    // 1. Р’РёР·РЅР°С‡Р°С”РјРѕ claims (РµРјС–С‚РµРЅС‚, С‚РµСЂРјС–РЅ РґС–С—, РїС–РґРїРёСЃ С– С‚.Рґ.)
+    // 2. РџС–РґРїРёСЃСѓС”РјРѕ JWT Р· РІРёРєРѕСЂРёСЃС‚Р°РЅРЅСЏРј HS512 Р°Р»РіРѕСЂРёС‚РјСѓ С– СЃРµРєСЂРµС‚РЅРѕРіРѕ РєР»СЋС‡Р°
+    // 3. Compact JWT РґРѕ URL-safe СЂСЏРґРєР°
     private String doGenerateToken(Map<String, Object> claims, String subject) {
         Key signingKey = getSigningKey();
         return Jwts.builder().claims(claims).subject(subject).issuedAt(new Date(System.currentTimeMillis()))
@@ -84,7 +84,7 @@ public class JwtTokenUtil implements Serializable {
                 .signWith((SecretKey) signingKey, Jwts.SIG.HS512).compact();
     }
 
-    // перевірка токену
+    // РїРµСЂРµРІС–СЂРєР° С‚РѕРєРµРЅСѓ
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = getUsernameFromToken(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
