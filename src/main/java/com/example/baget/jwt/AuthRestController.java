@@ -4,6 +4,7 @@ import com.example.baget.users.User;
 import com.example.baget.users.UsersService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -37,7 +38,7 @@ public class AuthRestController {
         return ResponseEntity.ok("User registered successfully!");
     }
 
-    @PostMapping("/login")
+    @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> loginUser(@RequestBody AuthRequest authRequest) {
         try {
             authenticationManager.authenticate(
@@ -51,4 +52,28 @@ public class AuthRestController {
 
         return ResponseEntity.ok(new AuthResponse(jwt));
     }
+
+    @PostMapping("/validate")
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String token) {
+        try {
+            // Видалити префікс "Bearer " з токену
+            String jwtToken = token.substring(7);
+
+            // Отримати ім'я користувача з токену
+            String username = jwtTokenUtil.getUsernameFromToken(jwtToken);
+
+            // Завантажити користувача з бази даних
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            // Перевірити, чи токен дійсний
+            if (jwtTokenUtil.validateToken(jwtToken, userDetails)) {
+                return ResponseEntity.ok("Token is valid");
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        }
+    }
+
 }

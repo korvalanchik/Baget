@@ -31,10 +31,10 @@
         })
             .then(response => response.json())
             .then(data => {
-                if (data.token) {
-                    localStorage.setItem('jwtToken', data.token);
+                if (data.jwt) {
+                    localStorage.setItem('jwtToken', data.jwt);
                     alert('Login successful!');
-                    // Redirect or perform other actions
+                    window.location.href = '/';
                 } else {
                     alert('Login failed!');
                 }

@@ -7,7 +7,10 @@ import lombok.Setter;
 @Setter
 public class AuthResponse {
 
-    public AuthResponse(String jwtToken) {
+    private String jwt;
+
+    public AuthResponse(String jwt) {
+        this.jwt = jwt;
     }
 
 }
