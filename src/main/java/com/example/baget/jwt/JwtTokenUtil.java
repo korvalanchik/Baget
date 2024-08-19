@@ -2,9 +2,7 @@ package com.example.baget.jwt;
 
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,8 +12,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.io.Serial;
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
-
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,9 +37,7 @@ public class JwtTokenUtil implements Serializable {
     }
 
     public Claims getAllClaimsFromToken(String token) {
-
         Key signingKey = getSigningKey();
-
         return Jwts.parser().verifyWith((SecretKey) signingKey).build().parseSignedClaims(token).getPayload();
     }
 
@@ -60,6 +54,16 @@ public class JwtTokenUtil implements Serializable {
         final Claims claims = getAllClaimsFromToken(token);
         return claimsResolver.apply(claims);
     }
+
+    // для отримання інформації з токену потрібен секретний ключ
+//    private Claims getAllClaimsFromToken(String token) {
+//        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+//    }
+
+//    private Claims getAllClaimsFromToken(String token) {
+//        return Jwts.parser().setSigningKey(key).build().parseC;
+////        return Jwts.parser().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+//    }
 
     // перевірка чи не закінчився термін дії токену
     private Boolean isTokenExpired(String token) {
