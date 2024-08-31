@@ -1,5 +1,6 @@
 package com.example.baget.items;
 
+import com.example.baget.orders.OrdersDTO;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping(value = "/api/items", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/orders/{orderNo}/items", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ItemsResource {
 
     private final ItemsService itemsService;
@@ -26,33 +27,35 @@ public class ItemsResource {
         this.itemsService = itemsService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<ItemsDTO>> getAllItemss() {
-        return ResponseEntity.ok(itemsService.findAll());
-    }
-
-    @GetMapping("/{orderNo}")
-    public ResponseEntity<ItemsDTO> getItems(@PathVariable(name = "orderNo") final Long orderNo,
-                                             @PathVariable(name = "itemNo") final Long itemNo) {
-        return ResponseEntity.ok(itemsService.get(orderNo, itemNo));
+    @GetMapping("")
+    public ResponseEntity<List<ItemsDTO>> getItemsByOrder(@PathVariable(name = "orderNo") final Long orderNo) {
+        return ResponseEntity.ok(itemsService.findByOrderNo(orderNo));
     }
 
     @PostMapping
     @ApiResponse(responseCode = "201")
-    public ResponseEntity<Long> createItems(@RequestBody @Valid final ItemsDTO itemsDTO) {
+    public ResponseEntity<Long> createItem(@PathVariable(name = "orderNo") final Long orderNo,
+                                           @RequestBody @Valid final ItemsDTO itemsDTO) {
+        itemsDTO.setOrderNo(orderNo);
         itemsService.create(itemsDTO);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    @PutMapping("/{orderNo}")
-    public ResponseEntity<Long> updateItems(@PathVariable(name = "orderNo") final Long orderNo,
+    @GetMapping("/{itemNo}")
+    public ResponseEntity<ItemsDTO> getItem(@PathVariable(name = "orderNo") final Long orderNo,
+                                             @PathVariable(name = "itemNo") final Long itemNo) {
+        return ResponseEntity.ok(itemsService.get(orderNo, itemNo));
+    }
+
+    @PutMapping("/{itemNo}")
+    public ResponseEntity<Long> updateItem(@PathVariable(name = "orderNo") final Long orderNo,
                                             @PathVariable(name = "itemNo") final Long itemNo,
             @RequestBody @Valid final ItemsDTO itemsDTO) {
         itemsService.update(orderNo, itemNo, itemsDTO);
         return ResponseEntity.ok(orderNo);
     }
 
-    @DeleteMapping("/{orderNo}")
+    @DeleteMapping("/{itemNo}")
     @ApiResponse(responseCode = "204")
     public ResponseEntity<Void> deleteItems(@PathVariable(name = "orderNo") final Long orderNo,
                                             @PathVariable(name = "itemNo") final Long itemNo) {
