@@ -77,4 +77,15 @@ public class AuthRestController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser() {
+        // Можна додати додаткові дії на стороні сервера, такі як інвалідовування токена
+        // Але стандартно, клієнт просто видаляє токен зі своєї сторони
+
+        // Наприклад, можна додати токен в blacklist на сервері
+        // або встановити його строк дії як завершений, якщо у вас є такий механізм
+
+        return ResponseEntity.ok("Logout successful");
+    }
+
 }
