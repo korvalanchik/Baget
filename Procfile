@@ -1,1 +1,1 @@
-web: java -jar target/Baget.jar
+web: java -jar build/libs/Baget-1.0.2.jar
