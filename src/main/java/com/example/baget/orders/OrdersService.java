@@ -38,11 +38,6 @@ public class OrdersService {
 
     public Page<OrdersDTO> findAll(Pageable pageable) {
         Page<Orders> ordersPage = ordersRepository.findAll(pageable);
-        System.out.println("Has Previous: " + ordersPage.hasPrevious());
-        System.out.println("Current Page: " + ordersPage.getNumber());
-        System.out.println("Size: " + ordersPage.getSize());
-        System.out.println("Total Pages: " + ordersPage.getTotalPages());
-        System.out.println("Has Next: " + ordersPage.hasNext());
         return ordersPage.map(orders -> mapToDTO(orders, new OrdersDTO()));
     }
 
@@ -50,6 +45,12 @@ public class OrdersService {
         return ordersRepository.findById(orderNo)
                 .map(orders -> mapToDTO(orders, new OrdersDTO()))
                 .orElseThrow(NotFoundException::new);
+    }
+
+    public Page<OrdersDTO> getOrders(Pageable pageable) {
+        // Виклик репозиторію для отримання сторінки замовлень
+        return ordersRepository.findAll(pageable)
+                .map(orders -> mapToDTO(orders, new OrdersDTO())); // Перетворення у DTO, якщо потрібно
     }
 
     @Transactional

@@ -3,6 +3,10 @@ package com.example.baget.orders;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +25,17 @@ public class OrdersResource {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrdersDTO>> getAllOrderss() {
-        return ResponseEntity.ok(ordersService.findAll());
+    public Page<OrdersDTO> getOrders(
+            @RequestParam(defaultValue = "0") int page,   // Номер сторінки, за замовчуванням 0
+            @RequestParam(defaultValue = "10") int size   // Розмір сторінки, за замовчуванням 10
+    ) {
+        Pageable pageable = PageRequest.of(page, size);  // Створення об'єкта Pageable для пагінації
+        return ordersService.getOrders(pageable);  // Повертаємо сторінку замовлень
     }
+//    @GetMapping
+//    public ResponseEntity<List<OrdersDTO>> getAllOrderss() {
+//        return ResponseEntity.ok(ordersService.findAll());
+//    }
 
     @GetMapping("/{orderNo}")
     public ResponseEntity<OrdersDTO> getOrders(@PathVariable(name = "orderNo") final Long orderNo) {
