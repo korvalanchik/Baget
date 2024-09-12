@@ -30,9 +30,9 @@ public class OrdersService {
     }
 
     public List<OrdersDTO> findAll() {
-        final List<Orders> orderses = ordersRepository.findAll(Sort.by("orderNo"));
-        return orderses.stream()
-                .map(orders -> mapToDTO(orders, new OrdersDTO()))
+        final List<Orders> orders = ordersRepository.findAll(Sort.by("orderNo"));
+        return orders.stream()
+                .map(order -> mapToDTO(order, new OrdersDTO()))
                 .toList();
     }
 

@@ -2,22 +2,17 @@ package com.example.baget.parts;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping(value = "/api/partss", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/parts", produces = MediaType.APPLICATION_JSON_VALUE)
 public class PartsResource {
 
     private final PartsService partsService;
@@ -27,24 +22,28 @@ public class PartsResource {
     }
 
     @GetMapping
-    public ResponseEntity<List<PartsDTO>> getAllPartss() {
-        return ResponseEntity.ok(partsService.findAll());
+    public Page<PartsDTO> getAllParts(
+            @RequestParam(defaultValue = "0") int page,   // Номер сторінки, за замовчуванням 0
+            @RequestParam(defaultValue = "10") int size   // Розмір сторінки, за замовчуванням 10
+    ) {
+        Pageable pageable = PageRequest.of(page, size);  // Створення об'єкта Pageable для пагінації
+        return partsService.getParts(pageable);  // Повертаємо сторінку елементів
     }
 
     @GetMapping("/{partNo}")
-    public ResponseEntity<PartsDTO> getParts(@PathVariable(name = "partNo") final Long partNo) {
+    public ResponseEntity<PartsDTO> getPart(@PathVariable(name = "partNo") final Long partNo) {
         return ResponseEntity.ok(partsService.get(partNo));
     }
 
     @PostMapping
     @ApiResponse(responseCode = "201")
-    public ResponseEntity<Long> createParts(@RequestBody @Valid final PartsDTO partsDTO) {
+    public ResponseEntity<Long> createPart(@RequestBody @Valid final PartsDTO partsDTO) {
         final Long createdPartNo = partsService.create(partsDTO);
         return new ResponseEntity<>(createdPartNo, HttpStatus.CREATED);
     }
 
     @PutMapping("/{partNo}")
-    public ResponseEntity<Long> updateParts(@PathVariable(name = "partNo") final Long partNo,
+    public ResponseEntity<Long> updatePart(@PathVariable(name = "partNo") final Long partNo,
             @RequestBody @Valid final PartsDTO partsDTO) {
         partsService.update(partNo, partsDTO);
         return ResponseEntity.ok(partNo);
@@ -52,7 +51,7 @@ public class PartsResource {
 
     @DeleteMapping("/{partNo}")
     @ApiResponse(responseCode = "204")
-    public ResponseEntity<Void> deleteParts(@PathVariable(name = "partNo") final Long partNo) {
+    public ResponseEntity<Void> deletePart(@PathVariable(name = "partNo") final Long partNo) {
         partsService.delete(partNo);
         return ResponseEntity.noContent().build();
     }

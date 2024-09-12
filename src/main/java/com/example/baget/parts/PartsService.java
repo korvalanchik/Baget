@@ -2,15 +2,16 @@ package com.example.baget.parts;
 
 import com.example.baget.util.CustomOptimisticLockException;
 import com.example.baget.util.NotFoundException;
-import java.util.List;
-
 import com.example.baget.vendors.Vendors;
-import com.example.baget.vendors.VendorsDTO;
 import com.example.baget.vendors.VendorsRepository;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 @Service
@@ -26,9 +27,9 @@ public class PartsService {
 
     @Transactional(readOnly = true)
     public List<PartsDTO> findAll() {
-        final List<Parts> partses = partsRepository.findAll(Sort.by("partNo"));
-        return partses.stream()
-                .map(parts -> mapToDTO(parts, new PartsDTO()))
+        final List<Parts> parts = partsRepository.findAll(Sort.by("partNo"));
+        return parts.stream()
+                .map(part -> mapToDTO(part, new PartsDTO()))
                 .toList();
     }
 
@@ -37,6 +38,12 @@ public class PartsService {
         return partsRepository.findById(partNo)
                 .map(parts -> mapToDTO(parts, new PartsDTO()))
                 .orElseThrow(NotFoundException::new);
+    }
+
+    public Page<PartsDTO> getParts(Pageable pageable) {
+        // Виклик репозиторію для отримання сторінки замовлень
+        return partsRepository.findAll(pageable)
+                .map(parts -> mapToDTO(parts, new PartsDTO())); // Перетворення у DTO, якщо потрібно
     }
 
     @Transactional
@@ -64,7 +71,6 @@ public class PartsService {
         partsRepository.deleteById(partNo);
     }
 
-    @Transactional(readOnly = true)
     public PartsDTO mapToDTO(final Parts parts, final PartsDTO partsDTO) {
         if (parts.getVendor() != null) {
             partsDTO.setVendorNo(parts.getVendor().getVendorNo());
@@ -91,8 +97,7 @@ public class PartsService {
         return partsDTO;
     }
 
-    @Transactional
-    public Parts mapToEntity(final PartsDTO partsDTO, final Parts parts) {
+    public void mapToEntity(final PartsDTO partsDTO, final Parts parts) {
         Vendors vendor = vendorsRepository.findById(partsDTO.getVendorNo())
                 .orElse(null);
         parts.setVendor(vendor);
@@ -108,7 +113,6 @@ public class PartsService {
         parts.setNoPercent(partsDTO.getNoPercent());
         parts.setListPrice_3(partsDTO.getListPrice3());
         parts.setVersion(partsDTO.getVersion());
-        return parts;
     }
 
 }
