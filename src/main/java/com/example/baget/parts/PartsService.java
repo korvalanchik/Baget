@@ -40,6 +40,7 @@ public class PartsService {
                 .orElseThrow(NotFoundException::new);
     }
 
+    @Transactional(readOnly = true)
     public Page<PartsDTO> getParts(Pageable pageable) {
         // Виклик репозиторію для отримання сторінки замовлень
         return partsRepository.findAll(pageable)
