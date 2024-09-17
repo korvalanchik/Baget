@@ -2,18 +2,13 @@ package com.example.baget.customer;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -27,8 +22,12 @@ public class CustomerResource {
     }
 
     @GetMapping
-    public ResponseEntity<List<CustomerDTO>> getAllCustomers() {
-        return ResponseEntity.ok(customerService.findAll());
+    public Page<CustomerDTO> getAllCustomers(
+            @RequestParam(defaultValue = "0") int page,   // Номер сторінки, за замовчуванням 0
+            @RequestParam(defaultValue = "10") int size   // Розмір сторінки, за замовчуванням 10
+    ) {
+        Pageable pageable = PageRequest.of(page, size);  // Створення об'єкта Pageable для пагінації
+        return customerService.getCustomers(pageable);  // Повертаємо сторінку клієнтів
     }
 
     @GetMapping("/{custNo}")

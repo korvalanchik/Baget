@@ -2,7 +2,6 @@ package com.example.baget.parts;
 
 import com.example.baget.util.CustomOptimisticLockException;
 import com.example.baget.util.NotFoundException;
-import com.example.baget.vendors.Vendors;
 import com.example.baget.vendors.VendorsRepository;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
@@ -73,13 +72,8 @@ public class PartsService {
     }
 
     public PartsDTO mapToDTO(final Parts parts, final PartsDTO partsDTO) {
-        if (parts.getVendor() != null) {
-            partsDTO.setVendorNo(parts.getVendor().getVendorNo());
-            partsDTO.setVendorName(parts.getVendor().getVendorName());
-        } else {
-            partsDTO.setVendorNo(null);
-            partsDTO.setVendorName(null);
-        }
+        partsDTO.setVendorNo(parts.getVendor() != null ? parts.getVendor().getVendorNo() : null);
+        partsDTO.setVendorName(parts.getVendor() != null ? parts.getVendor().getVendorName() : null);
 
         partsDTO.setPartNo(parts.getPartNo());
         partsDTO.setDescription(parts.getDescription());
@@ -99,9 +93,8 @@ public class PartsService {
     }
 
     public void mapToEntity(final PartsDTO partsDTO, final Parts parts) {
-        Vendors vendor = vendorsRepository.findById(partsDTO.getVendorNo())
-                .orElse(null);
-        parts.setVendor(vendor);
+        parts.setVendor(vendorsRepository.findById(partsDTO.getVendorNo()).orElse(null));
+
         parts.setDescription(partsDTO.getDescription());
         parts.setProfilWidth(partsDTO.getProfilWidth());
         parts.setInQuality(partsDTO.getInQuality());

@@ -1,9 +1,13 @@
 package com.example.baget.customer;
 
 import com.example.baget.util.NotFoundException;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 @Service
@@ -20,6 +24,13 @@ public class CustomerService {
         return customers.stream()
                 .map(customer -> mapToDTO(customer, new CustomerDTO()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> getCustomers(Pageable pageable) {
+        // Виклик репозиторію для отримання сторінки замовлень
+        return customerRepository.findAll(pageable)
+                .map(customers -> mapToDTO(customers, new CustomerDTO())); // Перетворення у DTO, якщо потрібно
     }
 
     public CustomerDTO get(final Long custNo) {
@@ -63,7 +74,7 @@ public class CustomerService {
         return customerDTO;
     }
 
-    private Customer mapToEntity(final CustomerDTO customerDTO, final Customer customer) {
+    private void mapToEntity(final CustomerDTO customerDTO, final Customer customer) {
         customer.setCompany(customerDTO.getCompany());
         customer.setAddr1(customerDTO.getAddr1());
         customer.setAddr2(customerDTO.getAddr2());
@@ -77,7 +88,6 @@ public class CustomerService {
         customer.setContact(customerDTO.getContact());
         customer.setLastInvoiceDate(customerDTO.getLastInvoiceDate());
         customer.setPriceLevel(customerDTO.getPriceLevel());
-        return customer;
     }
 
 }
