@@ -13,22 +13,29 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/auth")
 public class AuthRestController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final UsersService userService;
+    private final UserDetailsService userDetailsService;
 
+    // Ін'єкція через конструктор
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-
-    @Autowired
-    private UsersService userService;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
+    public AuthRestController(AuthenticationManager authenticationManager,
+                          JwtTokenUtil jwtTokenUtil,
+                          UsersService userService,
+                          UserDetailsService userDetailsService) {
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userService = userService;
+        this.userDetailsService = userDetailsService;
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
@@ -86,6 +93,21 @@ public class AuthRestController {
         // або встановити його строк дії як завершений, якщо у вас є такий механізм
 
         return ResponseEntity.ok("Logout successful");
+    }
+
+    @PostMapping("/password-recovery")
+    public ResponseEntity<String> sendRecoveryLink(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        userService.sendPasswordRecoveryEmail(email);
+        return ResponseEntity.ok("Recovery link sent to your email.");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("password");
+        userService.resetPassword(token, newPassword);
+        return ResponseEntity.ok("Password successfully changed.");
     }
 
 }
