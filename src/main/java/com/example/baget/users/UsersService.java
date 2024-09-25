@@ -43,7 +43,7 @@ public class UsersService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         String token = UUID.randomUUID().toString(); // Генеруємо токен для відновлення
-        String recoveryLink = "http://your-app-url/reset-password?token=" + token;
+        String recoveryLink = "https://ramarnya.koyeb.app/auth/reset-password?token=" + token;
 
         // Логіка для збереження токену у БД (для подальшої валідації)
         saveRecoveryToken(user, token);
