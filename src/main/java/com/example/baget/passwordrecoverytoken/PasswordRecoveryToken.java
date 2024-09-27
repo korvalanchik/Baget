@@ -26,7 +26,7 @@ public class PasswordRecoveryToken {
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    @Column(nullable = false)
+    @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
 
     public PasswordRecoveryToken(String token, User user, LocalDateTime expiryDate) {
