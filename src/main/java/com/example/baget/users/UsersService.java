@@ -2,7 +2,6 @@ package com.example.baget.users;
 
 import com.example.baget.passwordrecoverytoken.PasswordRecoveryToken;
 import com.example.baget.passwordrecoverytoken.PasswordRecoveryTokenRepository;
-import lombok.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,10 +50,6 @@ public class UsersService {
         user.setRoles(roles);
         // Збереження користувача
         userRepository.save(user);
-    }
-
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username);
     }
 
     public void sendPasswordRecoveryEmail(String email) {
