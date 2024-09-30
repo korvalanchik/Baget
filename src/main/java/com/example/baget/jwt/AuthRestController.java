@@ -45,12 +45,13 @@ public class AuthRestController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody User user) {
-        if (userService.findByUsername(user.getUsername()) != null) {
-            return ResponseEntity.badRequest().body("Username is already taken!");
+    public ResponseEntity<?> registerUser(@RequestBody UserRegistrationDTO userDto) {
+        try {
+            userService.registerNewUser(userDto);
+            return ResponseEntity.ok("User registered successfully!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        userService.registerNewUser(user);
-        return ResponseEntity.ok("User registered successfully!");
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -8,11 +8,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class UsersService {
     private final UsersRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordRecoveryTokenRepository passwordRecoveryTokenRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -20,18 +22,34 @@ public class UsersService {
     // Ін'єкція через конструктор
     @Autowired
     public UsersService(UsersRepository userRepository,
-                       PasswordRecoveryTokenRepository passwordRecoveryTokenRepository,
-                       EmailService emailService,
-                       PasswordEncoder passwordEncoder) {
+                        RoleRepository roleRepository, PasswordRecoveryTokenRepository passwordRecoveryTokenRepository,
+                        EmailService emailService,
+                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.passwordRecoveryTokenRepository = passwordRecoveryTokenRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User registerNewUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+    public void registerNewUser(UserRegistrationDTO userDto) {
+        // Перевірка існування користувача за username або email
+        if (userRepository.existsByUsername(userDto.getUsername())) {
+            throw new IllegalArgumentException("Username is already taken");
+        }
+        if (userRepository.existsByEmail(userDto.getEmail())) {
+            throw new IllegalArgumentException("Email is already registered");
+        }
+        // Отримання ролей за їх ідентифікаторами
+        List<Role> roles = roleRepository.findAllById(userDto.getRoles());
+        // Створення нового користувача
+        User user = new User();
+        user.setUsername(userDto.getUsername());
+        user.setEmail(userDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        user.setRoles(roles);
+        // Збереження користувача
+        userRepository.save(user);
     }
 
     public User findByUsername(String username) {
