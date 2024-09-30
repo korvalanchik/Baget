@@ -2,6 +2,7 @@ package com.example.baget.users;
 
 import com.example.baget.passwordrecoverytoken.PasswordRecoveryToken;
 import com.example.baget.passwordrecoverytoken.PasswordRecoveryTokenRepository;
+import lombok.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -67,7 +68,7 @@ public class UsersService {
         saveRecoveryToken(user, token);
 
         // Надсилання email з посиланням для відновлення паролю
-        emailService.sendEmail(email, "Password Recovery", "Click on the link to reset your password: " + recoveryLink);
+        emailService.sendEmail(email,"Password Recovery", "Click on the link to reset your password: " + recoveryLink);
     }
 
     private void saveRecoveryToken(User user, String token) {
