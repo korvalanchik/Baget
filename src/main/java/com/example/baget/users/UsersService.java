@@ -39,7 +39,12 @@ public class UsersService {
         return userRepository.findAll(pageable).map(users -> mapToDTO(users, new UserDTO()));
     }
 
+    public void delete(final Long userNo) {
+        userRepository.deleteById(userNo);
+    }
+
     private UserDTO mapToDTO(final User user, final UserDTO userDTO) {
+        userDTO.setId(user.getId());
         userDTO.setUsername(user.getUsername());
         userDTO.setEmail(user.getEmail());
         userDTO.setRoles(

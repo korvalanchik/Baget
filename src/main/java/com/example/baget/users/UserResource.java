@@ -1,12 +1,11 @@
 package com.example.baget.users;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(value = "/api/users")
@@ -24,5 +23,12 @@ public class UserResource {
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return usersService.getUsers(pageable);
+    }
+
+    @DeleteMapping("/{userNo}")
+    @ApiResponse(responseCode = "204")
+    public ResponseEntity<Void> deleteUser(@PathVariable(name = "userNo") final Long userNo) {
+        usersService.delete(userNo);
+        return ResponseEntity.noContent().build();
     }
 }
