@@ -2,6 +2,7 @@ package com.example.baget.passwordrecoverytoken;
 
 import com.example.baget.users.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class PasswordRecoveryToken {
 
     @Id
@@ -28,12 +30,6 @@ public class PasswordRecoveryToken {
 
     @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
-
-    public PasswordRecoveryToken(String token, User user, LocalDateTime expiryDate) {
-        this.token = token;
-        this.user = user;
-        this.expiryDate = expiryDate;
-    }
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiryDate);

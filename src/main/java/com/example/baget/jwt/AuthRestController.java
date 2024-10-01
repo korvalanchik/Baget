@@ -45,9 +45,9 @@ public class AuthRestController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody UserRegistrationDTO userDto) {
+    public ResponseEntity<?> registerUser(@RequestBody UserPassRecoveryDTO userPassRecoveryDto) {
         try {
-            userService.registerNewUser(userDto);
+            userService.registerNewUser(userPassRecoveryDto);
             return ResponseEntity.ok("User registered successfully!");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

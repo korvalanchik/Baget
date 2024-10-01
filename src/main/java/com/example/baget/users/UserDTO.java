@@ -7,9 +7,8 @@ import java.util.List;
 
 @Getter
 @Setter
-public class UserRegistrationDTO {
+public class UserDTO {
     private String username;
     private String email;
-    private String password;
-    private List<Long> roles; // Список ідентифікаторів ролей
+    private List<String> roles; // Список ідентифікаторів ролей
 }

@@ -3,6 +3,8 @@ package com.example.baget.users;
 import com.example.baget.passwordrecoverytoken.PasswordRecoveryToken;
 import com.example.baget.passwordrecoverytoken.PasswordRecoveryTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UsersService {
@@ -32,21 +35,37 @@ public class UsersService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public void registerNewUser(UserRegistrationDTO userDto) {
+    public Page<UserDTO> getUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(users -> mapToDTO(users, new UserDTO()));
+    }
+
+    private UserDTO mapToDTO(final User user, final UserDTO userDTO) {
+        userDTO.setUsername(user.getUsername());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setRoles(
+                user.getRoles()
+                    .stream()
+                    .map(Role::getName)
+                    .collect(Collectors.toList())
+        );
+        return userDTO;
+    }
+
+    public void registerNewUser(UserPassRecoveryDTO userPassRecoveryDto) {
         // Перевірка існування користувача за username або email
-        if (userRepository.existsByUsername(userDto.getUsername())) {
+        if (userRepository.existsByUsername(userPassRecoveryDto.getUsername())) {
             throw new IllegalArgumentException("Username is already taken");
         }
-        if (userRepository.existsByEmail(userDto.getEmail())) {
+        if (userRepository.existsByEmail(userPassRecoveryDto.getEmail())) {
             throw new IllegalArgumentException("Email is already registered");
         }
         // Отримання ролей за їх ідентифікаторами
-        List<Role> roles = roleRepository.findAllById(userDto.getRoles());
+        List<Role> roles = roleRepository.findAllById(userPassRecoveryDto.getRoles());
         // Створення нового користувача
         User user = new User();
-        user.setUsername(userDto.getUsername());
-        user.setEmail(userDto.getEmail());
-        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        user.setUsername(userPassRecoveryDto.getUsername());
+        user.setEmail(userPassRecoveryDto.getEmail());
+        user.setPassword(passwordEncoder.encode(userPassRecoveryDto.getPassword()));
         user.setRoles(roles);
         // Збереження користувача
         userRepository.save(user);
@@ -71,11 +90,13 @@ public class UsersService {
         PasswordRecoveryToken recoveryToken = new PasswordRecoveryToken();
         recoveryToken.setUser(user);
         recoveryToken.setToken(token);
-        recoveryToken.setExpiryDate(LocalDateTime.now().plusHours(1)); // Токен діє 1 годину
+        recoveryToken.setExpiryDate(LocalDateTime.now().plusMinutes(15)); // Токен діє 15 хвилин
         passwordRecoveryTokenRepository.save(recoveryToken);
     }
 
     public void resetPassword(String token, String newPassword) {
+        // Спочатку видалити всі прострочені токени перед виконанням операції пошуку
+        passwordRecoveryTokenRepository.deleteAllExpiredTokens(LocalDateTime.now());
         PasswordRecoveryToken recoveryToken = passwordRecoveryTokenRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
 
