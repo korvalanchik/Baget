@@ -1,5 +1,5 @@
 -- ----------------------------
--- Tables structure for users' autentification and autorization
+-- Tables structure for users' authentication and authorization
 -- ----------------------------
 
 -- DROP TABLE IF EXISTS `users`;

@@ -10,7 +10,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -96,7 +95,7 @@ public class UsersService {
         PasswordRecoveryToken recoveryToken = new PasswordRecoveryToken();
         recoveryToken.setUser(user);
         recoveryToken.setToken(token);
-        recoveryToken.setExpiryDate(ZonedDateTime.now().plusMinutes(15)); // Токен діє 15 хвилин
+        recoveryToken.setExpiryDate(LocalDateTime.now().plusMinutes(15)); // Токен діє 15 хвилин
         passwordRecoveryTokenRepository.save(recoveryToken);
     }
 
