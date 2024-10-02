@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "password_recovery_tokens")
@@ -29,9 +30,9 @@ public class PasswordRecoveryToken {
     private User user;
 
     @Column(name = "expiry_date", nullable = false)
-    private LocalDateTime expiryDate;
+    private ZonedDateTime expiryDate;
 
     public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiryDate);
+        return ZonedDateTime.now().isAfter(expiryDate);
     }
 }
