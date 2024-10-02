@@ -2,8 +2,6 @@ package com.example.baget.orders;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,7 +31,7 @@ public class OrdersResource {
         return ordersService.getOrders(pageable);  // Повертаємо сторінку замовлень
     }
 //    @GetMapping
-//    public ResponseEntity<List<OrdersDTO>> getAllOrderss() {
+//    public ResponseEntity<List<OrdersDTO>> getAllOrders() {
 //        return ResponseEntity.ok(ordersService.findAll());
 //    }
 

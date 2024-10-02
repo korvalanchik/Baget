@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +107,9 @@ public class AuthRestController {
     @PostMapping("/password-recovery")
     public ResponseEntity<String> sendRecoveryLink(@RequestBody Map<String, String> request) {
         String email = request.get("email");
-        userService.sendPasswordRecoveryEmail(email);
+        String currentDateTimeWithTimezone = request.get("currentDateTime");
+        OffsetDateTime clientDateTime = OffsetDateTime.parse(currentDateTimeWithTimezone);
+        userService.sendPasswordRecoveryEmail(email, clientDateTime);
         return ResponseEntity.ok("Recovery link sent to your email.");
     }
 
@@ -114,7 +117,9 @@ public class AuthRestController {
     public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         String newPassword = request.get("password");
-        userService.resetPassword(token, newPassword);
+        String currentDateTimeWithTimezone = request.get("currentDateTime");
+        OffsetDateTime clientDateTime = OffsetDateTime.parse(currentDateTimeWithTimezone);
+        userService.resetPassword(token, newPassword, clientDateTime);
         return ResponseEntity.ok("Password successfully changed.");
     }
 

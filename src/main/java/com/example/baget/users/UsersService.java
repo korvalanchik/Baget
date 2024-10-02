@@ -9,7 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -76,7 +76,7 @@ public class UsersService {
         userRepository.save(user);
     }
 
-    public void sendPasswordRecoveryEmail(String email) {
+    public void sendPasswordRecoveryEmail(String email, OffsetDateTime clientDateTime) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
@@ -84,28 +84,21 @@ public class UsersService {
         String recoveryLink = "https://ramarnya.vercel.app/auth/passreset.html?token=" + token;
 
         // Логіка для збереження токену у БД (для подальшої валідації)
-        saveRecoveryToken(user, token);
+        PasswordRecoveryToken recoveryToken = new PasswordRecoveryToken();
+        recoveryToken.setUser(user);
+        recoveryToken.setToken(token);
+        recoveryToken.setExpiryDate(clientDateTime.plusMinutes(15)); // Токен діє 15 хвилин
+        passwordRecoveryTokenRepository.save(recoveryToken);
 
         // Надсилання email з посиланням для відновлення паролю
         emailService.sendEmail(email,"Password Recovery", "Click on the link to reset your password: " + recoveryLink);
     }
 
-    private void saveRecoveryToken(User user, String token) {
-        // Логіка для збереження токену у базі даних (можна створити окрему сутність PasswordRecoveryToken)
-        PasswordRecoveryToken recoveryToken = new PasswordRecoveryToken();
-        recoveryToken.setUser(user);
-        recoveryToken.setToken(token);
-        recoveryToken.setExpiryDate(LocalDateTime.now().plusMinutes(15)); // Токен діє 15 хвилин
-        passwordRecoveryTokenRepository.save(recoveryToken);
-    }
-
-    public void resetPassword(String token, String newPassword) {
-        // Спочатку видалити всі прострочені токени перед виконанням операції пошуку
-        passwordRecoveryTokenRepository.deleteAllExpiredTokens(LocalDateTime.now());
+    public void resetPassword(String token, String newPassword, OffsetDateTime clientDateTime) {
         PasswordRecoveryToken recoveryToken = passwordRecoveryTokenRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
 
-        if (recoveryToken.isExpired()) {
+        if (recoveryToken.isExpired(clientDateTime)) {
             throw new IllegalArgumentException("Token has expired");
         }
 
@@ -115,6 +108,8 @@ public class UsersService {
 
         // Видалити токен після успішної зміни паролю
         passwordRecoveryTokenRepository.delete(recoveryToken);
+        // Видалити всі прострочені токени
+        passwordRecoveryTokenRepository.deleteAllExpiredTokens(clientDateTime);
     }
 
 }
