@@ -10,6 +10,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping(value = "/api/customers", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -35,6 +37,13 @@ public class CustomerResource {
             @PathVariable(name = "custNo") final Long custNo) {
         return ResponseEntity.ok(customerService.get(custNo));
     }
+
+    @GetMapping("/searchByPhonePrefix")
+    public ResponseEntity<List<CustomerDTO>> searchByPhonePrefix(@RequestParam String prefix) {
+        List<CustomerDTO> customers = customerService.findByPhonePrefix(prefix);
+        return ResponseEntity.ok(customers);
+    }
+
 
     @PostMapping
     @ApiResponse(responseCode = "201")

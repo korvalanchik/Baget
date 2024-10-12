@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -90,4 +91,11 @@ public class CustomerService {
         customer.setPriceLevel(customerDTO.getPriceLevel());
     }
 
+    public List<CustomerDTO> findByPhonePrefix(String prefix) {
+        return customerRepository.findByPhoneContaining(prefix)
+                .stream()
+                .map(customer -> new CustomerDTO(customer.getCustNo(), customer.getCompany(), customer.getPhone()))
+                .collect(Collectors.toList());
+
+    }
 }

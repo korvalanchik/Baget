@@ -3,6 +3,7 @@ package com.example.baget.customer;
 import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -50,4 +51,11 @@ public class CustomerDTO {
 
     private Double priceLevel;
 
+    public CustomerDTO() {}
+
+    public CustomerDTO(Long custNo, String company, String phone) {
+        this.custNo = custNo;
+        this.company = company;
+        this.phone = phone;
+    }
 }
