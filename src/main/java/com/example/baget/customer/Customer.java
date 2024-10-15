@@ -28,8 +28,8 @@ public class Customer {
     @Column(length = 30)
     private String addr1;
 
-    @Column(length = 30)
-    private String addr2;
+    @Column(length = 50)
+    private String comment;
 
     @Column(length = 15)
     private String city;

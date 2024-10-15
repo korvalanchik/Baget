@@ -21,7 +21,7 @@ public class CustomerDTO {
     private String addr1;
 
     @Size(max = 30)
-    private String addr2;
+    private String comment;
 
     @Size(max = 15)
     private String city;

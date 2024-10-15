@@ -61,7 +61,7 @@ public class CustomerService {
         customerDTO.setCustNo(customer.getCustNo());
         customerDTO.setCompany(customer.getCompany());
         customerDTO.setAddr1(customer.getAddr1());
-        customerDTO.setAddr2(customer.getAddr2());
+        customerDTO.setComment(customer.getComment());
         customerDTO.setCity(customer.getCity());
         customerDTO.setState(customer.getState());
         customerDTO.setZip(customer.getZip());
@@ -78,7 +78,7 @@ public class CustomerService {
     private void mapToEntity(final CustomerDTO customerDTO, final Customer customer) {
         customer.setCompany(customerDTO.getCompany());
         customer.setAddr1(customerDTO.getAddr1());
-        customer.setAddr2(customerDTO.getAddr2());
+        customer.setComment(customerDTO.getComment());
         customer.setCity(customerDTO.getCity());
         customer.setState(customerDTO.getState());
         customer.setZip(customerDTO.getZip());
