@@ -44,6 +44,11 @@ public class CustomerResource {
         return ResponseEntity.ok(customers);
     }
 
+    @GetMapping("/searchPhoneByCustNo")
+    public ResponseEntity<String> searchPhoneByCustNo(@RequestParam Long custNo) {
+        String phone = customerService.findPhoneByCustNo(custNo);
+        return ResponseEntity.ok(phone);
+    }
 
     @PostMapping
     @ApiResponse(responseCode = "201")

@@ -98,4 +98,8 @@ public class CustomerService {
                 .collect(Collectors.toList());
 
     }
+
+    public String findPhoneByCustNo(Long custNo) {
+        return customerRepository.findPhoneByCustNo(custNo).getPhone();
+    }
 }

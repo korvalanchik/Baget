@@ -1,6 +1,5 @@
 package com.example.baget.customer;
 
-import org.codehaus.groovy.runtime.StreamGroovyMethods;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +13,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Page<Customer> findAll(@NonNull Pageable pageable);
 
     List<Customer> findByPhoneContaining(String prefix);
+
+    Customer findPhoneByCustNo(Long custNo);
 
 }
