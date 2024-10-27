@@ -18,6 +18,12 @@ public class OrdersDTO {
 
     private Long custNo;
 
+    @Size(max = 30)
+    private String company;
+
+    @Size(max = 15)
+    private String phone;
+
     private List<ItemsDTO> items;
 
     private Long factNo;

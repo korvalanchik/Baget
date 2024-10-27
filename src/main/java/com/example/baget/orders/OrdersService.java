@@ -78,6 +78,8 @@ public class OrdersService {
     private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO) {
         ordersDTO.setOrderNo(orders.getOrderNo());
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
+        ordersDTO.setCompany(orders.getCustomer().getCompany());
+        ordersDTO.setPhone(orders.getCustomer().getPhone());
         ordersDTO.setItems(orders.getItems().stream()
                 .map(item -> itemsService.mapToDTO(item, new ItemsDTO()))
                 .collect(Collectors.toList()));
