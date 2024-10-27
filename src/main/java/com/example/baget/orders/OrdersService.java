@@ -67,7 +67,8 @@ public class OrdersService {
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         mapToEntity(ordersDTO, existingOrder);
-        updateItems(existingOrder, ordersDTO.getItems());
+//        Тимчасово відключили оновлення Items
+//        updateItems(existingOrder, ordersDTO.getItems());
         ordersRepository.save(existingOrder);
     }
 
