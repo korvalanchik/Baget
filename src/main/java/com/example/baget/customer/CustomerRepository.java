@@ -14,6 +14,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     List<Customer> findByPhoneContaining(String prefix);
 
-    Customer findPhoneByCustNo(Long custNo);
+//    Customer findPhoneByCustNo(Long custNo);
 
 }

@@ -1,6 +1,8 @@
 package com.example.baget.customer;
 
 import com.example.baget.util.NotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -40,12 +42,14 @@ public class CustomerService {
                 .orElseThrow(NotFoundException::new);
     }
 
+//    @CacheEvict(value = "CustomerPhonePrefix", allEntries = true)
     public Long create(final CustomerDTO customerDTO) {
         final Customer customer = new Customer();
         mapToEntity(customerDTO, customer);
         return customerRepository.save(customer).getCustNo();
     }
 
+    @CacheEvict(value = "CustomerPhonePrefix", key = "#customerDTO.phone")
     public void update(final Long custNo, final CustomerDTO customerDTO) {
         final Customer customer = customerRepository.findById(custNo)
                 .orElseThrow(NotFoundException::new);
@@ -91,6 +95,7 @@ public class CustomerService {
         customer.setPriceLevel(customerDTO.getPriceLevel());
     }
 
+    @Cacheable(value = "CustomerPhonePrefix", key = "#prefix")
     public List<CustomerDTO> findByPhonePrefix(String prefix) {
         return customerRepository.findByPhoneContaining(prefix)
                 .stream()
@@ -99,7 +104,7 @@ public class CustomerService {
 
     }
 
-    public String findPhoneByCustNo(Long custNo) {
-        return customerRepository.findPhoneByCustNo(custNo).getPhone();
-    }
+//    public String findPhoneByCustNo(Long custNo) {
+//        return customerRepository.findPhoneByCustNo(custNo).getPhone();
+//    }
 }
