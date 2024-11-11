@@ -35,9 +35,8 @@ public class ItemsResource {
     @PostMapping
     @ApiResponse(responseCode = "201")
     public ResponseEntity<Long> createItem(@PathVariable(name = "orderNo") final Long orderNo,
-                                           @RequestBody @Valid final ItemsDTO itemsDTO) {
-        itemsDTO.setOrderNo(orderNo);
-        itemsService.create(itemsDTO);
+                                           @RequestBody @Valid final List<ItemsDTO> itemsDTO) {
+//        itemsService.create(itemsDTO);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -141,6 +142,20 @@ public class OrdersService {
         orders.setPriceLevel(ordersDTO.getPriceLevel());
         orders.setStatusOrder(ordersDTO.getStatusOrder());
         orders.setRahFacNo(ordersDTO.getRahFacNo());
+    }
+
+    public void saveItemsList(final Long orderNo, final List<ItemsDTO> itemsDTO) {
+        Orders order = ordersService.findByOrderNo(orderNo);
+        Long orderNo = itemsDTO.getOrderNo();
+        Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(orderNo);
+        Long newItemNo = (maxItemNo != null) ? maxItemNo + 1 : 1L;
+        itemsDTO.setItemNo(newItemNo);
+        final Items items = new Items();
+        Orders order = ordersRepository.findById(orderNo).orElseThrow(() -> new EntityNotFoundException("Order not found"));
+        items.setOrder(order);
+
+        mapToEntity(itemsDTO, items);
+        itemsRepository.save(items);
     }
 
     private void saveItems(final OrdersDTO ordersDTO, final Orders orders) {
