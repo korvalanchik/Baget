@@ -19,6 +19,11 @@ public interface ItemsRepository extends JpaRepository<Items, ItemId> {
     @Query("DELETE FROM Items i WHERE i.id.orderNo = :orderNo AND i.id.itemNo = :itemNo")
     void deleteItemByOrderNoAndItemNo(@Param("orderNo") Long orderNo, @Param("itemNo") Long itemNo);
 
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Items i WHERE i.order.orderNo = :orderNo")
+    void deleteByOrderOrderNo(@Param("orderNo") Long orderNo);
+
     @Query("SELECT COALESCE(MAX(i.id.itemNo), 0) FROM Items i WHERE i.order.orderNo = :orderNo")
     Long findMaxItemNoByOrderNo(@Param("orderNo") Long orderNo);
 

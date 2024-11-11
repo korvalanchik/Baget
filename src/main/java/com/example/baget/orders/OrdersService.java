@@ -4,6 +4,8 @@ import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.items.*;
 import com.example.baget.util.NotFoundException;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -59,7 +61,7 @@ public class OrdersService {
         final Orders orders = new Orders();
         mapToEntity(ordersDTO, orders);
         ordersRepository.save(orders);
-        saveItems(ordersDTO, orders);
+        saveItems(orders, ordersDTO);
         return orders.getOrderNo();
     }
 
@@ -69,7 +71,7 @@ public class OrdersService {
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         mapToEntity(ordersDTO, existingOrder);
 //        Тимчасово відключили оновлення Items
-//        updateItems(existingOrder, ordersDTO.getItems());
+        updateItems(existingOrder, ordersDTO);
         ordersRepository.save(existingOrder);
     }
 
@@ -144,38 +146,25 @@ public class OrdersService {
         orders.setRahFacNo(ordersDTO.getRahFacNo());
     }
 
-    public void saveItemsList(final Long orderNo, final List<ItemsDTO> itemsDTO) {
-        Orders order = ordersService.findByOrderNo(orderNo);
-        Long orderNo = itemsDTO.getOrderNo();
-        Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(orderNo);
-        Long newItemNo = (maxItemNo != null) ? maxItemNo + 1 : 1L;
-        itemsDTO.setItemNo(newItemNo);
-        final Items items = new Items();
-        Orders order = ordersRepository.findById(orderNo).orElseThrow(() -> new EntityNotFoundException("Order not found"));
-        items.setOrder(order);
-
-        mapToEntity(itemsDTO, items);
-        itemsRepository.save(items);
-    }
-
-    private void saveItems(final OrdersDTO ordersDTO, final Orders orders) {
+    private void saveItems(final Orders orders, final OrdersDTO ordersDTO) {
         if(ordersDTO.getItems() != null) {
-            int itemNo = 1;
-            for (ItemsDTO itemsDTO : ordersDTO.getItems()) {
+            List<Items> items = new ArrayList<>();
+            Long itemNo = 1L;
+            for (ItemsDTO itemDTO : ordersDTO.getItems()) {
                 Items item = new Items();
-                ItemId itemId = new ItemId(orders.getOrderNo(), (long) itemNo);
+                ItemId itemId = new ItemId(orders.getOrderNo(), itemNo);
                 item.setId(itemId);
                 item.setOrder(orders);
-                item.setPartNo(itemsDTO.getPartNo());
-                item.setProfilWidth(itemsDTO.getProfilWidth());
-                item.setWidth(itemsDTO.getWidth());
-                item.setHeight(itemsDTO.getHeight());
-                item.setQty(itemsDTO.getQty());
-                item.setQuantity(itemsDTO.getQuantity());
-                item.setSellPrice(itemsDTO.getSellPrice());
-                item.setDiscount(itemsDTO.getDiscount());
-                item.setOnHand(itemsDTO.getOnHand());
-                item.setCost(itemsDTO.getCost());
+                item.setPartNo(itemDTO.getPartNo());
+                item.setProfilWidth(itemDTO.getProfilWidth());
+                item.setWidth(itemDTO.getWidth());
+                item.setHeight(itemDTO.getHeight());
+                item.setQty(itemDTO.getQty());
+                item.setQuantity(itemDTO.getQuantity());
+                item.setSellPrice(itemDTO.getSellPrice());
+                item.setDiscount(itemDTO.getDiscount());
+                item.setOnHand(itemDTO.getOnHand());
+                item.setCost(itemDTO.getCost());
 
                 itemsRepository.save(item);
                 itemNo++;
@@ -183,29 +172,13 @@ public class OrdersService {
         }
     }
 
-    private void updateItems(final Orders order, final List<ItemsDTO> newItemsDTOList) {
-        List<Items> currentItems = itemsRepository.findByOrder(order);
-
-        Map<Long, Items> currentItemsMap = currentItems.stream()
-                .collect(Collectors.toMap(item -> item.getId().getItemNo(), item -> item));
-
-        for (ItemsDTO newItemDTO : newItemsDTOList) {
-            Items existingItem = currentItemsMap.remove(newItemDTO.getItemNo());
-            if (existingItem != null) {
-                ItemsService.mapToEntity(newItemDTO, existingItem);
-            } else {
-                Items newItem = new Items();
-                ItemsService.mapToEntity(newItemDTO, newItem);
-                newItem.setOrder(order);
-                order.getItems().add(newItem);
-            }
-        }
-
-        for (Items itemToRemove : currentItemsMap.values()) {
-            itemsRepository.delete(itemToRemove);
-        }
-
-        itemsRepository.saveAll(order.getItems());
-
+    private void updateItems(final Orders existingOrder, final OrdersDTO ordersDTO) {
+        deleteAllItemsByOrderNo(existingOrder.getOrderNo());
+        saveItems(existingOrder, ordersDTO);
     }
+
+    public void deleteAllItemsByOrderNo(Long orderNo) {
+        itemsRepository.deleteByOrderOrderNo(orderNo);
+    }
+
 }
