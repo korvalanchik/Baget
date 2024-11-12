@@ -4,18 +4,15 @@ import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.items.*;
 import com.example.baget.util.NotFoundException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -70,9 +67,8 @@ public class OrdersService {
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         mapToEntity(ordersDTO, existingOrder);
-//        Тимчасово відключили оновлення Items
-        updateItems(existingOrder, ordersDTO);
         ordersRepository.save(existingOrder);
+        updateItems(existingOrder, ordersDTO);
     }
 
     public void delete(final Long orderNo) {
