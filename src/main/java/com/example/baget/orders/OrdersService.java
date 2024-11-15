@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,7 +57,7 @@ public class OrdersService {
         final Orders orders = new Orders();
         mapToEntity(ordersDTO, orders);
         ordersRepository.save(orders);
-        saveItems(orders, ordersDTO);
+        saveItems(1L, orders, ordersDTO);
         return orders.getOrderNo();
     }
 
@@ -81,7 +80,7 @@ public class OrdersService {
         ordersDTO.setCompany(orders.getCustomer().getCompany());
         ordersDTO.setPhone(orders.getCustomer().getPhone());
         ordersDTO.setItems(orders.getItems().stream()
-                .map(item -> itemsService.mapToDTO(item, new ItemsDTO()))
+                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
                 .collect(Collectors.toList()));
         ordersDTO.setFactNo(orders.getFactNo());
         ordersDTO.setSaleDate(orders.getSaleDate());
@@ -142,10 +141,8 @@ public class OrdersService {
         orders.setRahFacNo(ordersDTO.getRahFacNo());
     }
 
-    private void saveItems(final Orders orders, final OrdersDTO ordersDTO) {
+    private void saveItems(Long itemNo, final Orders orders, final OrdersDTO ordersDTO) {
         if(ordersDTO.getItems() != null) {
-            List<Items> items = new ArrayList<>();
-            Long itemNo = 1L;
             for (ItemsDTO itemDTO : ordersDTO.getItems()) {
                 Items item = new Items();
                 ItemId itemId = new ItemId(orders.getOrderNo(), itemNo);
@@ -169,8 +166,10 @@ public class OrdersService {
     }
 
     private void updateItems(final Orders existingOrder, final OrdersDTO ordersDTO) {
+        Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(existingOrder.getOrderNo());
+        Long nextItemNo = (maxItemNo != null ? maxItemNo : 0L) + 1;
         deleteAllItemsByOrderNo(existingOrder.getOrderNo());
-        saveItems(existingOrder, ordersDTO);
+        saveItems(nextItemNo, existingOrder, ordersDTO);
     }
 
     public void deleteAllItemsByOrderNo(Long orderNo) {
