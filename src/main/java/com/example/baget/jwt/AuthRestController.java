@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,18 +124,20 @@ public class AuthRestController {
         return ResponseEntity.ok("Password successfully changed.");
     }
 
-    @GetMapping("/check-admin")
-    public ResponseEntity<Map<String, Boolean>> checkAdmin(Principal principal) {
-        Map<String, Boolean> response = new HashMap<>();
+    @GetMapping("/check-role")
+    public ResponseEntity<List<String>> checkRoles(Principal principal) {
+        List<String> roles = new ArrayList<>();
+
         if (principal != null) {
-            // Перевірка ролі користувача
-            boolean isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
-                    .stream().anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
-            response.put("isAdmin", isAdmin);
+            // Отримуємо всі ролі користувача
+            roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                    .stream()
+                    .map(authority -> authority.getAuthority()) // Отримуємо роль у вигляді рядка
+                    .collect(Collectors.toList()); // Перетворюємо в список
         } else {
-            response.put("isAdmin", false);
+            roles.add("NOT AUTHORIZED");
         }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(roles);
     }
 
     @GetMapping("/roles")

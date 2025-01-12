@@ -9,6 +9,6 @@ VALUES
     (1, 'ROLE_ADMIN'),
     (2, 'ROLE_COUNTER'),  -- accountant
     (3, 'ROLE_USER'),  -- buyer
-    (4, 'ROLE_LEVEL1'),  -- ordinary seller
+    (4, 'ROLE_SELLER'),  -- ordinary seller
     (5, 'ROLE_LEVEL2');  -- privileged seller
 COMMIT;
