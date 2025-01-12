@@ -23,23 +23,23 @@ public class ItemsService {
     }
 
     public List<ItemsDTO> findAll() {
-        final List<Items> itemses = itemsRepository.findAll(Sort.by("order.orderNo"));
-        return itemses.stream()
-                .map(items -> mapToDTO(items, new ItemsDTO()))
+        final List<Items> items = itemsRepository.findAll(Sort.by("order.orderNo"));
+        return items.stream()
+                .map(item -> mapItemsToDTO(item, new ItemsDTO()))
                 .toList();
     }
 
     public List<ItemsDTO> findByOrderNo(Long orderNo) {
         final List<Items> items = itemsRepository.findByOrderOrderNo(orderNo);
         return items.stream()
-                .map(item -> mapToDTO(item, new ItemsDTO()))
+                .map(item -> mapItemsToDTO(item, new ItemsDTO()))
                 .toList();
     }
 
     public ItemsDTO get(final Long orderNo, final Long itemNo) {
         ItemId itemId = new ItemId(orderNo, itemNo);
         return itemsRepository.findById(itemId)
-                .map(items -> mapToDTO(items, new ItemsDTO()))
+                .map(items -> mapItemsToDTO(items, new ItemsDTO()))
                 .orElseThrow(NotFoundException::new);
     }
 
@@ -52,7 +52,7 @@ public class ItemsService {
         Orders order = ordersRepository.findById(orderNo).orElseThrow(() -> new EntityNotFoundException("Order not found"));
         items.setOrder(order);
 
-        mapToEntity(itemsDTO, items);
+        mapItemsToEntity(itemsDTO, items);
         itemsRepository.save(items);
     }
 
@@ -61,7 +61,7 @@ public class ItemsService {
         final Items items = itemsRepository.findById(itemId).orElseThrow(NotFoundException::new);
         Orders order = ordersRepository.findById(orderNo).orElseThrow(() -> new EntityNotFoundException("Order not found"));
         items.setOrder(order);
-        mapToEntity(itemsDTO, items);
+        mapItemsToEntity(itemsDTO, items);
         itemsRepository.save(items);
     }
 
@@ -70,7 +70,7 @@ public class ItemsService {
         itemsRepository.deleteItemByOrderNoAndItemNo(orderNo, itemNo);
     }
 
-    public ItemsDTO mapToDTO(final Items items, final ItemsDTO itemsDTO) {
+    public ItemsDTO mapItemsToDTO(final Items items, final ItemsDTO itemsDTO) {
         if (items == null) {
             return null;
         }
@@ -89,9 +89,9 @@ public class ItemsService {
         return itemsDTO;
     }
 
-    public static Items mapToEntity(final ItemsDTO itemsDTO, final Items items) {
+    public void mapItemsToEntity(final ItemsDTO itemsDTO, final Items items) {
         if (itemsDTO == null) {
-            return null;
+            return;
         }
         ItemId itemId = new ItemId(itemsDTO.getOrderNo(), itemsDTO.getItemNo());
         items.setId(itemId);
@@ -105,7 +105,6 @@ public class ItemsService {
         items.setDiscount(itemsDTO.getDiscount());
         items.setOnHand(itemsDTO.getOnHand());
         items.setCost(itemsDTO.getCost());
-        return items;
     }
 
 }
