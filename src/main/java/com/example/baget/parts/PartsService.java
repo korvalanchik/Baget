@@ -3,12 +3,14 @@ package com.example.baget.parts;
 import com.example.baget.util.CustomOptimisticLockException;
 import com.example.baget.util.NotFoundException;
 import com.example.baget.vendors.VendorsRepository;
+// import org.flywaydb.core.internal.jdbc.JdbcTemplate;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 
@@ -18,10 +20,12 @@ public class PartsService {
 
     private final PartsRepository partsRepository;
     private final VendorsRepository vendorsRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public PartsService(final PartsRepository partsRepository, VendorsRepository vendorsRepository) {
+    public PartsService(final PartsRepository partsRepository, VendorsRepository vendorsRepository, JdbcTemplate jdbcTemplate) {
         this.partsRepository = partsRepository;
         this.vendorsRepository = vendorsRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -109,4 +113,16 @@ public class PartsService {
         parts.setVersion(partsDTO.getVersion());
     }
 
+    public List<ProfilListDTO> getBaget() {
+        String query = "SELECT Description, ProfilWidth, OnHand, ListPrice_1, ListPrice_2, ListPrice_3 FROM parts WHERE ProfilWidth > 0.008 ORDER BY ProfilWidth ASC";
+        return jdbcTemplate.query(query, (rs, rowNum) -> new ProfilListDTO(
+                rs.getString("description"),
+                rs.getDouble("profilWidth")*1000,  // width in mm.
+                rs.getDouble("onHand"),
+                rs.getDouble("listPrice_1"),
+                rs.getDouble("listPrice_2"),
+                rs.getDouble("listPrice_3")
+        ));
+
+    }
 }
