@@ -3,14 +3,16 @@ package com.example.baget.parts;
 import com.example.baget.util.CustomOptimisticLockException;
 import com.example.baget.util.NotFoundException;
 import com.example.baget.vendors.VendorsRepository;
-// import org.flywaydb.core.internal.jdbc.JdbcTemplate;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.List;
 
@@ -114,14 +116,30 @@ public class PartsService {
     }
 
     public List<ProfilListDTO> getBaget() {
-        String query = "SELECT Description, ProfilWidth, OnHand, ListPrice_1, ListPrice_2, ListPrice_3 FROM parts WHERE ProfilWidth > 0.008 ORDER BY ProfilWidth ASC";
+        // Отримання аутентифікації з контексту безпеки
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Отримання ролі користувача
+        String userRole = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElse("ROLE_USER"); // Значення за замовчуванням, якщо роль не знайдено
+
+        String priceColumn = switch (userRole) {
+            case "ROLE_ADMIN" -> "Cost";  // Собівартість
+            case "ROLE_COUNTER" -> "ListPrice_1";  // Вхідна для ділерів
+            case "ROLE_SELLER" -> "ListPrice_3";  // Вихідна від ділерів (для форми прийому замовлень)
+            case "ROLE_LEVEL2" -> "ListPrice";  // Вихідна від мастера (для форми прийому замовлень)
+            default -> "ListPrice_3"; // За замовчуванням (максимальна)
+        };
+
+        // Вибір відповідної цінової колонки залежно від ролі користувача
+        String query = String.format("SELECT Description, ProfilWidth, OnHand, %s AS ListPrice FROM parts WHERE ProfilWidth > 0.008 ORDER BY ProfilWidth ASC", priceColumn);
         return jdbcTemplate.query(query, (rs, rowNum) -> new ProfilListDTO(
                 rs.getString("description"),
                 rs.getDouble("profilWidth")*1000,  // width in mm.
                 rs.getDouble("onHand"),
-                rs.getDouble("listPrice_1"),
-                rs.getDouble("listPrice_2"),
-                rs.getDouble("listPrice_3")
+                rs.getDouble("listPrice")
         ));
 
     }

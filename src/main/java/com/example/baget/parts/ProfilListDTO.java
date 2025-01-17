@@ -16,9 +16,5 @@ public class ProfilListDTO {
 
     private Double onHand;
 
-    private Double listPrice_1;
-
-    private Double listPrice_2;
-
-    private Double listPrice_3;
+    private Double listPrice;
 }
