@@ -1,5 +1,9 @@
 package com.example.baget.config;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.ArraySchema;
@@ -12,12 +16,24 @@ import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Arrays;
+
 
 @Configuration
+@OpenAPIDefinition(
+        info = @Info(title = "Ramarnya API", version = "${api.version}",
+                contact = @Contact(name = "Ramarnya", email = "user@mppu.org.ua", url = "https://www.mppu.org.ua"),
+                license = @License(name = "Apache 2.0", url = "https://www.apache.org/licenses/LICENSE-2.0"), termsOfService = "${tos.uri}",
+                description = "${api.description}"),
+        servers = {
+                @io.swagger.v3.oas.annotations.servers.Server(url = "http://localhost:8080", description = "Development"),
+                @io.swagger.v3.oas.annotations.servers.Server(url = "${api.server.url}", description = "Production")})
+
 public class SwaggerConfig {
 
     @Bean
