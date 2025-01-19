@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/authentication-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
+                        .requestMatchers("/swagger-ui/**", "v3/api-docs/**").permitAll()
+
 //                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
 
 //            our private endpoints

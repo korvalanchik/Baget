@@ -10,6 +10,8 @@ import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,8 +21,12 @@ import org.springframework.context.annotation.Configuration;
 public class SwaggerConfig {
 
     @Bean
-    public OpenAPI openApiSpec() {
-        return new OpenAPI().components(new Components()
+    public OpenAPI customOpenAPI() {
+        final String securitySchemeName = "bearerAuth";
+
+        // Створюємо компоненти для OpenAPI
+        Components components = new Components()
+                // Додаємо схеми для обробки помилок
                 .addSchemas("ApiErrorResponse", new ObjectSchema()
                         .addProperty("status", new IntegerSchema())
                         .addProperty("code", new StringSchema())
@@ -32,7 +38,19 @@ public class SwaggerConfig {
                         .addProperty("message", new StringSchema())
                         .addProperty("property", new StringSchema())
                         .addProperty("rejectedValue", new ObjectSchema())
-                        .addProperty("path", new StringSchema())));
+                        .addProperty("path", new StringSchema()))
+                // Додаємо схему для безпеки (JWT авторизація)
+                .addSecuritySchemes(securitySchemeName, new SecurityScheme()
+                        .name(securitySchemeName)
+                        .type(SecurityScheme.Type.HTTP)
+                        .scheme("bearer")
+                        .description("Provide the JWT token. JWT token can be obtained from the Login API. For testing, use the credentials <strong>john/password</strong>")
+                        .bearerFormat("JWT"));
+
+        // Створюємо OpenAPI з усіма компонентами та налаштуваннями
+        return new OpenAPI()
+                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                .components(components);
     }
 
     @Bean
