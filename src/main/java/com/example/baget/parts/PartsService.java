@@ -129,12 +129,13 @@ public class PartsService {
             case "ROLE_ADMIN" -> "Cost";  // Собівартість
             case "ROLE_COUNTER" -> "ListPrice_1";  // Вхідна для ділерів
             case "ROLE_SELLER" -> "ListPrice_3";  // Вихідна від ділерів (для форми прийому замовлень)
-            case "ROLE_LEVEL2" -> "ListPrice";  // Вихідна від мастера (для форми прийому замовлень)
+            case "ROLE_LEVEL2" -> "ListPrice";  // Вихідна від майстра (для форми прийому замовлень)
             default -> "ListPrice_3"; // За замовчуванням (максимальна)
         };
 
         // Вибір відповідної цінової колонки залежно від ролі користувача
-        String query = String.format("SELECT Description, ProfilWidth, OnHand, %s AS ListPrice FROM parts WHERE ProfilWidth > 0.008 ORDER BY ProfilWidth ASC", priceColumn);
+        String query = String.format("SELECT Description, ProfilWidth, OnHand, %s AS ListPrice FROM parts " +
+                                    "WHERE ProfilWidth > 0.008 ORDER BY ProfilWidth ASC", priceColumn);
         return jdbcTemplate.query(query, (rs, rowNum) -> new ProfilListDTO(
                 rs.getString("description"),
                 rs.getDouble("profilWidth")*1000,  // width in mm.
