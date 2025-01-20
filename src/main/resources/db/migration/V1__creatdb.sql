@@ -156,7 +156,7 @@ CREATE TABLE `orders`  (
 -- ----------------------------
 -- DROP TABLE IF EXISTS `parts`;
 CREATE TABLE `parts` (
-                         `partNo` bigint NOT NULL AUTO_INCREMENT,
+                         `PartNo` bigint NOT NULL AUTO_INCREMENT,
                          `VendorNo` bigint NULL DEFAULT NULL,
                          `Description` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
                          `ProfilWidth` float NULL DEFAULT NULL,

@@ -12,7 +12,7 @@ public class ProfilListDTO {
     @Size(max = 30)
     private String description;
 
-    private Double profilWidth;
+    private Long profilWidth;
 
     private Double onHand;
 

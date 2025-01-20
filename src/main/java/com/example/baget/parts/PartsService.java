@@ -134,11 +134,12 @@ public class PartsService {
         };
 
         // Вибір відповідної цінової колонки залежно від ролі користувача
-        String query = String.format("SELECT Description, ProfilWidth, OnHand, %s AS ListPrice FROM parts " +
-                                    "WHERE ProfilWidth > 0.008 ORDER BY ProfilWidth ASC", priceColumn);
+        String query = String.format("SELECT Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
+                                    "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
+        System.out.println(query);
         return jdbcTemplate.query(query, (rs, rowNum) -> new ProfilListDTO(
                 rs.getString("description"),
-                rs.getDouble("profilWidth")*1000,  // width in mm.
+                Math.round(rs.getDouble("profilWidth")*1000),  // width in mm.
                 rs.getDouble("onHand"),
                 rs.getDouble("listPrice")
         ));
