@@ -7,6 +7,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,7 +15,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -115,7 +118,7 @@ public class PartsService {
         parts.setVersion(partsDTO.getVersion());
     }
 
-    public List<ProfilListDTO> getBaget() {
+    public ResponseEntity<?> getBaget() {
         // Отримання аутентифікації з контексту безпеки
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -134,15 +137,24 @@ public class PartsService {
         };
 
         // Вибір відповідної цінової колонки залежно від ролі користувача
-        String query = String.format("SELECT Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
+        String queryBaget = String.format("SELECT Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
                                     "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
-        System.out.println(query);
-        return jdbcTemplate.query(query, (rs, rowNum) -> new ProfilListDTO(
+        String queryParts = String.format("SELECT PartNo, %s AS ListPrice FROM parts", priceColumn);
+        System.out.println(queryBaget);
+        List<ProfilListDTO> bagetParts = jdbcTemplate.query(queryBaget, (rs, rowNum) -> new ProfilListDTO(
                 rs.getString("description"),
                 Math.round(rs.getDouble("profilWidth")*1000),  // width in mm.
                 rs.getDouble("onHand"),
                 rs.getDouble("listPrice")
         ));
+        List<AccessoryListDTO> accessoryParts = jdbcTemplate.query(queryParts, (rs, rowNum) -> new AccessoryListDTO(
+        ));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("bagetParts", bagetParts);
+        response.put("accessoryParts", accessoryParts);
+
+        return ResponseEntity.ok(response);
 
     }
 }

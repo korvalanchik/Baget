@@ -59,7 +59,7 @@ public class PartsResource {
     }
 
     @GetMapping("/profillist")
-    public List<ProfilListDTO> getBaget() {
+    public ResponseEntity<?> getBaget() {
         return partsService.getBaget();
     }
 }
