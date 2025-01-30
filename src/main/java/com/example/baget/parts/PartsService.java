@@ -139,8 +139,9 @@ public class PartsService {
         // Вибір відповідної цінової колонки залежно від ролі користувача
         String queryBaget = String.format("SELECT Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
                                     "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
+        // Вибір ціни додаткових материалів
         String queryParts = String.format("SELECT PartNo, %s AS ListPrice FROM parts", priceColumn);
-        System.out.println(queryBaget);
+
         List<ProfilListDTO> bagetParts = jdbcTemplate.query(queryBaget, (rs, rowNum) -> new ProfilListDTO(
                 rs.getString("description"),
                 Math.round(rs.getDouble("profilWidth")*1000),  // width in mm.
@@ -148,6 +149,8 @@ public class PartsService {
                 rs.getDouble("listPrice")
         ));
         List<AccessoryListDTO> accessoryParts = jdbcTemplate.query(queryParts, (rs, rowNum) -> new AccessoryListDTO(
+                rs.getLong("partNo"),
+                rs.getDouble("listPrice")
         ));
 
         Map<String, Object> response = new HashMap<>();
