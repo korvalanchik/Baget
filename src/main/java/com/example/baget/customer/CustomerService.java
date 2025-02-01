@@ -99,7 +99,7 @@ public class CustomerService {
     public List<CustomerDTO> findByPhonePrefix(String prefix) {
         return customerRepository.findByMobileContaining(prefix)
                 .stream()
-                .map(customer -> new CustomerDTO(customer.getCustNo(), customer.getCompany(), customer.getMobile()))
+                .map(customer -> new CustomerDTO(customer.getCustNo(), customer.getCompany(), customer.getAddr1(), customer.getMobile(), customer.getComment()))
                 .collect(Collectors.toList());
 
     }

@@ -53,9 +53,11 @@ public class CustomerDTO {
 
     public CustomerDTO() {}
 
-    public CustomerDTO(Long custNo, String company, String phone) {
+    public CustomerDTO(Long custNo, String company, String addr1, String mobile, String comment) {
         this.custNo = custNo;
         this.company = company;
-        this.phone = phone;
+        this.addr1 = addr1;
+        this.mobile = mobile;
+        this.comment = comment;
     }
 }
