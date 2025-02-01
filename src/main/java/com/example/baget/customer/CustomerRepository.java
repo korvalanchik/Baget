@@ -12,7 +12,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @NonNull
     Page<Customer> findAll(@NonNull Pageable pageable);
 
-    List<Customer> findByPhoneContaining(String prefix);
+    List<Customer> findByMobileContaining(String prefix);
 
 //    Customer findPhoneByCustNo(Long custNo);
 

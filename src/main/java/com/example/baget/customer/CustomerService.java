@@ -97,7 +97,7 @@ public class CustomerService {
 
     @Cacheable(value = "CustomerPhonePrefix", key = "#prefix")
     public List<CustomerDTO> findByPhonePrefix(String prefix) {
-        return customerRepository.findByPhoneContaining(prefix)
+        return customerRepository.findByMobileContaining(prefix)
                 .stream()
                 .map(customer -> new CustomerDTO(customer.getCustNo(), customer.getCompany(), customer.getMobile()))
                 .collect(Collectors.toList());
