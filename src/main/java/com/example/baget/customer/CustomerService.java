@@ -71,7 +71,7 @@ public class CustomerService {
         customerDTO.setZip(customer.getZip());
         customerDTO.setCountry(customer.getCountry());
         customerDTO.setPhone(customer.getPhone());
-        customerDTO.setFax(customer.getFax());
+        customerDTO.setMobile(customer.getMobile());
         customerDTO.setTaxRate(customer.getTaxRate());
         customerDTO.setContact(customer.getContact());
         customerDTO.setLastInvoiceDate(customer.getLastInvoiceDate());
@@ -88,7 +88,7 @@ public class CustomerService {
         customer.setZip(customerDTO.getZip());
         customer.setCountry(customerDTO.getCountry());
         customer.setPhone(customerDTO.getPhone());
-        customer.setFax(customerDTO.getFax());
+        customer.setMobile(customerDTO.getMobile());
         customer.setTaxRate(customerDTO.getTaxRate());
         customer.setContact(customerDTO.getContact());
         customer.setLastInvoiceDate(customerDTO.getLastInvoiceDate());
@@ -99,7 +99,7 @@ public class CustomerService {
     public List<CustomerDTO> findByPhonePrefix(String prefix) {
         return customerRepository.findByPhoneContaining(prefix)
                 .stream()
-                .map(customer -> new CustomerDTO(customer.getCustNo(), customer.getCompany(), customer.getPhone()))
+                .map(customer -> new CustomerDTO(customer.getCustNo(), customer.getCompany(), customer.getMobile()))
                 .collect(Collectors.toList());
 
     }

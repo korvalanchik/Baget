@@ -1,6 +1,6 @@
 SET NAMES UTF8MB4;
 START TRANSACTION;
-INSERT INTO `customer` (`CustNo`, `Company`, `Addr1`, `Comment`, `City`, `State`, `Zip`, `Country`, `Phone`, `FAX`, `TaxRate`, `Contact`, `LastInvoiceDate`, `PriceLevel`)
+INSERT INTO `customer` (`CustNo`, `Company`, `Addr1`, `Comment`, `City`, `State`, `Zip`, `Country`, `Phone`, `Mobile`, `TaxRate`, `Contact`, `LastInvoiceDate`, `PriceLevel`)
 VALUES
 
 (9864, 'Каштан', 'ул. Спасская', NULL, 'Миколаїв', NULL, NULL, 'Украина', '322223', NULL, 0, 'Шепель Валерий', '2009-08-12 00:00:00', 3),

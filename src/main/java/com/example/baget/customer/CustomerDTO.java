@@ -39,7 +39,7 @@ public class CustomerDTO {
     private String phone;
 
     @Size(max = 15)
-    private String fax;
+    private String mobile;
 
     private Double taxRate;
 

@@ -47,7 +47,7 @@ public class Customer {
     private String phone;
 
     @Column(length = 15)
-    private String fax;
+    private String mobile;
 
     @Column
     private Double taxRate;
