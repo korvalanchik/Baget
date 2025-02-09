@@ -93,6 +93,22 @@ public class AuthRestController {
         }
     }
 
+    @PostMapping("/validateTelegram")
+    public ResponseEntity<?> validateTelegram(@RequestHeader("Authorization") Long telegramId) {
+        try {
+            // Перевірка, чи існує користувач з таким Telegram ID
+            boolean isValid = userService.validateTelegramId(telegramId);
+
+            if (isValid) {
+                return ResponseEntity.ok("Telegram ID is valid");
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Telegram ID");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Telegram ID");
+        }
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser() {
         // Можна додати додаткові дії на стороні сервера, такі як інвалідовування токена

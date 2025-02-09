@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -111,5 +112,12 @@ public class UsersService {
         // Видалити всі прострочені токени
         passwordRecoveryTokenRepository.deleteAllExpiredTokens(clientDateTime);
     }
+    public boolean validateTelegramId(Long telegramId) {
+        // Знайти користувача за Telegram ID в базі даних
+        Optional<User> userOptional = userRepository.findByTelegramId(telegramId);
 
+        // Якщо користувач знайдений і Telegram ID валідний
+        return userOptional.isPresent();
+
+    }
 }

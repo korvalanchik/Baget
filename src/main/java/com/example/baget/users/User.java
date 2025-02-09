@@ -28,6 +28,9 @@ public class User {
     @Column(nullable = false)
     private String email;
 
+    @Column(unique = true, nullable = true)
+    private Long telegramId; // Буде null, поки не прив’язаний
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
