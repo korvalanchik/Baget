@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,6 +31,7 @@ public class AuthRestController {
     private final UsersService userService;
     private final UserDetailsService userDetailsService;
     private final RoleRepository roleRepository;
+    private final TelegramAuthService telegramAuthService;
 
     // Ін'єкція через конструктор
     @Autowired
@@ -37,12 +39,13 @@ public class AuthRestController {
                           JwtTokenUtil jwtTokenUtil,
                           UsersService userService,
                           UserDetailsService userDetailsService,
-                          RoleRepository roleRepository) {
+                          RoleRepository roleRepository, TelegramAuthService telegramAuthService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userService = userService;
         this.userDetailsService = userDetailsService;
         this.roleRepository = roleRepository;
+        this.telegramAuthService = telegramAuthService;
     }
 
     @PostMapping("/signup")
@@ -91,6 +94,11 @@ public class AuthRestController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
         }
+    }
+
+    @PostMapping("/loginTelegram")
+    public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) {
+        return telegramAuthService.verifyTelegramLogin(request.getInitData());
     }
 
     @PostMapping("/validateTelegram")
@@ -147,7 +155,7 @@ public class AuthRestController {
             // Отримуємо всі ролі користувача
             roles = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
                     .stream()
-                    .map(authority -> authority.getAuthority()) // Отримуємо роль у вигляді рядка
+                    .map(GrantedAuthority::getAuthority) // Отримуємо роль у вигляді рядка
                     .collect(Collectors.toList()); // Перетворюємо в список
         } else {
             roles.add("NOT AUTHORIZED");
