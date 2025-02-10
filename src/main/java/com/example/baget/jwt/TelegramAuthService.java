@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 public class TelegramAuthService {
 
-    @Value("${BOT_TOKEN}")
+    @Value("${bot.token}")
     private String botToken; // Токен бота для перевірки підпису
 
     private final JwtTokenUtil jwtTokenUtil; // Генератор JWT токенів
