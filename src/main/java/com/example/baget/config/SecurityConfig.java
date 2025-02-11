@@ -47,18 +47,14 @@ public class SecurityConfig {
 //        Set permissions on endpoints
                 .authorizeHttpRequests(auth -> auth
 //            our public endpoints
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/auth/signup").hasRole("ADMIN")
                         .requestMatchers("/api/users").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/users/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/authentication-docs/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
                         .requestMatchers("/swagger-ui/**", "v3/api-docs/**").permitAll()
-
-//                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
-
-//            our private endpoints
+                        .requestMatchers("/auth/signup").hasRole("ADMIN") // ОБМЕЖЕННЯ ПЕРШИМ
+                        .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
 

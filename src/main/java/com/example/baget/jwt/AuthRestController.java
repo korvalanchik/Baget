@@ -31,6 +31,7 @@ public class AuthRestController {
     private final UsersService userService;
     private final UserDetailsService userDetailsService;
     private final RoleRepository roleRepository;
+    private final UsersRepository userRepository;
     private final TelegramAuthService telegramAuthService;
 
     // Ін'єкція через конструктор
@@ -39,12 +40,15 @@ public class AuthRestController {
                           JwtTokenUtil jwtTokenUtil,
                           UsersService userService,
                           UserDetailsService userDetailsService,
-                          RoleRepository roleRepository, TelegramAuthService telegramAuthService) {
+                          RoleRepository roleRepository,
+                          UsersRepository userRepository,
+                          TelegramAuthService telegramAuthService) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.userService = userService;
         this.userDetailsService = userDetailsService;
         this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
         this.telegramAuthService = telegramAuthService;
     }
 
@@ -99,6 +103,39 @@ public class AuthRestController {
     @PostMapping("/loginTelegram")
     public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) {
         return telegramAuthService.verifyTelegramLogin(request.getInitData());
+    }
+
+    // Метод для перевірки та прив'язки Telegram ID до існуючого акаунту
+    @PostMapping("/associateTelegram")
+    public ResponseEntity<?> associateTelegramId(@RequestBody Map<String, String> payload,
+                                                 @RequestHeader("Authorization") String token) {
+        // Отримуємо токен та перевіряємо, чи він валідний
+        String jwtToken = token.replace("Bearer ", "");
+        String username = jwtTokenUtil.getUsernameFromToken(jwtToken);
+
+        if (username == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid JWT token");
+        }
+
+        // Отримуємо Telegram ID з payload
+        Long telegramId = Long.valueOf(payload.get("telegramId"));
+
+        // Знаходимо користувача за ім'ям
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+//        User user = userOptional.get();
+
+        // Якщо у користувача ще немає прив'язаного Telegram ID
+        if (user.getTelegramId() == null) {
+            user.setTelegramId(telegramId);
+            userRepository.save(user);
+            return ResponseEntity.ok(Map.of("message", "Telegram ID прив'язано"));
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Telegram ID вже прив'язано до іншого акаунту");
     }
 
     @PostMapping("/validateTelegram")

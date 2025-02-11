@@ -16,8 +16,12 @@ import java.util.stream.Collectors;
 
 @Service
 public class MyUserDetailsService implements UserDetailsService {
+
+    private final UsersRepository userRepository;
     @Autowired
-    private UsersRepository userRepository;
+    public MyUserDetailsService(UsersRepository userRepository) {
+        this.userRepository = userRepository;
+    }
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username);
