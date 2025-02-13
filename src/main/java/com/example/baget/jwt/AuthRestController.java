@@ -118,8 +118,8 @@ public class AuthRestController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid JWT token");
         }
 
-        // Отримуємо Telegram ID з payload
-//        Long telegramId = Long.valueOf(initData);
+        // Отримуємо Telegram ID з initDate
+        Long telegramId = telegramAuthService.getTelegramId(initData);
 
         // Знаходимо користувача за ім'ям
         User user = userRepository.findByUsername(username);
@@ -131,7 +131,7 @@ public class AuthRestController {
 
         // Якщо у користувача ще немає прив'язаного Telegram ID
         if (user.getTelegramId() == null) {
-            user.setTelegramId(123456L);
+            user.setTelegramId(telegramId);
             userRepository.save(user);
             return ResponseEntity.ok(Map.of("message", "Telegram ID прив'язано"));
         }

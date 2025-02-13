@@ -120,7 +120,7 @@ public class TelegramAuthService {
 
 
 
-    public ResponseEntity<?> verifyTelegramLogin(String initData) throws JsonProcessingException {
+    public ResponseEntity<?> verifyTelegramLogin(String initData) {
         // Перевіряємо, чи коректні дані (hash, signature)
         if (!validateTelegramData(initData)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -128,26 +128,11 @@ public class TelegramAuthService {
         }
 
         // Розбираємо initData, отримуємо user_id
-        String decodedInitData = URLDecoder.decode(initData, StandardCharsets.UTF_8);
-        Map<String, String> params = parseTelegramData(decodedInitData);
-        String userJson = params.get("user");
-        userJson = userJson.replace("\\/", "/");
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> userMap = objectMapper.readValue(userJson, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+        Long telegramId = getTelegramId(initData);
 
-        String userId = userMap.get("id").toString();
-
-        if (userId == null) {
+        if (telegramId == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Telegram ID is missing"));
-        }
-
-        long telegramId;
-        try {
-            telegramId = Long.parseLong(userId);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Invalid Telegram ID format"));
         }
 
         // Перевіряємо, чи є такий юзер у базі
@@ -169,6 +154,34 @@ public class TelegramAuthService {
         // Повертаємо JWT токен на фронтенд у форматі JSON
 //        return ResponseEntity.ok(Map.of("jwtToken", jwtToken));
         return ResponseEntity.ok(new AuthResponse(jwtToken));
+    }
+
+    public Long getTelegramId(String initData) {
+        String decodedInitData = URLDecoder.decode(initData, StandardCharsets.UTF_8);
+        Map<String, String> params = parseTelegramData(decodedInitData);
+        String userJson = params.get("user");
+        userJson = userJson.replace("\\/", "/");
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> userMap;
+        try {
+            userMap = objectMapper.readValue(userJson, new com.fasterxml.jackson.core.type.TypeReference<>() {});
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        String userId = userMap.get("id").toString();
+        if (userId == null) {
+            return null;
+        }
+
+        long telegramId;
+        try {
+            telegramId = Long.parseLong(userId);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+        return telegramId;
     }
 
 }
