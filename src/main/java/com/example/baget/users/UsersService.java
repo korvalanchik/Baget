@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -57,6 +58,7 @@ public class UsersService {
         return userDTO;
     }
 
+    @Transactional
     public void registerNewUser(UserPassRecoveryDTO userPassRecoveryDto) {
         // Перевірка існування користувача за username або email
         if (userRepository.existsByUsername(userPassRecoveryDto.getUsername())) {
@@ -66,7 +68,7 @@ public class UsersService {
             throw new IllegalArgumentException("Email is already registered");
         }
         // Отримання ролей за їх ідентифікаторами
-        List<Role> roles = roleRepository.findAllById(userPassRecoveryDto.getRoles());
+        List<Role> roles = roleRepository.findAllByNameIn(userPassRecoveryDto.getRoles());
         // Створення нового користувача
         User user = new User();
         user.setUsername(userPassRecoveryDto.getUsername());

@@ -11,5 +11,5 @@ public class UserPassRecoveryDTO {
     private String username;
     private String email;
     private String password;
-    private List<Long> roles; // Список ідентифікаторів ролей
+    private List<String> roles; // Список назв ролей
 }

@@ -1,6 +1,7 @@
 package com.example.baget.jwt;
 
 import com.example.baget.users.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -101,13 +102,13 @@ public class AuthRestController {
     }
 
     @PostMapping("/loginTelegram")
-    public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) {
+    public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) throws JsonProcessingException {
         return telegramAuthService.verifyTelegramLogin(request.getInitData());
     }
 
     // Метод для перевірки та прив'язки Telegram ID до існуючого акаунту
     @PostMapping("/associateTelegram")
-    public ResponseEntity<?> associateTelegramId(@RequestBody Map<String, String> payload,
+    public ResponseEntity<?> associateTelegramId(@RequestBody String initData,
                                                  @RequestHeader("Authorization") String token) {
         // Отримуємо токен та перевіряємо, чи він валідний
         String jwtToken = token.replace("Bearer ", "");
@@ -118,7 +119,7 @@ public class AuthRestController {
         }
 
         // Отримуємо Telegram ID з payload
-        Long telegramId = Long.valueOf(payload.get("telegramId"));
+//        Long telegramId = Long.valueOf(initData);
 
         // Знаходимо користувача за ім'ям
         User user = userRepository.findByUsername(username);
@@ -130,7 +131,7 @@ public class AuthRestController {
 
         // Якщо у користувача ще немає прив'язаного Telegram ID
         if (user.getTelegramId() == null) {
-            user.setTelegramId(telegramId);
+            user.setTelegramId(123456L);
             userRepository.save(user);
             return ResponseEntity.ok(Map.of("message", "Telegram ID прив'язано"));
         }
