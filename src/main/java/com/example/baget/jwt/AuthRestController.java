@@ -103,13 +103,15 @@ public class AuthRestController {
 
     @PostMapping("/loginTelegram")
     public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) throws JsonProcessingException {
-        return telegramAuthService.verifyTelegramLogin(request.getInitData());
+        String initData = request.getInitData();
+        return telegramAuthService.verifyTelegramLogin(initData);
     }
 
     // Метод для перевірки та прив'язки Telegram ID до існуючого акаунту
     @PostMapping("/associateTelegram")
-    public ResponseEntity<?> associateTelegramId(@RequestBody String initData,
+    public ResponseEntity<?> associateTelegramId(@RequestBody TelegramAuthRequest request,
                                                  @RequestHeader("Authorization") String token) {
+        String initData = request.getInitData();
         // Отримуємо токен та перевіряємо, чи він валідний
         String jwtToken = token.replace("Bearer ", "");
         String username = jwtTokenUtil.getUsernameFromToken(jwtToken);
@@ -134,6 +136,10 @@ public class AuthRestController {
             user.setTelegramId(telegramId);
             userRepository.save(user);
             return ResponseEntity.ok(Map.of("message", "Telegram ID прив'язано"));
+        }
+        // Якщо користувач вже має прив'язаний Telegram ID
+        if (user.getTelegramId().equals(telegramId)) {
+            return ResponseEntity.ok(Map.of("message", "User already associated with his Telegram ID"));
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Telegram ID вже прив'язано до іншого акаунту");

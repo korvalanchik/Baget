@@ -27,6 +27,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
+        String requestURI = request.getRequestURI();
+
+        // Пропускаємо фільтр для Telegram-авторизації
+        if (requestURI.equals("/auth/loginTelegram")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
