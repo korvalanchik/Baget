@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/favicon.ico").permitAll()
                         .requestMatchers("/swagger-ui/**", "v3/api-docs/**").permitAll()
                         .requestMatchers("/auth/signup").hasRole("ADMIN") // ОБМЕЖЕННЯ ПЕРШИМ
-                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/login").permitAll()
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
 
