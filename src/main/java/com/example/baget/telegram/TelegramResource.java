@@ -1,5 +1,7 @@
 package com.example.baget.telegram;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,9 +14,14 @@ public class TelegramResource {
     }
 
     @PostMapping("/send")
-    public String sendMessage(@RequestBody String message) {
-        telegramService.sendMessage(message);
-        return "Повідомлення відправлено у майстерню!";
+    public ResponseEntity<String> sendMessage(@RequestBody String message) {
+        try {
+            telegramService.sendMessage(message);
+            return ResponseEntity.ok("Повідомлення відправлено у майстерню!");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Помилка відправки замовлення: " + e.getMessage());
+        }
     }
 
 }

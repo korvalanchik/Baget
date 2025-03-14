@@ -11,19 +11,21 @@ import java.util.Map;
 public class TelegramService {
 
     @Value("${bot.token}")
-    private String TOKEN;
-    private final String CHAT_ID = "5217802119";
-    private final String TELEGRAM_API_URL = "https://api.telegram.org/bot" + TOKEN + "/sendMessage";
+    private String botToken;
+
+    @Value("${CHAT_ID}")
+    private String chatId;
 
     public void sendMessage(String message) {
+        String telegram_API_URL = "https://api.telegram.org/bot" + botToken + "/sendMessage";
         RestTemplate restTemplate = new RestTemplate();
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("chat_id", CHAT_ID);
+        requestBody.put("chat_id", chatId);
         requestBody.put("text", message);
         requestBody.put("parse_mode", "Markdown"); // Або "HTML"
 
-        restTemplate.postForObject(TELEGRAM_API_URL, requestBody, String.class);
+        restTemplate.postForObject(telegram_API_URL, requestBody, String.class);
     }
 
 }
