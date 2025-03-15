@@ -1,10 +1,11 @@
 package com.example.baget.telegram;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -16,16 +17,27 @@ public class TelegramService {
     @Value("${CHAT_ID}")
     private String chatId;
 
-    public void sendMessage(String message) {
-        String telegram_API_URL = "https://api.telegram.org/bot" + botToken + "/sendMessage";
-        RestTemplate restTemplate = new RestTemplate();
+    public void sendMessage(String messageJson) {
+        try {
+            // Парсимо JSON у Map<String, Object>
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> messageMap = objectMapper.readValue(messageJson, new TypeReference<>() {});
 
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("chat_id", chatId);
-        requestBody.put("text", message);
-        requestBody.put("parse_mode", "Markdown"); // Або "HTML"
+            // Отримуємо текст повідомлення (переконавшись, що ключ існує)
+            String text = messageMap.getOrDefault("message", "").toString();
 
-        restTemplate.postForObject(telegram_API_URL, requestBody, String.class);
+            String telegram_API_URL = "https://api.telegram.org/bot" + botToken + "/sendMessage";
+            RestTemplate restTemplate = new RestTemplate();
+
+            Map<String, Object> requestBody = Map.of(
+                    "chat_id", chatId,
+                    "text", text,
+                    "parse_mode", "HTML" // Або "Markdown"
+            );
+
+            restTemplate.postForObject(telegram_API_URL, requestBody, String.class);
+        } catch (Exception e) {
+            e.printStackTrace(); // Логування помилки
+        }
     }
-
 }
