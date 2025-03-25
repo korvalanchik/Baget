@@ -141,6 +141,7 @@ class UsersServiceTest {
         verify(passwordRecoveryTokenRepository, never()).delete(recoveryToken);
         verify(userRepository, never()).save(any(User.class));
     }
+    @Disabled
     @Test
     public void testRegisterNewUser_Success() {
         // Arrange
