@@ -141,7 +141,6 @@ class UsersServiceTest {
         verify(passwordRecoveryTokenRepository, never()).delete(recoveryToken);
         verify(userRepository, never()).save(any(User.class));
     }
-    @Disabled
     @Test
     public void testRegisterNewUser_Success() {
         // Arrange
@@ -152,7 +151,7 @@ class UsersServiceTest {
 
         when(userRepository.existsByUsername("testUser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
-        when(roleRepository.findAllById(userPassRecoveryDto.getRoles())).thenReturn(new ArrayList<>());
+//        when(roleRepository.findAllById(userPassRecoveryDto.getRoles())).thenReturn(new ArrayList<>());
 
         // Act
         usersService.registerNewUser(userPassRecoveryDto);
