@@ -26,7 +26,7 @@ public class OrdersDTO {
 
     private List<ItemsDTO> items;
 
-    private Long factNo;
+    private Long BranchNo;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime saleDate;

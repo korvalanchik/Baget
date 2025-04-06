@@ -82,7 +82,7 @@ public class OrdersService {
         ordersDTO.setItems(orders.getItems().stream()
                 .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
                 .collect(Collectors.toList()));
-        ordersDTO.setFactNo(orders.getFactNo());
+        ordersDTO.setBranchNo(orders.getBranchNo());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
         ordersDTO.setEmpNo(orders.getEmpNo());
@@ -114,7 +114,7 @@ public class OrdersService {
         Customer customer = customerRepository.findById(ordersDTO.getCustNo())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
         orders.setCustomer(customer);
-        orders.setFactNo(ordersDTO.getFactNo());
+        orders.setBranchNo(ordersDTO.getBranchNo());
         orders.setSaleDate(ordersDTO.getSaleDate());
         orders.setShipDate(ordersDTO.getShipDate());
         orders.setEmpNo(ordersDTO.getEmpNo());

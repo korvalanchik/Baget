@@ -29,8 +29,8 @@ public class Orders {
     @OneToMany(mappedBy = "order", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Items> items;
 
-    @Column(name = "FactNo")
-    private Long factNo;
+    @Column(name = "BranchNo")
+    private Long branchNo;
 
     @Column(name = "SaleDate")
     private OffsetDateTime saleDate;
