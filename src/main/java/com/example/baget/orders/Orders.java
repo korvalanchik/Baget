@@ -1,5 +1,6 @@
 package com.example.baget.orders;
 
+import com.example.baget.branch.Branch;
 import com.example.baget.customer.Customer;
 import com.example.baget.items.Items;
 import jakarta.persistence.*;
@@ -29,8 +30,12 @@ public class Orders {
     @OneToMany(mappedBy = "order", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Items> items;
 
-    @Column(name = "BranchNo")
-    private Long branchNo;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "BranchNo", insertable = false, updatable = false)
+    private Branch branch;
+
+//    @Column(name = "BranchNo")
+//    private Long branchNo;
 
     @Column(name = "SaleDate")
     private OffsetDateTime saleDate;

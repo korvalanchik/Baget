@@ -1,5 +1,7 @@
 package com.example.baget.orders;
 
+import com.example.baget.branch.Branch;
+import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.items.*;
@@ -19,11 +21,14 @@ public class OrdersService {
 
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
+    private final BranchRepository branchRepository;
     private final ItemsRepository itemsRepository;
     private final ItemsService itemsService;
-    public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository, ItemsRepository itemsRepository, ItemsService itemsService) {
+    public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository,
+                         BranchRepository branchRepository, ItemsRepository itemsRepository, ItemsService itemsService) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
+        this.branchRepository = branchRepository;
         this.itemsRepository = itemsRepository;
         this.itemsService = itemsService;
     }
@@ -82,7 +87,7 @@ public class OrdersService {
         ordersDTO.setItems(orders.getItems().stream()
                 .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
                 .collect(Collectors.toList()));
-        ordersDTO.setBranchNo(orders.getBranchNo());
+        ordersDTO.setBranchName(orders.getBranch().getName());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
         ordersDTO.setEmpNo(orders.getEmpNo());
@@ -113,8 +118,11 @@ public class OrdersService {
     private void mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
         Customer customer = customerRepository.findById(ordersDTO.getCustNo())
                 .orElseThrow(() -> new NotFoundException("Customer not found"));
+        Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
+                .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
+
         orders.setCustomer(customer);
-        orders.setBranchNo(ordersDTO.getBranchNo());
+        orders.setBranch(branch);
         orders.setSaleDate(ordersDTO.getSaleDate());
         orders.setShipDate(ordersDTO.getShipDate());
         orders.setEmpNo(ordersDTO.getEmpNo());
