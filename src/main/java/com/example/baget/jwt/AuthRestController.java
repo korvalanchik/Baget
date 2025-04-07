@@ -1,7 +1,6 @@
 package com.example.baget.jwt;
 
 import com.example.baget.users.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -102,7 +101,7 @@ public class AuthRestController {
     }
 
     @PostMapping("/loginTelegram")
-    public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) throws JsonProcessingException {
+    public ResponseEntity<?> telegramLogin(@RequestBody TelegramAuthRequest request) {
         String initData = request.getInitData();
         return telegramAuthService.verifyTelegramLogin(initData);
     }
