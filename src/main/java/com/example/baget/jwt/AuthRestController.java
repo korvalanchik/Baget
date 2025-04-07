@@ -124,7 +124,8 @@ public class AuthRestController {
         Long telegramId = telegramAuthService.getTelegramId(initData);
 
         // Знаходимо користувача за ім'ям
-        User user = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username).orElse(null);
+//        User user = userRepository.findByUsername(username);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
