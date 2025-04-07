@@ -34,7 +34,7 @@ public class OrdersDTO {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime shipDate;
 
-    private Long empNo;
+    private String empNo;
 
     @Size(max = 20)
     private String shipToContact;

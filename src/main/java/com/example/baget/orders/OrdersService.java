@@ -5,14 +5,19 @@ import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.items.*;
+import com.example.baget.users.User;
+import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -21,13 +26,16 @@ public class OrdersService {
 
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
+    private final UsersRepository userRepository;
     private final BranchRepository branchRepository;
     private final ItemsRepository itemsRepository;
     private final ItemsService itemsService;
     public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository,
-                         BranchRepository branchRepository, ItemsRepository itemsRepository, ItemsService itemsService) {
+                         UsersRepository userRepository, BranchRepository branchRepository,
+                         ItemsRepository itemsRepository, ItemsService itemsService) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
+        this.userRepository = userRepository;
         this.branchRepository = branchRepository;
         this.itemsRepository = itemsRepository;
         this.itemsService = itemsService;
@@ -52,18 +60,27 @@ public class OrdersService {
     }
 
     public Page<OrdersDTO> getOrders(Pageable pageable) {
-        // Виклик репозиторію для отримання сторінки замовлень
+        Map<Long, String> userIdUsernameMap = loadUserIdUsernameMap(); // Один раз
+
         return ordersRepository.findAll(pageable)
-                .map(orders -> mapToDTO(orders, new OrdersDTO())); // Перетворення у DTO, якщо потрібно
+                .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
     }
 
     @Transactional
     public Long create(final OrdersDTO ordersDTO) {
-        final Orders orders = new Orders();
-        mapToEntity(ordersDTO, orders);
-        ordersRepository.save(orders);
-        saveItems(1L, orders, ordersDTO);
-        return orders.getOrderNo();
+        String username = null;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            username =  authentication.getName(); // Це і є username
+        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Orders order = new Orders();
+        mapToEntity(ordersDTO, order);
+        order.setEmpNo(user.getId()); // Присвоюємо userId як empNo
+        ordersRepository.save(order);
+        saveItems(1L, order, ordersDTO);
+        return order.getOrderNo();
     }
 
     @Transactional
@@ -90,7 +107,50 @@ public class OrdersService {
         ordersDTO.setBranchName(orders.getBranch().getName());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
-        ordersDTO.setEmpNo(orders.getEmpNo());
+
+        User user = userRepository.findById(orders.getEmpNo()).orElse(null);
+        if (user != null) {
+            ordersDTO.setEmpNo(user.getUsername()); // записуємо username в DTO
+        } else {
+            ordersDTO.setEmpNo(null);
+        }
+//        ordersDTO.setEmpNo(orders.getEmpNo());
+        ordersDTO.setShipToContact(orders.getShipToContact());
+        ordersDTO.setShipToAddr1(orders.getShipToAddr1());
+        ordersDTO.setShipToAddr2(orders.getShipToAddr2());
+        ordersDTO.setShipToCity(orders.getShipToCity());
+        ordersDTO.setShipToState(orders.getShipToState());
+        ordersDTO.setShipToZip(orders.getShipToZip());
+        ordersDTO.setShipToCountry(orders.getShipToCountry());
+        ordersDTO.setShipToPhone(orders.getShipToPhone());
+        ordersDTO.setShipVia(orders.getShipVia());
+        ordersDTO.setPo(orders.getPo());
+        ordersDTO.setTerms(orders.getTerms());
+        ordersDTO.setPaymentMethod(orders.getPaymentMethod());
+        ordersDTO.setItemsTotal(orders.getItemsTotal());
+        ordersDTO.setTaxRate(orders.getTaxRate());
+        ordersDTO.setFreight(orders.getFreight());
+        ordersDTO.setAmountPaid(orders.getAmountPaid());
+        ordersDTO.setAmountDueN(orders.getAmountDueN());
+        ordersDTO.setIncome(orders.getIncome());
+        ordersDTO.setPriceLevel(orders.getPriceLevel());
+        ordersDTO.setStatusOrder(orders.getStatusOrder());
+        ordersDTO.setRahFacNo(orders.getRahFacNo());
+        return ordersDTO;
+    }
+
+    private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO, Map<Long, String> userMap) {
+        ordersDTO.setOrderNo(orders.getOrderNo());
+        ordersDTO.setCustNo(orders.getCustomer().getCustNo());
+        ordersDTO.setCompany(orders.getCustomer().getCompany());
+        ordersDTO.setPhone(orders.getCustomer().getPhone());
+        ordersDTO.setItems(orders.getItems().stream()
+                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
+                .collect(Collectors.toList()));
+        ordersDTO.setBranchName(orders.getBranch().getName());
+        ordersDTO.setSaleDate(orders.getSaleDate());
+        ordersDTO.setShipDate(orders.getShipDate());
+        ordersDTO.setEmpNo(userMap.getOrDefault(orders.getEmpNo(), null));
         ordersDTO.setShipToContact(orders.getShipToContact());
         ordersDTO.setShipToAddr1(orders.getShipToAddr1());
         ordersDTO.setShipToAddr2(orders.getShipToAddr2());
@@ -121,11 +181,15 @@ public class OrdersService {
         Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
                 .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
 
+        User user = userRepository.findByUsername(ordersDTO.getEmpNo())
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        orders.setEmpNo(user.getId()); // записуємо userId в orders
+
         orders.setCustomer(customer);
         orders.setBranch(branch);
         orders.setSaleDate(ordersDTO.getSaleDate());
         orders.setShipDate(ordersDTO.getShipDate());
-        orders.setEmpNo(ordersDTO.getEmpNo());
+//        orders.setEmpNo(ordersDTO.getEmpNo());
         orders.setShipToContact(ordersDTO.getShipToContact());
         orders.setShipToAddr1(ordersDTO.getShipToAddr1());
         orders.setShipToAddr2(ordersDTO.getShipToAddr2());
@@ -182,6 +246,14 @@ public class OrdersService {
 
     public void deleteAllItemsByOrderNo(Long orderNo) {
         itemsRepository.deleteByOrderOrderNo(orderNo);
+    }
+
+    private Map<Long, String> loadUserIdUsernameMap() {
+        return userRepository.findAllUserIdAndUsername().stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (String) row[1]
+                ));
     }
 
 }
