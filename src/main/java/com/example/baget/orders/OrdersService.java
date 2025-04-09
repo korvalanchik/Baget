@@ -6,6 +6,7 @@ import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.items.*;
 import com.example.baget.users.User;
+import com.example.baget.users.UserCacheService;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
 import jakarta.transaction.Transactional;
@@ -27,15 +28,17 @@ public class OrdersService {
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
     private final UsersRepository userRepository;
+    private final UserCacheService userCacheService;
     private final BranchRepository branchRepository;
     private final ItemsRepository itemsRepository;
     private final ItemsService itemsService;
     public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository,
-                         UsersRepository userRepository, BranchRepository branchRepository,
+                         UsersRepository userRepository, UserCacheService userCacheService, BranchRepository branchRepository,
                          ItemsRepository itemsRepository, ItemsService itemsService) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
         this.userRepository = userRepository;
+        this.userCacheService = userCacheService;
         this.branchRepository = branchRepository;
         this.itemsRepository = itemsRepository;
         this.itemsService = itemsService;
@@ -60,8 +63,7 @@ public class OrdersService {
     }
 
     public Page<OrdersDTO> getOrders(Pageable pageable) {
-        Map<Long, String> userIdUsernameMap = loadUserIdUsernameMap(); // Один раз
-
+        Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
         return ordersRepository.findAll(pageable)
                 .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
     }
@@ -114,7 +116,6 @@ public class OrdersService {
         } else {
             ordersDTO.setEmpNo(null);
         }
-//        ordersDTO.setEmpNo(orders.getEmpNo());
         ordersDTO.setShipToContact(orders.getShipToContact());
         ordersDTO.setShipToAddr1(orders.getShipToAddr1());
         ordersDTO.setShipToAddr2(orders.getShipToAddr2());
@@ -139,7 +140,7 @@ public class OrdersService {
         return ordersDTO;
     }
 
-    private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO, Map<Long, String> userMap) {
+    private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO, final Map<Long, String> userMap) {
         ordersDTO.setOrderNo(orders.getOrderNo());
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
         ordersDTO.setCompany(orders.getCustomer().getCompany());
@@ -246,14 +247,6 @@ public class OrdersService {
 
     public void deleteAllItemsByOrderNo(Long orderNo) {
         itemsRepository.deleteByOrderOrderNo(orderNo);
-    }
-
-    private Map<Long, String> loadUserIdUsernameMap() {
-        return userRepository.findAllUserIdAndUsername().stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],
-                        row -> (String) row[1]
-                ));
     }
 
 }

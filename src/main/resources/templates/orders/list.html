@@ -20,7 +20,6 @@
             <tr>
                 <th scope="col">[[#{orders.orderNo.label}]]</th>
                 <th scope="col">[[#{orders.custNo.label}]]</th>
-                <th scope="col">[[#{orders.factNo.label}]]</th>
                 <th scope="col">[[#{orders.saleDate.label}]]</th>
                 <th scope="col">[[#{orders.shipDate.label}]]</th>
                 <th scope="col">[[#{orders.empNo.label}]]</th>
@@ -33,7 +32,6 @@
             <tr th:each="orders : ${ordersPage.content}">
                 <td>[[${orders.orderNo}]]</td>
                 <td>[[${orders.custNo}]]</td>
-                <td>[[${orders.factNo}]]</td>
                 <td>[[${orders.saleDate}]]</td>
                 <td>[[${orders.shipDate}]]</td>
                 <td>[[${orders.empNo}]]</td>
