@@ -9,4 +9,6 @@ import org.springframework.lang.NonNull;
 public interface OrdersRepository extends JpaRepository<Orders, Long> {
     @NonNull
     Page<Orders> findAll(@NonNull Pageable pageable);
+
+    Page<Orders> findByBranchName(String branchName, Pageable pageable);
 }

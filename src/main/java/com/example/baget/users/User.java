@@ -1,11 +1,13 @@
 package com.example.baget.users;
 
+import com.example.baget.branch.Branch;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Collection;
+import java.util.Set;
 
 
 @Entity
@@ -38,4 +40,12 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Collection<Role> roles;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_branch_access",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "branch_no")
+    )
+    private Set<Branch> allowedBranches;
 }

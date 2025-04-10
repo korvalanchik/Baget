@@ -21,14 +21,25 @@ public class OrdersResource {
         this.ordersService = ordersService;
     }
 
+//    @GetMapping
+//    public Page<OrdersDTO> getOrders(
+//            @RequestParam(defaultValue = "0") int page,   // Номер сторінки, за замовчуванням 0
+//            @RequestParam(defaultValue = "10") int size   // Розмір сторінки, за замовчуванням 10
+//    ) {
+//        Pageable pageable = PageRequest.of(page, size);  // Створення об'єкта Pageable для пагінації
+//        return ordersService.getOrders(pageable);  // Повертаємо сторінку замовлень
+//    }
+
     @GetMapping
     public Page<OrdersDTO> getOrders(
-            @RequestParam(defaultValue = "0") int page,   // Номер сторінки, за замовчуванням 0
-            @RequestParam(defaultValue = "10") int size   // Розмір сторінки, за замовчуванням 10
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam String branch // <-- назва філіалу з фронту
     ) {
-        Pageable pageable = PageRequest.of(page, size);  // Створення об'єкта Pageable для пагінації
-        return ordersService.getOrders(pageable);  // Повертаємо сторінку замовлень
+        Pageable pageable = PageRequest.of(page, size);
+        return ordersService.getOrders(pageable, branch);
     }
+
 //    @GetMapping
 //    public ResponseEntity<List<OrdersDTO>> getAllOrders() {
 //        return ResponseEntity.ok(ordersService.findAll());

@@ -5,6 +5,7 @@ import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.items.*;
+import com.example.baget.users.Role;
 import com.example.baget.users.User;
 import com.example.baget.users.UserCacheService;
 import com.example.baget.users.UsersRepository;
@@ -13,12 +14,15 @@ import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -62,10 +66,35 @@ public class OrdersService {
                 .orElseThrow(NotFoundException::new);
     }
 
-    public Page<OrdersDTO> getOrders(Pageable pageable) {
+    public Page<OrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        Set<String> userRoles = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+
         Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
-        return ordersRepository.findAll(pageable)
-                .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
+
+        // --- ADMIN бачить все
+        if (userRoles.contains("ROLE_ADMIN")) {
+            return ordersRepository.findAll(pageable)
+                    .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
+        } else {
+            Set<String> allowedBranches = user.getAllowedBranches().stream()
+                    .map(Branch::getName)
+                    .collect(Collectors.toSet());
+            if (!allowedBranches.contains(requestedBranchName)) {
+                throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
+            }
+
+            return ordersRepository.findByBranchName(requestedBranchName, pageable)
+                    .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
+        }
+
     }
 
     @Transactional
