@@ -132,9 +132,10 @@ public class OrdersService {
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
         ordersDTO.setCompany(orders.getCustomer().getCompany());
         ordersDTO.setPhone(orders.getCustomer().getMobile());
-        ordersDTO.setItems(orders.getItems().stream()
-                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
-                .collect(Collectors.toList()));
+//        ordersDTO.setItems(orders.getItems().stream()
+//                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
+//                .collect(Collectors.toList()));
+        ordersDTO.setItems(itemsService.findByOrderNo(orders.getOrderNo()));
         ordersDTO.setBranchName(orders.getBranch().getName());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
@@ -173,10 +174,10 @@ public class OrdersService {
         ordersDTO.setOrderNo(orders.getOrderNo());
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
         ordersDTO.setCompany(orders.getCustomer().getCompany());
-        ordersDTO.setPhone(orders.getCustomer().getPhone());
-        ordersDTO.setItems(orders.getItems().stream()
-                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
-                .collect(Collectors.toList()));
+        ordersDTO.setPhone(orders.getCustomer().getMobile());
+//        ordersDTO.setItems(orders.getItems().stream()
+//                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
+//                .collect(Collectors.toList()));
         ordersDTO.setBranchName(orders.getBranch().getName());
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());

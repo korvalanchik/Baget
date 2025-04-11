@@ -1,13 +1,16 @@
 package com.example.baget.parts;
 
-import com.example.baget.vendors.VendorsDTO;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class PartsDTO {
 
     private Long partNo;
@@ -40,5 +43,8 @@ public class PartsDTO {
     private Double listPrice3;
 
     private Long version;
-
+    public PartsDTO(Long partNo, String description) {
+        this.partNo = partNo;
+        this.description = description;
+    }
 }

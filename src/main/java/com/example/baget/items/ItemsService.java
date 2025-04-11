@@ -2,8 +2,12 @@ package com.example.baget.items;
 
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
+import com.example.baget.parts.PartLookupService;
+import com.example.baget.parts.PartsDTO;
 import com.example.baget.util.NotFoundException;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -15,10 +19,13 @@ import org.springframework.stereotype.Service;
 public class ItemsService {
 
     private final ItemsRepository itemsRepository;
+    private final PartLookupService partLookupService;
     private final OrdersRepository ordersRepository;
 
-    public ItemsService(final ItemsRepository itemsRepository, OrdersRepository ordersRepository) {
+    public ItemsService(final ItemsRepository itemsRepository, PartLookupService partLookupService,
+                        OrdersRepository ordersRepository) {
         this.itemsRepository = itemsRepository;
+        this.partLookupService = partLookupService;
         this.ordersRepository = ordersRepository;
     }
 
@@ -31,10 +38,21 @@ public class ItemsService {
 
     public List<ItemsDTO> findByOrderNo(Long orderNo) {
         final List<Items> items = itemsRepository.findByOrderOrderNo(orderNo);
+
+        // Отримуємо всі Parts з кешу разом
+        Map<Long, String> partDescriptionMap = partLookupService.findAll().stream()
+                .collect(Collectors.toMap(PartsDTO::getPartNo, PartsDTO::getDescription));
+
         return items.stream()
-                .map(item -> mapItemsToDTO(item, new ItemsDTO()))
+                .map(item -> {
+                    ItemsDTO dto = mapItemsToDTO(item, new ItemsDTO());
+                    // Вставляємо опис з кешу
+                    dto.setDescription(partDescriptionMap.get(item.getPartNo()));
+                    return dto;
+                })
                 .toList();
     }
+
 
     public ItemsDTO get(final Long orderNo, final Long itemNo) {
         ItemId itemId = new ItemId(orderNo, itemNo);

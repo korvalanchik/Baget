@@ -34,7 +34,7 @@ public class OrdersResource {
     public Page<OrdersDTO> getOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam String branch // <-- назва філіалу з фронту
+            @RequestParam(defaultValue = "1") String branch // <-- назва філіалу з фронту
     ) {
         Pageable pageable = PageRequest.of(page, size);
         return ordersService.getOrders(pageable, branch);
@@ -46,7 +46,7 @@ public class OrdersResource {
 //    }
 
     @GetMapping("/{orderNo}")
-    public ResponseEntity<OrdersDTO> getOrders(@PathVariable(name = "orderNo") final Long orderNo) {
+    public ResponseEntity<OrdersDTO> getOrder(@PathVariable(name = "orderNo") final Long orderNo) {
         return ResponseEntity.ok(ordersService.get(orderNo));
     }
 

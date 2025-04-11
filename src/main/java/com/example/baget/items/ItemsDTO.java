@@ -16,6 +16,8 @@ public class ItemsDTO {
 
     private Long partNo;
 
+    private String description;
+
     private Double profilWidth;
 
     private Double width;
