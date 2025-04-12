@@ -67,6 +67,10 @@ public class OrdersService {
     }
 
     public Page<OrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
+
+        System.out.println("Pageable: " + pageable);
+        System.out.println("Сортування: " + pageable.getSort());
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
 
