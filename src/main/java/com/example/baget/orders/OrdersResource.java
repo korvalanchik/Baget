@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,29 +22,16 @@ public class OrdersResource {
         this.ordersService = ordersService;
     }
 
-//    @GetMapping
-//    public Page<OrdersDTO> getOrders(
-//            @RequestParam(defaultValue = "0") int page,   // Номер сторінки, за замовчуванням 0
-//            @RequestParam(defaultValue = "10") int size   // Розмір сторінки, за замовчуванням 10
-//    ) {
-//        Pageable pageable = PageRequest.of(page, size);  // Створення об'єкта Pageable для пагінації
-//        return ordersService.getOrders(pageable);  // Повертаємо сторінку замовлень
-//    }
-
     @GetMapping
     public Page<OrdersDTO> getOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "1") String branch // <-- назва філіалу з фронту
     ) {
-        Pageable pageable = PageRequest.of(page, size);
+//        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "saleDate"));
         return ordersService.getOrders(pageable, branch);
     }
-
-//    @GetMapping
-//    public ResponseEntity<List<OrdersDTO>> getAllOrders() {
-//        return ResponseEntity.ok(ordersService.findAll());
-//    }
 
     @GetMapping("/{orderNo}")
     public ResponseEntity<OrdersDTO> getOrder(@PathVariable(name = "orderNo") final Long orderNo) {
