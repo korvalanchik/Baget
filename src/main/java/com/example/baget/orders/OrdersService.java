@@ -83,22 +83,31 @@ public class OrdersService {
 
         Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
 
-        // --- ADMIN бачить все
+        // ADMIN бачить усе
         if (userRoles.contains("ROLE_ADMIN")) {
             return ordersRepository.findAll(pageable)
                     .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
-        } else {
-            Set<String> allowedBranches = user.getAllowedBranches().stream()
-                    .map(Branch::getName)
-                    .collect(Collectors.toSet());
-            if (!allowedBranches.contains(requestedBranchName)) {
-                throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
-            }
+        }
 
-            return ordersRepository.findByBranchName(requestedBranchName, pageable)
+        // Дозволені філії для користувача
+        Set<String> allowedBranches = user.getAllowedBranches().stream()
+                .map(Branch::getName)
+                .collect(Collectors.toSet());
+
+        // Якщо роль — COUNTER, то показуємо всі замовлення по доступних філіях
+        if (userRoles.contains("ROLE_COUNTER")) {
+            return ordersRepository.findByBranchNameIn(allowedBranches, pageable)
                     .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
         }
 
+        // Якщо requestedBranchName не входить до дозволених
+        if (!allowedBranches.contains(requestedBranchName)) {
+            throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
+        }
+
+        // Виводимо замовлення лише по requestedBranchName
+        return ordersRepository.findByBranchName(requestedBranchName, pageable)
+                .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
     }
 
     @Transactional
