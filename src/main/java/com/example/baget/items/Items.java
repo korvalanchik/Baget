@@ -30,6 +30,12 @@ public class Items {
     @Column(name = "ProfilWidth")
     private Double profilWidth;
 
+    @Column(name = "EstimationWidth")
+    private Double estimationWidth;
+
+    @Column(name = "EstimationHeight")
+    private Double estimationHeight;
+
     @Column(name = "Width")
     private Double width;
 

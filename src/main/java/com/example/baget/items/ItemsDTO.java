@@ -20,6 +20,10 @@ public class ItemsDTO {
 
     private Double profilWidth;
 
+    private Double estimationWidth;
+
+    private Double estimationHeight;
+
     private Double width;
 
     private Double height;

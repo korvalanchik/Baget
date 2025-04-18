@@ -266,6 +266,8 @@ public class OrdersService {
                 item.setOrder(orders);
                 item.setPartNo(itemDTO.getPartNo());
                 item.setProfilWidth(itemDTO.getProfilWidth());
+                item.setEstimationWidth(itemDTO.getEstimationWidth());
+                item.setEstimationHeight(itemDTO.getEstimationHeight());
                 item.setWidth(itemDTO.getWidth());
                 item.setHeight(itemDTO.getHeight());
                 item.setQty(itemDTO.getQty());

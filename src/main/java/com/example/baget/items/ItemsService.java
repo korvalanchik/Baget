@@ -96,6 +96,8 @@ public class ItemsService {
         itemsDTO.setOrderNo(items.getId().getOrderNo());
         itemsDTO.setPartNo(items.getPartNo());
         itemsDTO.setProfilWidth(items.getProfilWidth());
+        itemsDTO.setEstimationWidth(items.getEstimationWidth());
+        itemsDTO.setEstimationHeight(items.getEstimationHeight());
         itemsDTO.setWidth(items.getWidth());
         itemsDTO.setHeight(items.getHeight());
         itemsDTO.setQty(items.getQty());
@@ -115,6 +117,8 @@ public class ItemsService {
         items.setId(itemId);
         items.setPartNo(itemsDTO.getPartNo());
         items.setProfilWidth(itemsDTO.getProfilWidth());
+        items.setEstimationWidth(itemsDTO.getEstimationWidth());
+        items.setEstimationHeight(itemsDTO.getEstimationHeight());
         items.setWidth(itemsDTO.getWidth());
         items.setHeight(itemsDTO.getHeight());
         items.setQty(itemsDTO.getQty());
