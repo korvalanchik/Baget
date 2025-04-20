@@ -24,9 +24,12 @@ public class OrdersDTO {
     @Size(max = 15)
     private String phone;
 
+    @Size(max = 30)
+    private String addr1;
+
     private List<ItemsDTO> items;
 
-    private String BranchName;
+    private String branchName;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private OffsetDateTime saleDate;

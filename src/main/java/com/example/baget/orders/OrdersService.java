@@ -3,7 +3,9 @@ package com.example.baget.orders;
 import com.example.baget.branch.Branch;
 import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.Customer;
+import com.example.baget.customer.CustomerDTO;
 import com.example.baget.customer.CustomerRepository;
+import com.example.baget.customer.CustomerService;
 import com.example.baget.items.*;
 import com.example.baget.users.Role;
 import com.example.baget.users.User;
@@ -31,16 +33,19 @@ public class OrdersService {
 
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
+    private final CustomerService customerService;
     private final UsersRepository userRepository;
     private final UserCacheService userCacheService;
     private final BranchRepository branchRepository;
     private final ItemsRepository itemsRepository;
     private final ItemsService itemsService;
     public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository,
-                         UsersRepository userRepository, UserCacheService userCacheService, BranchRepository branchRepository,
+                         CustomerService customerService, UsersRepository userRepository,
+                         UserCacheService userCacheService, BranchRepository branchRepository,
                          ItemsRepository itemsRepository, ItemsService itemsService) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
+        this.customerService = customerService;
         this.userRepository = userRepository;
         this.userCacheService = userCacheService;
         this.branchRepository = branchRepository;
@@ -220,8 +225,22 @@ public class OrdersService {
     }
 
     private void mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
-        Customer customer = customerRepository.findById(ordersDTO.getCustNo())
-                .orElseThrow(() -> new NotFoundException("Customer not found"));
+        Customer customer;
+        if (ordersDTO.getCustNo() != null) {
+            customer = customerRepository.findById(ordersDTO.getCustNo())
+                    .orElseThrow(() -> new NotFoundException("Customer not found"));
+        } else {
+            // Створюємо нового клієнта
+            CustomerDTO customerDTO = new CustomerDTO();
+            customerDTO.setCompany(ordersDTO.getCompany());
+            customerDTO.setMobile(ordersDTO.getPhone());
+            customerDTO.setAddr1(ordersDTO.getAddr1());
+
+            Long newCustNo = customerService.create(customerDTO);
+            customer = customerRepository.findById(newCustNo)
+                    .orElseThrow(() -> new RuntimeException("Newly created customer not found"));
+        }
+
         Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
                 .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
 

@@ -137,12 +137,13 @@ public class PartsService {
         };
 
         // Вибір відповідної цінової колонки залежно від ролі користувача
-        String queryBaget = String.format("SELECT Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
+        String queryBaget = String.format("SELECT PartNo, Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
                                     "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
         // Вибір ціни додаткових материалів
         String queryParts = String.format("SELECT PartNo, %s AS ListPrice FROM parts", priceColumn);
 
         List<ProfilListDTO> bagetParts = jdbcTemplate.query(queryBaget, (rs, rowNum) -> new ProfilListDTO(
+                rs.getLong("partNo"),
                 rs.getString("description"),
                 Math.round(rs.getDouble("profilWidth")*1000),  // width in mm.
                 rs.getDouble("onHand"),

@@ -9,6 +9,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class ProfilListDTO {
+    private Long partNo;
+
     @Size(max = 30)
     private String description;
 
