@@ -20,7 +20,6 @@ public class Orders {
 
     @Id
     @Column(name = "OrderNo", nullable = false, updatable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderNo;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -31,7 +30,7 @@ public class Orders {
     private List<Items> items;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "BranchNo", insertable = false, updatable = false)
+    @JoinColumn(name = "BranchNo")
     private Branch branch;
 
 //    @Column(name = "BranchNo")

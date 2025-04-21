@@ -49,10 +49,10 @@ public class OrdersResource {
     }
 
     @PostMapping("/batch")
-    public ResponseEntity<List<OrderSaveResult>> saveBatch(@RequestBody BatchOrderRequest request) {
+    public ResponseEntity<List<OrderSaveResult>> saveBatch(@RequestBody List<OrdersDTO> orders) {
         List<OrderSaveResult> results = new ArrayList<>();
 
-        for (OrdersDTO dto : request.getOrders()) {
+        for (OrdersDTO dto : orders) {
             try {
                 ordersService.create(dto);
                 results.add(new OrderSaveResult(dto, true, "Saved successfully"));

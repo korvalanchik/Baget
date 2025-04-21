@@ -244,10 +244,11 @@ public class OrdersService {
         Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
                 .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
 
-        User user = userRepository.findByUsername(ordersDTO.getEmpNo())
-                .orElseThrow(() -> new NotFoundException("User not found"));
-        orders.setEmpNo(user.getId()); // записуємо userId в orders
+//        User user = userRepository.findByUsername(ordersDTO.getEmpNo())
+//                .orElseThrow(() -> new NotFoundException("User not found"));
 
+        orders.setOrderNo(ordersDTO.getOrderNo());
+//        orders.setEmpNo(user.getId()); // записуємо userId в orders
         orders.setCustomer(customer);
         orders.setBranch(branch);
         orders.setSaleDate(ordersDTO.getSaleDate());
