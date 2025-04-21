@@ -11,6 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @RestController
 @RequestMapping(value = "/api/orders", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -40,13 +43,29 @@ public class OrdersResource {
 
     @PostMapping
     @ApiResponse(responseCode = "201")
-    public ResponseEntity<Long> createOrders(@RequestBody @Valid final OrdersDTO ordersDTO) {
+    public ResponseEntity<Long> createOrder(@RequestBody @Valid final OrdersDTO ordersDTO) {
         final Long createdOrderNo = ordersService.create(ordersDTO);
         return new ResponseEntity<>(createdOrderNo, HttpStatus.CREATED);
     }
 
+    @PostMapping("/batch")
+    public ResponseEntity<List<OrderSaveResult>> saveBatch(@RequestBody BatchOrderRequest request) {
+        List<OrderSaveResult> results = new ArrayList<>();
+
+        for (OrdersDTO dto : request.getOrders()) {
+            try {
+                ordersService.create(dto);
+                results.add(new OrderSaveResult(dto, true, "Saved successfully"));
+            } catch (Exception ex) {
+                results.add(new OrderSaveResult(dto, false, "Failed: " + ex.getMessage()));
+            }
+        }
+
+        return ResponseEntity.ok(results);
+    }
+
     @PutMapping("/{orderNo}")
-    public ResponseEntity<Long> updateOrders(@PathVariable(name = "orderNo") final Long orderNo,
+    public ResponseEntity<Long> updateOrder(@PathVariable(name = "orderNo") final Long orderNo,
             @RequestBody @Valid final OrdersDTO ordersDTO) {
         ordersService.update(orderNo, ordersDTO);
         return ResponseEntity.ok(orderNo);
@@ -54,7 +73,7 @@ public class OrdersResource {
 
     @DeleteMapping("/{orderNo}")
     @ApiResponse(responseCode = "204")
-    public ResponseEntity<Void> deleteOrders(@PathVariable(name = "orderNo") final Long orderNo) {
+    public ResponseEntity<Void> deleteOrder(@PathVariable(name = "orderNo") final Long orderNo) {
         ordersService.delete(orderNo);
         return ResponseEntity.noContent().build();
     }
