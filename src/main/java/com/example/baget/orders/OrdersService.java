@@ -185,6 +185,7 @@ public class OrdersService {
         ordersDTO.setPriceLevel(orders.getPriceLevel());
         ordersDTO.setStatusOrder(orders.getStatusOrder());
         ordersDTO.setRahFacNo(orders.getRahFacNo());
+        ordersDTO.setNotice(orders.getNotice());
         return ordersDTO;
     }
 
@@ -221,6 +222,7 @@ public class OrdersService {
         ordersDTO.setPriceLevel(orders.getPriceLevel());
         ordersDTO.setStatusOrder(orders.getStatusOrder());
         ordersDTO.setRahFacNo(orders.getRahFacNo());
+        ordersDTO.setNotice(orders.getNotice());
         return ordersDTO;
     }
 
@@ -275,6 +277,7 @@ public class OrdersService {
         orders.setPriceLevel(ordersDTO.getPriceLevel());
         orders.setStatusOrder(ordersDTO.getStatusOrder());
         orders.setRahFacNo(ordersDTO.getRahFacNo());
+        orders.setNotice(ordersDTO.getNotice());
     }
 
     private void saveItems(Long itemNo, final Orders orders, final OrdersDTO ordersDTO) {

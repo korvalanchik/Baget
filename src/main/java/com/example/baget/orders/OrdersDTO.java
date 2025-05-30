@@ -93,4 +93,7 @@ public class OrdersDTO {
 
     private Long rahFacNo;
 
+    @Size(max = 100)
+    private String notice;
+
 }

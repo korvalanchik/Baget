@@ -108,4 +108,7 @@ public class Orders {
     @Column(name = "RahFacNo")
     private Long rahFacNo;
 
+    @Column(name = "Notice")
+    private String notice;
+
 }
