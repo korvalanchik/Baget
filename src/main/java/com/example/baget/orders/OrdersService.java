@@ -182,6 +182,7 @@ public class OrdersService {
         ordersDTO.setAmountPaid(orders.getAmountPaid());
         ordersDTO.setAmountDueN(orders.getAmountDueN());
         ordersDTO.setIncome(orders.getIncome());
+        ordersDTO.setTotalCost(orders.getTotalCost());
         ordersDTO.setPriceLevel(orders.getPriceLevel());
         ordersDTO.setStatusOrder(orders.getStatusOrder());
         ordersDTO.setRahFacNo(orders.getRahFacNo());
@@ -219,6 +220,7 @@ public class OrdersService {
         ordersDTO.setAmountPaid(orders.getAmountPaid());
         ordersDTO.setAmountDueN(orders.getAmountDueN());
         ordersDTO.setIncome(orders.getIncome());
+        ordersDTO.setTotalCost(orders.getTotalCost());
         ordersDTO.setPriceLevel(orders.getPriceLevel());
         ordersDTO.setStatusOrder(orders.getStatusOrder());
         ordersDTO.setRahFacNo(orders.getRahFacNo());
@@ -274,6 +276,7 @@ public class OrdersService {
         orders.setAmountPaid(ordersDTO.getAmountPaid());
         orders.setAmountDueN(ordersDTO.getAmountDueN());
         orders.setIncome(ordersDTO.getIncome());
+        orders.setTotalCost(ordersDTO.getTotalCost());
         orders.setPriceLevel(ordersDTO.getPriceLevel());
         orders.setStatusOrder(ordersDTO.getStatusOrder());
         orders.setRahFacNo(ordersDTO.getRahFacNo());

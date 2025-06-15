@@ -99,6 +99,9 @@ public class Orders {
     @Column(name = "Income")
     private Double income;
 
+    @Column(name = "TotalCost")
+    private Double totalCost;
+
     @Column(name = "PriceLevel")
     private Integer priceLevel;
 

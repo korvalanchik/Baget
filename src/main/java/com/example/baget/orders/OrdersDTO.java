@@ -87,6 +87,8 @@ public class OrdersDTO {
 
     private Double income;
 
+    private Double totalCost;
+
     private Integer priceLevel;
 
     private Integer statusOrder;
