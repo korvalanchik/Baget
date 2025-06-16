@@ -1,2 +1,2 @@
 ALTER TABLE `orders`
-    ADD COLUMN `TotalCost` float NULL DEFAULT NULL AFTER 'Income';
+    ADD COLUMN `TotalCost` FLOAT NULL DEFAULT NULL AFTER `Income`;
