@@ -26,12 +26,11 @@ public class OrdersResource {
     }
 
     @GetMapping
-    public Page<OrdersDTO> getOrders(
+    public Page<? extends BaseOrdersDTO> getOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "1") String branch // <-- назва філіалу з фронту
     ) {
-//        Pageable pageable = PageRequest.of(page, size);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "saleDate"));
         return ordersService.getOrders(pageable, branch);
     }

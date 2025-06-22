@@ -175,10 +175,13 @@ public class AuthRestController {
     @PostMapping("/password-recovery")
     public ResponseEntity<String> sendRecoveryLink(@RequestBody Map<String, String> request) {
         String email = request.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body("Email is required.");
+        }
         String currentDateTimeWithTimezone = request.get("currentDateTime");
         OffsetDateTime clientDateTime = OffsetDateTime.parse(currentDateTimeWithTimezone);
         userService.sendPasswordRecoveryEmail(email, clientDateTime);
-        return ResponseEntity.ok("Recovery link sent to your email.");
+        return ResponseEntity.ok("If this email exists, a recovery link was sent.");
     }
 
     @PostMapping("/reset-password")
