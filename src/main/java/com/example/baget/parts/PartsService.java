@@ -140,7 +140,8 @@ public class PartsService {
         String queryBaget = String.format("SELECT PartNo, Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
                                     "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
         // Вибір ціни додаткових материалів
-        String queryParts = String.format("SELECT PartNo, %s AS ListPrice FROM parts", priceColumn);
+        String queryParts = String.format("SELECT PartNo, Description, %s AS ListPrice FROM parts " +
+                                    "WHERE (InQuality IN (1, 3)) AND (ProfilWidth < 0.0003 OR ProfilWidth IS NULL)", priceColumn);
 
         List<ProfilListDTO> bagetParts = jdbcTemplate.query(queryBaget, (rs, rowNum) -> new ProfilListDTO(
                 rs.getLong("partNo"),
@@ -151,6 +152,7 @@ public class PartsService {
         ));
         List<AccessoryListDTO> accessoryParts = jdbcTemplate.query(queryParts, (rs, rowNum) -> new AccessoryListDTO(
                 rs.getLong("partNo"),
+                rs.getString("description"),
                 rs.getDouble("listPrice")
         ));
 
