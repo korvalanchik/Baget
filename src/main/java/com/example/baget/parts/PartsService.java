@@ -141,7 +141,7 @@ public class PartsService {
                                     "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
         // Вибір ціни додаткових материалів
         String queryParts = String.format("SELECT PartNo, Description, %s AS ListPrice FROM parts " +
-                                    "WHERE (InQuality IN (1, 3)) AND (ProfilWidth < 0.0003 OR ProfilWidth IS NULL)", priceColumn);
+                                    "WHERE ProfilWidth < 0.0003 OR ProfilWidth IS NULL", priceColumn);
 
         List<ProfilListDTO> bagetParts = jdbcTemplate.query(queryBaget, (rs, rowNum) -> new ProfilListDTO(
                 rs.getLong("partNo"),
