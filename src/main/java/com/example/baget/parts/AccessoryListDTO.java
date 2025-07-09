@@ -9,5 +9,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AccessoryListDTO {
     private Long partNo;
+    private String description;
     private Double listPrice;
 }
