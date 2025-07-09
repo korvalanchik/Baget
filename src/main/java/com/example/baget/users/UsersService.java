@@ -94,9 +94,10 @@ public class UsersService {
         passwordRecoveryTokenRepository.save(recoveryToken);
 
         // Надсилання email з посиланням для відновлення паролю
-        emailService.sendEmail(email,"Password Recovery", "Click on the link to reset your password: " + recoveryLink);
+        emailService.sendEmail(email,"Password Recovery", "Натисни на посилання для встановлення нового паролю: " + recoveryLink);
     }
 
+    @Transactional
     public void resetPassword(String token, String newPassword, OffsetDateTime clientDateTime) {
         PasswordRecoveryToken recoveryToken = passwordRecoveryTokenRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid token"));
@@ -114,6 +115,7 @@ public class UsersService {
         // Видалити всі прострочені токени
         passwordRecoveryTokenRepository.deleteAllExpiredTokens(clientDateTime);
     }
+
     public boolean validateTelegramId(Long telegramId) {
         // Знайти користувача за Telegram ID в базі даних
         Optional<User> userOptional = userRepository.findByTelegramId(telegramId);
