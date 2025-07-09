@@ -181,7 +181,7 @@ public class AuthRestController {
         String currentDateTimeWithTimezone = request.get("currentDateTime");
         OffsetDateTime clientDateTime = OffsetDateTime.parse(currentDateTimeWithTimezone);
         userService.sendPasswordRecoveryEmail(email, clientDateTime);
-        return ResponseEntity.ok("If this email exists, a recovery link was sent.");
+        return ResponseEntity.ok("Якщо цей email існує, посиляння буде відправлене на нього.");
     }
 
     @PostMapping("/reset-password")
@@ -191,7 +191,7 @@ public class AuthRestController {
         String currentDateTimeWithTimezone = request.get("currentDateTime");
         OffsetDateTime clientDateTime = OffsetDateTime.parse(currentDateTimeWithTimezone);
         userService.resetPassword(token, newPassword, clientDateTime);
-        return ResponseEntity.ok("Password successfully changed.");
+        return ResponseEntity.ok("Пароль успішно змінений.");
     }
 
     @GetMapping("/check-role")
