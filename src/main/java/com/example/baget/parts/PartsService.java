@@ -15,9 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Service
@@ -118,49 +116,75 @@ public class PartsService {
         parts.setVersion(partsDTO.getVersion());
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getBaget() {
-        // Отримання аутентифікації з контексту безпеки
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
 
-        // Отримання ролі користувача
-        String userRole = authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElse("ROLE_USER"); // Значення за замовчуванням, якщо роль не знайдено
+        if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            List<Parts> parts = partsRepository.findAll(Sort.by("partNo"));
+            List<PartsDTO> dtoList = parts.stream()
+                    .map(part -> mapToDTO(part, new PartsDTO()))
+                    .toList();
+            return ResponseEntity.ok(dtoList);
+        }
 
-        String priceColumn = switch (userRole) {
-            case "ROLE_ADMIN" -> "Cost";  // Собівартість
-            case "ROLE_COUNTER" -> "ListPrice_1";  // Вхідна для ділерів
-            case "ROLE_SELLER" -> "ListPrice_3";  // Вихідна від ділерів (для форми прийому замовлень)
-            case "ROLE_LEVEL2" -> "ListPrice";  // Вихідна від майстра (для форми прийому замовлень)
-            default -> "ListPrice_3"; // За замовчуванням (максимальна)
-        };
+        String priceColumn = resolvePriceColumn(authorities);
+        validatePriceColumn(priceColumn);
 
-        // Вибір відповідної цінової колонки залежно від ролі користувача
-        String queryBaget = String.format("SELECT PartNo, Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice FROM parts " +
-                                    "WHERE InQuality = 2 AND ProfilWidth > 0.0003 ORDER BY ProfilWidth ASC", priceColumn);
-        // Вибір ціни додаткових материалів
-        String queryParts = String.format("SELECT PartNo, Description, %s AS ListPrice FROM parts " +
-                                    "WHERE ProfilWidth < 0.0003 OR ProfilWidth IS NULL", priceColumn);
+        List<ProfilListDTO> profileParts = fetchProfileParts(priceColumn);
+        List<AccessoryListDTO> accessoryParts = fetchAccessoryParts(priceColumn);
 
-        List<ProfilListDTO> bagetParts = jdbcTemplate.query(queryBaget, (rs, rowNum) -> new ProfilListDTO(
+        BagetResponseDTO response = new BagetResponseDTO(profileParts, accessoryParts);
+        return ResponseEntity.ok(response);
+    }
+
+    private String resolvePriceColumn(Collection<? extends GrantedAuthority> authorities) {
+        if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_COUNTER"))) {
+            return "ListPrice_1";
+        } else if (authorities.stream().anyMatch(a -> a.getAuthority().equals("ROLE_LEVEL2"))) {
+            return "ListPrice";
+        } else {
+            return "ListPrice_3"; // Default for ROLE_USER, ROLE_SELLER, etc.
+        }
+    }
+
+    private void validatePriceColumn(String priceColumn) {
+        Set<String> allowedColumns = Set.of("ListPrice", "ListPrice_1", "ListPrice_3");
+        if (!allowedColumns.contains(priceColumn)) {
+            throw new IllegalArgumentException("Invalid price column: " + priceColumn);
+        }
+    }
+
+    private List<ProfilListDTO> fetchProfileParts(String priceColumn) {
+        String sql = String.format("""
+            SELECT PartNo, Description, ProfilWidth, InQuality, OnHand, %s AS ListPrice
+            FROM parts
+            WHERE InQuality = 2 AND ProfilWidth > 0.0003
+            ORDER BY ProfilWidth ASC
+            """, priceColumn);
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new ProfilListDTO(
                 rs.getLong("partNo"),
                 rs.getString("description"),
-                Math.round(rs.getDouble("profilWidth")*1000),  // width in mm.
+                Math.round(rs.getDouble("profilWidth") * 1000), // mm
                 rs.getDouble("onHand"),
                 rs.getDouble("listPrice")
         ));
-        List<AccessoryListDTO> accessoryParts = jdbcTemplate.query(queryParts, (rs, rowNum) -> new AccessoryListDTO(
+    }
+
+    private List<AccessoryListDTO> fetchAccessoryParts(String priceColumn) {
+        String sql = String.format("""
+            SELECT PartNo, Description, %s AS ListPrice
+            FROM parts
+            WHERE ProfilWidth < 0.0003 OR ProfilWidth IS NULL
+            """, priceColumn);
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new AccessoryListDTO(
                 rs.getLong("partNo"),
                 rs.getString("description"),
                 rs.getDouble("listPrice")
         ));
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("bagetParts", bagetParts);
-        response.put("accessoryParts", accessoryParts);
-
-        return ResponseEntity.ok(response);
-
     }
+
 }
