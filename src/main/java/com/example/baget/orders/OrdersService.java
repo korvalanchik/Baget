@@ -391,6 +391,7 @@ public class OrdersService {
                 item.setQty(itemDTO.getQty());
                 item.setQuantity(itemDTO.getQuantity());
                 item.setSellPrice(itemDTO.getSellPrice());
+                item.setResellerPrice(itemDTO.getResellerPrice());
                 item.setDiscount(itemDTO.getDiscount());
                 item.setOnHand(itemDTO.getOnHand());
                 item.setCost(itemDTO.getCost());

@@ -51,6 +51,9 @@ public class Items {
     @Column(name = "SellPrice")
     private Double sellPrice;
 
+    @Column(name = "ResellerPrice")
+    private Double resellerPrice;
+
     @Column(name = "Discount")
     private Double discount;
 

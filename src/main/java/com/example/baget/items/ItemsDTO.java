@@ -34,6 +34,8 @@ public class ItemsDTO {
 
     private Double sellPrice;
 
+    private Double resellerPrice;
+
     private Double discount;
 
     private Double onHand;

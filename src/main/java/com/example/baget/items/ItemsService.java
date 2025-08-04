@@ -103,6 +103,7 @@ public class ItemsService {
         itemsDTO.setQty(items.getQty());
         itemsDTO.setQuantity(items.getQuantity());
         itemsDTO.setSellPrice(items.getSellPrice());
+        itemsDTO.setResellerPrice(items.getResellerPrice());
         itemsDTO.setDiscount(items.getDiscount());
         itemsDTO.setOnHand(items.getOnHand());
         itemsDTO.setCost(items.getCost());
@@ -124,6 +125,7 @@ public class ItemsService {
         items.setQty(itemsDTO.getQty());
         items.setQuantity(itemsDTO.getQuantity());
         items.setSellPrice(itemsDTO.getSellPrice());
+        items.setResellerPrice(itemsDTO.getResellerPrice());
         items.setDiscount(itemsDTO.getDiscount());
         items.setOnHand(itemsDTO.getOnHand());
         items.setCost(itemsDTO.getCost());
