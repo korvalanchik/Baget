@@ -107,6 +107,7 @@ public class ItemsService {
         itemsDTO.setDiscount(items.getDiscount());
         itemsDTO.setOnHand(items.getOnHand());
         itemsDTO.setCost(items.getCost());
+        itemsDTO.setSum(items.getSum());
         return itemsDTO;
     }
 
@@ -129,6 +130,7 @@ public class ItemsService {
         items.setDiscount(itemsDTO.getDiscount());
         items.setOnHand(itemsDTO.getOnHand());
         items.setCost(itemsDTO.getCost());
+        items.setSum(itemsDTO.getSum());
     }
 
 }

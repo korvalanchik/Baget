@@ -395,6 +395,7 @@ public class OrdersService {
                 item.setDiscount(itemDTO.getDiscount());
                 item.setOnHand(itemDTO.getOnHand());
                 item.setCost(itemDTO.getCost());
+                item.setSum(itemDTO.getSum());
 
                 itemsRepository.save(item);
                 itemNo++;

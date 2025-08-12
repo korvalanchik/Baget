@@ -63,4 +63,7 @@ public class Items {
     @Column(name = "Cost")
     private Double cost;
 
+    @Column(name = "Sum")
+    private Double sum;
+
 }

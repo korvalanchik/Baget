@@ -42,4 +42,5 @@ public class ItemsDTO {
 
     private Double cost;
 
+    private Double sum;
 }
