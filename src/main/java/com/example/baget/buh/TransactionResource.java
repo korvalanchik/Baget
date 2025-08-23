@@ -17,15 +17,27 @@ public class TransactionResource {
         return transactionService.getTransactionsByOrder(orderNo);
     }
 
-    @PostMapping("/{orderNo}")
-    public TransactionDTO addTransaction(@PathVariable Long orderNo,
-                                         @RequestBody TransactionDTO transactionDTO) {
-        return transactionService.addTransaction(orderNo, transactionDTO);
-    }
-
     @GetMapping("/transaction-types")
     public List<TransactionTypeDTO> getTransactionTypes() {
         return transactionService.getAllTransactionTypes();
     }
+
+    @PostMapping("/{orderNo}")
+    public TransactionDTO addTransaction(@PathVariable Long orderNo,
+                                         @RequestBody TransactionDTO dto) {
+        return transactionService.addTransaction(orderNo, dto);
+    }
+
+    @PostMapping("/{transactionId}/complete")
+    public void completeTransaction(@PathVariable Long transactionId) {
+        transactionService.completeTransaction(transactionId);
+    }
+
+    @PostMapping("/{transactionId}/cancel")
+    public void cancelTransaction(@PathVariable Long transactionId) {
+        transactionService.cancelTransaction(transactionId);
+    }
+
+
 
 }

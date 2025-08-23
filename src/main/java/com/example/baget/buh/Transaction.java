@@ -2,9 +2,7 @@ package com.example.baget.buh;
 
 import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 
@@ -13,10 +11,13 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Transaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
     private Long transactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,6 +29,7 @@ public class Transaction {
     private TransactionType transactionType;
 
     @Column(name = "transaction_date")
+    @Builder.Default
     private OffsetDateTime transactionDate = OffsetDateTime.now();
 
     @Column(nullable = false)

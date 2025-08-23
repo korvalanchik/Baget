@@ -74,6 +74,20 @@ public class TransactionService {
                 .toList();
     }
 
+    public void completeTransaction(Long transactionId) {
+        Transaction tx = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+        tx.setStatus("Completed");
+        transactionRepository.save(tx);
+    }
+
+    public void cancelTransaction(Long transactionId) {
+        Transaction tx = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+        tx.setStatus("Canceled");
+        transactionRepository.save(tx);
+    }
+
     private TransactionTypeDTO toDtoType(TransactionType type) {
         TransactionTypeDTO dto = new TransactionTypeDTO();
         dto.setTypeId(type.getTypeId());
@@ -89,12 +103,10 @@ public class TransactionService {
 
         return TransactionDTO.builder()
                 .transactionId(entity.getTransactionId())
-                .orderNo(entity.getOrder().getOrderNo())
-
-                .transactionTypeId(entity.getTransactionType().getTypeId())
-                .transactionTypeCode(entity.getTransactionType().getCode())
-                .transactionTypeDescription(entity.getTransactionType().getDescription())
-
+                .orderNo(entity.getOrder() != null ? entity.getOrder().getOrderNo() : null)
+                .transactionTypeId(entity.getTransactionType() != null ? entity.getTransactionType().getTypeId() : null)
+                .transactionTypeCode(entity.getTransactionType() != null ? entity.getTransactionType().getCode() : null)
+                .transactionTypeDescription(entity.getTransactionType() != null ? entity.getTransactionType().getDescription() : null)
                 .transactionDate(entity.getTransactionDate())
                 .amount(entity.getAmount())
                 .reference(entity.getReference())
@@ -108,15 +120,13 @@ public class TransactionService {
             return null;
         }
 
-        Transaction tx = new Transaction();
-        tx.setTransactionId(dto.getTransactionId());
-
-        tx.setTransactionDate(dto.getTransactionDate() != null ? dto.getTransactionDate() : OffsetDateTime.now());
-        tx.setAmount(dto.getAmount());
-        tx.setReference(dto.getReference());
-        tx.setStatus(dto.getStatus());
-        tx.setNote(dto.getNote());
-
-        return tx;
+        return Transaction.builder()
+                .transactionId(dto.getTransactionId())
+                .transactionDate(dto.getTransactionDate() != null ? dto.getTransactionDate() : OffsetDateTime.now())
+                .amount(dto.getAmount())
+                .reference(dto.getReference())
+                .status(dto.getStatus())
+                .note(dto.getNote())
+                .build();
     }
 }
