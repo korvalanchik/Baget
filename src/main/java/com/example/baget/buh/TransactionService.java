@@ -91,6 +91,7 @@ public class TransactionService {
     private TransactionTypeDTO toDtoType(TransactionType type) {
         TransactionTypeDTO dto = new TransactionTypeDTO();
         dto.setTypeId(type.getTypeId());
+        dto.setCode(type.getCode());
         dto.setDescription(type.getDescription()); // або description, якщо так називається
         return dto;
     }
