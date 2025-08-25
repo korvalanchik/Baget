@@ -80,10 +80,9 @@ public class OrdersResource {
     @GetMapping("/summary")
     public Page<OrderSummaryView> getOrderSummaries(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "1") String branch
+            @RequestParam(defaultValue = "10") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "saleDate"));
-        return ordersService.getOrderSummaries(pageable, branch);
+        return ordersService.getOrderSummaries(pageable);
     }
 }

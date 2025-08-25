@@ -115,30 +115,22 @@ public class OrdersService {
 //                .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
 //    }
     public Page<? extends BaseOrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String username = auth.getName();
-
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        Set<String> userRoles = user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
+        UserAndRoles result = getUserAndRoles();
 
         Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
 
         // ADMIN бачить усе
-        if (userRoles.contains("ROLE_ADMIN")) {
+        if (result.userRoles().contains("ROLE_ADMIN")) {
             return ordersRepository.findAll(pageable)
                     .map(order -> mapToAdminDTO(order, userIdUsernameMap));
         }
 
-        Set<String> allowedBranches = user.getAllowedBranches().stream()
+        Set<String> allowedBranches = result.user().getAllowedBranches().stream()
                 .map(Branch::getName)
                 .collect(Collectors.toSet());
 
         // COUNTER бачить замовлення по дозволених філіях
-        if (userRoles.contains("ROLE_COUNTER")) {
+        if (result.userRoles().contains("ROLE_COUNTER")) {
             return ordersRepository.findByBranchNameIn(allowedBranches, pageable)
                     .map(order -> mapToCounterDTO(order, userIdUsernameMap));
         }
@@ -152,8 +144,32 @@ public class OrdersService {
                 .map(order -> mapToUserDTO(order, userIdUsernameMap));
     }
 
-    public Page<OrderSummaryView> getOrderSummaries(Pageable pageable, String branchName) {
-        return ordersRepository.findSummaryByBranch_Name(branchName, pageable);
+    private UserAndRoles getUserAndRoles() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        Set<String> userRoles = user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+        return new UserAndRoles(user, userRoles);
+    }
+
+    private record UserAndRoles(User user, Set<String> userRoles) {
+    }
+
+
+    public Page<OrderSummaryView> getOrderSummaries(Pageable pageable) {
+        UserAndRoles result = getUserAndRoles();
+
+        // ADMIN бачить усе
+        if (result.userRoles.contains("ROLE_ADMIN")) {
+            return ordersRepository.findAllBy(pageable);
+        } else {
+            throw new AccessDeniedException("Обмежено права доступу");
+        }
     }
 
 
@@ -242,13 +258,6 @@ public class OrdersService {
         dto.setRahFacNo(order.getRahFacNo());
         dto.setNotice(order.getNotice());
     }
-
-
-
-
-
-
-
 
     private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO) {
         ordersDTO.setOrderNo(orders.getOrderNo());
