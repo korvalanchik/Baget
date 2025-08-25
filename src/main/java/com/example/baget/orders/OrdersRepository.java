@@ -12,6 +12,8 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     @NonNull
     Page<Orders> findAll(@NonNull Pageable pageable);
 
-    Page<Orders> findByBranchName(String branchName, Pageable pageable);
+    Page<Orders> findByBranch_Name(String branchName, Pageable pageable);
     Page<Orders> findByBranchNameIn(Set<String> branchNames, Pageable pageable);
+
+    Page<OrderSummaryView> findSummaryByBranch_Name(String branchName, Pageable pageable);
 }

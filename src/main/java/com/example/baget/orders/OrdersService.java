@@ -148,9 +148,14 @@ public class OrdersService {
             throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
         }
 
-        return ordersRepository.findByBranchName(requestedBranchName, pageable)
+        return ordersRepository.findByBranch_Name(requestedBranchName, pageable)
                 .map(order -> mapToUserDTO(order, userIdUsernameMap));
     }
+
+    public Page<OrderSummaryView> getOrderSummaries(Pageable pageable, String branchName) {
+        return ordersRepository.findSummaryByBranch_Name(branchName, pageable);
+    }
+
 
     @Transactional
     public Long create(final OrdersDTO ordersDTO) {

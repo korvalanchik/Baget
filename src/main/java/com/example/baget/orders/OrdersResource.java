@@ -76,4 +76,14 @@ public class OrdersResource {
         ordersService.delete(orderNo);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/summary")
+    public Page<OrderSummaryView> getOrderSummaries(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") String branch
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "saleDate"));
+        return ordersService.getOrderSummaries(pageable, branch);
+    }
 }
