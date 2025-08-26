@@ -33,9 +33,6 @@ public class Orders {
     @JoinColumn(name = "BranchNo")
     private Branch branch;
 
-//    @Column(name = "BranchNo")
-//    private Long branchNo;
-
     @Column(name = "SaleDate")
     private OffsetDateTime saleDate;
 
