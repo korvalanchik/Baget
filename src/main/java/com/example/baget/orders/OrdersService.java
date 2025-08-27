@@ -114,34 +114,59 @@ public class OrdersService {
 //        return ordersRepository.findByBranchName(requestedBranchName, pageable)
 //                .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
 //    }
-    public Page<? extends BaseOrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
-        UserAndRoles result = getUserAndRoles();
 
-        Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
+// previous
+//    public Page<? extends BaseOrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
+//        UserAndRoles result = getUserAndRoles();
+//
+//        Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
+//
+//        // ADMIN бачить усе
+//        if (result.userRoles().contains("ROLE_ADMIN")) {
+//            return ordersRepository.findAll(pageable)
+//                    .map(order -> mapToAdminDTO(order, userIdUsernameMap));
+//        }
+//
+//        Set<String> allowedBranches = result.user().getAllowedBranches().stream()
+//                .map(Branch::getName)
+//                .collect(Collectors.toSet());
+//
+//        // COUNTER бачить замовлення по дозволених філіях
+//        if (result.userRoles().contains("ROLE_COUNTER")) {
+//            return ordersRepository.findByBranchNameIn(allowedBranches, pageable)
+//                    .map(order -> mapToCounterDTO(order, userIdUsernameMap));
+//        }
+//
+//        // USER — лише для одного філіалу
+//        if (!allowedBranches.contains(requestedBranchName)) {
+//            throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
+//        }
+//
+//        return ordersRepository.findByBranch_Name(requestedBranchName, pageable)
+//                .map(order -> mapToUserDTO(order, userIdUsernameMap));
+//    }
+    public Page<? extends OrderProjections.BaseOrdersView> getOrders(Pageable pageable, String requestedBranchName) {
+        UserAndRoles userAndRoles = getUserAndRoles();
 
-        // ADMIN бачить усе
-        if (result.userRoles().contains("ROLE_ADMIN")) {
-            return ordersRepository.findAll(pageable)
-                    .map(order -> mapToAdminDTO(order, userIdUsernameMap));
-        }
-
-        Set<String> allowedBranches = result.user().getAllowedBranches().stream()
+        Set<String> allowedBranches = userAndRoles.user().getAllowedBranches()
+                .stream()
                 .map(Branch::getName)
                 .collect(Collectors.toSet());
 
-        // COUNTER бачить замовлення по дозволених філіях
-        if (result.userRoles().contains("ROLE_COUNTER")) {
-            return ordersRepository.findByBranchNameIn(allowedBranches, pageable)
-                    .map(order -> mapToCounterDTO(order, userIdUsernameMap));
+        if (userAndRoles.userRoles().contains("ROLE_ADMIN")) {
+            return ordersRepository.findAllBy(pageable);
         }
 
-        // USER — лише для одного філіалу
+        if (userAndRoles.userRoles().contains("ROLE_COUNTER")) {
+            return ordersRepository.findByBranch_NameIn(allowedBranches, pageable);
+        }
+
+        // USER — лише для конкретної філії
         if (!allowedBranches.contains(requestedBranchName)) {
             throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
         }
 
-        return ordersRepository.findByBranch_Name(requestedBranchName, pageable)
-                .map(order -> mapToUserDTO(order, userIdUsernameMap));
+        return ordersRepository.findByBranch_Name(requestedBranchName, pageable);
     }
 
     private UserAndRoles getUserAndRoles() {
@@ -166,7 +191,7 @@ public class OrdersService {
 
         // ADMIN бачить усе
         if (result.userRoles.contains("ROLE_ADMIN")) {
-            return ordersRepository.findAllBy(pageable);
+            return ordersRepository.findSummaryAllBy(pageable);
         } else {
             throw new AccessDeniedException("Обмежено права доступу");
         }
@@ -184,7 +209,8 @@ public class OrdersService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Orders order = new Orders();
         mapToEntity(ordersDTO, order);
-        order.setEmpNo(user.getId()); // Присвоюємо userId як empNo
+        order.setEmployee(user);
+//        order.setEmpNo(user.getId()); // Присвоюємо userId як empNo
         ordersRepository.save(order);
         saveItems(1L, order, ordersDTO);
         return order.getOrderNo();
@@ -204,61 +230,6 @@ public class OrdersService {
     }
 
 
-    private OrderAdminDTO mapToAdminDTO(Orders order, Map<Long, String> userMap) {
-        OrderAdminDTO dto = new OrderAdminDTO();
-        fillBaseFields(dto, order, userMap);
-        dto.setTaxRate(order.getTaxRate());
-        dto.setAmountPaid(order.getAmountPaid());
-        dto.setAmountDueN(order.getAmountDueN());
-        dto.setIncome(order.getIncome());
-        dto.setTotalCost(order.getTotalCost());
-        dto.setPriceLevel(order.getPriceLevel());
-        return dto;
-    }
-
-    private OrderCounterDTO mapToCounterDTO(Orders order, Map<Long, String> userMap) {
-        OrderCounterDTO dto = new OrderCounterDTO();
-        fillBaseFields(dto, order, userMap);
-        dto.setAmountPaid(order.getAmountPaid());
-        dto.setAmountDueN(order.getAmountDueN());
-        dto.setTotalCost(order.getTotalCost());
-        return dto;
-    }
-
-    private OrderUserDTO mapToUserDTO(Orders order, Map<Long, String> userMap) {
-        OrderUserDTO dto = new OrderUserDTO();
-        fillBaseFields(dto, order, userMap);
-        return dto;
-    }
-
-    private void fillBaseFields(final BaseOrdersDTO dto, final Orders order, final Map<Long, String> userMap) {
-        dto.setOrderNo(order.getOrderNo());
-        dto.setCustNo(order.getCustomer().getCustNo());
-        dto.setCompany(order.getCustomer().getCompany());
-        dto.setPhone(order.getCustomer().getMobile());
-        dto.setBranchName(order.getBranch().getName());
-        dto.setSaleDate(order.getSaleDate());
-        dto.setShipDate(order.getShipDate());
-        dto.setEmpNo(userMap.getOrDefault(order.getEmpNo(), null));
-        dto.setShipToContact(order.getShipToContact());
-        dto.setShipToAddr1(order.getShipToAddr1());
-        dto.setShipToAddr2(order.getShipToAddr2());
-        dto.setShipToCity(order.getShipToCity());
-        dto.setShipToState(order.getShipToState());
-        dto.setShipToZip(order.getShipToZip());
-        dto.setShipToCountry(order.getShipToCountry());
-        dto.setShipToPhone(order.getShipToPhone());
-        dto.setShipVia(order.getShipVia());
-        dto.setPo(order.getPo());
-        dto.setTerms(order.getTerms());
-        dto.setPaymentMethod(order.getPaymentMethod());
-        dto.setItemsTotal(order.getItemsTotal());
-        dto.setFreight(order.getFreight());
-        dto.setStatusOrder(order.getStatusOrder());
-        dto.setRahFacNo(order.getRahFacNo());
-        dto.setNotice(order.getNotice());
-    }
-
     private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO) {
         ordersDTO.setOrderNo(orders.getOrderNo());
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
@@ -272,47 +243,12 @@ public class OrdersService {
         ordersDTO.setSaleDate(orders.getSaleDate());
         ordersDTO.setShipDate(orders.getShipDate());
 
-        User user = userRepository.findById(orders.getEmpNo()).orElse(null);
+        User user = orders.getEmployee();
         if (user != null) {
             ordersDTO.setEmpNo(user.getUsername()); // записуємо username в DTO
         } else {
             ordersDTO.setEmpNo(null);
         }
-        ordersDTO.setShipToContact(orders.getShipToContact());
-        ordersDTO.setShipToAddr1(orders.getShipToAddr1());
-        ordersDTO.setShipToAddr2(orders.getShipToAddr2());
-        ordersDTO.setShipToCity(orders.getShipToCity());
-        ordersDTO.setShipToState(orders.getShipToState());
-        ordersDTO.setShipToZip(orders.getShipToZip());
-        ordersDTO.setShipToCountry(orders.getShipToCountry());
-        ordersDTO.setShipToPhone(orders.getShipToPhone());
-        ordersDTO.setShipVia(orders.getShipVia());
-        ordersDTO.setPo(orders.getPo());
-        ordersDTO.setTerms(orders.getTerms());
-        ordersDTO.setPaymentMethod(orders.getPaymentMethod());
-        ordersDTO.setItemsTotal(orders.getItemsTotal());
-        ordersDTO.setTaxRate(orders.getTaxRate());
-        ordersDTO.setFreight(orders.getFreight());
-        ordersDTO.setAmountPaid(orders.getAmountPaid());
-        ordersDTO.setAmountDueN(orders.getAmountDueN());
-        ordersDTO.setIncome(orders.getIncome());
-        ordersDTO.setTotalCost(orders.getTotalCost());
-        ordersDTO.setPriceLevel(orders.getPriceLevel());
-        ordersDTO.setStatusOrder(orders.getStatusOrder());
-        ordersDTO.setRahFacNo(orders.getRahFacNo());
-        ordersDTO.setNotice(orders.getNotice());
-        return ordersDTO;
-    }
-
-    private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO, final Map<Long, String> userMap) {
-        ordersDTO.setOrderNo(orders.getOrderNo());
-        ordersDTO.setCustNo(orders.getCustomer().getCustNo());
-        ordersDTO.setCompany(orders.getCustomer().getCompany());
-        ordersDTO.setPhone(orders.getCustomer().getMobile());
-        ordersDTO.setBranchName(orders.getBranch().getName());
-        ordersDTO.setSaleDate(orders.getSaleDate());
-        ordersDTO.setShipDate(orders.getShipDate());
-        ordersDTO.setEmpNo(userMap.getOrDefault(orders.getEmpNo(), null));
         ordersDTO.setShipToContact(orders.getShipToContact());
         ordersDTO.setShipToAddr1(orders.getShipToAddr1());
         ordersDTO.setShipToAddr2(orders.getShipToAddr2());

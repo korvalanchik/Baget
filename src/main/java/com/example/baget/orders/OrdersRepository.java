@@ -12,8 +12,18 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     @NonNull
     Page<Orders> findAll(@NonNull Pageable pageable);
 
-    Page<Orders> findByBranch_Name(String branchName, Pageable pageable);
-    Page<Orders> findByBranchNameIn(Set<String> branchNames, Pageable pageable);
+//    Page<Orders> findByBranch_Name(String branchName, Pageable pageable);
+//    Page<Orders> findByBranchNameIn(Set<String> branchNames, Pageable pageable);
 
-    Page<OrderSummaryView> findAllBy(Pageable pageable);
+    Page<OrderSummaryView> findSummaryAllBy(Pageable pageable);
+
+    // Admin — бачить усі замовлення
+    Page<OrderProjections.AdminOrderView> findAllBy(Pageable pageable);
+
+    // Counter — бачить тільки дозволені філії
+    Page<OrderProjections.CounterOrderView> findByBranch_NameIn(Set<String> branchNames, Pageable pageable);
+
+    // User — лише для конкретної філії
+    Page<OrderProjections.UserOrderView> findByBranch_Name(String branchName, Pageable pageable);
+
 }

@@ -26,7 +26,7 @@ public class OrdersResource {
     }
 
     @GetMapping
-    public Page<? extends BaseOrdersDTO> getOrders(
+    public Page<? extends OrderProjections.BaseOrdersView> getOrders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "1") String branch // <-- назва філіалу з фронту

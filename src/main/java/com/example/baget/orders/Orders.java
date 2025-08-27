@@ -3,6 +3,7 @@ package com.example.baget.orders;
 import com.example.baget.branch.Branch;
 import com.example.baget.customer.Customer;
 import com.example.baget.items.Items;
+import com.example.baget.users.User;
 import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
@@ -39,8 +40,9 @@ public class Orders {
     @Column(name = "ShipDate")
     private OffsetDateTime shipDate;
 
-    @Column(name = "EmpNo")
-    private Long empNo;
+    @ManyToOne(fetch = FetchType.LAZY) // відносини без FK
+    @JoinColumn(name = "EmpNo", referencedColumnName = "id")
+    private User employee;
 
     @Column(name = "ShipToContact", length = 20)
     private String shipToContact;
