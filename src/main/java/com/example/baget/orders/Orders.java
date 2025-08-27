@@ -40,7 +40,7 @@ public class Orders {
     @Column(name = "ShipDate")
     private OffsetDateTime shipDate;
 
-    @ManyToOne(fetch = FetchType.LAZY) // відносини без FK
+    @ManyToOne(fetch = FetchType.EAGER) // відносини без FK
     @JoinColumn(name = "EmpNo", referencedColumnName = "id")
     private User employee;
 

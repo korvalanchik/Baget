@@ -1,12 +1,8 @@
 package com.example.baget.orders;
 
-import com.example.baget.items.ItemsDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Size;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 public interface OrderProjections {
     // базові поля для всіх користувачів
