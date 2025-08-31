@@ -15,15 +15,16 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
 //    Page<Orders> findByBranch_Name(String branchName, Pageable pageable);
 //    Page<Orders> findByBranchNameIn(Set<String> branchNames, Pageable pageable);
 
-    Page<OrderSummaryView> findSummaryAllBy(Pageable pageable);
+    // ADMIN бачить усі замовлення
+    Page<OrderProjections.AdminOrderView> findAllAdminBy(Pageable pageable);
 
-    // Admin — бачить усі замовлення
-    Page<OrderProjections.AdminOrderView> findAllBy(Pageable pageable);
-
-    // Counter — бачить тільки дозволені філії
+    // COUNTER бачить замовлення по кількох філіях
     Page<OrderProjections.CounterOrderView> findByBranch_NameIn(Set<String> branchNames, Pageable pageable);
 
-    // User — лише для конкретної філії
+    // USER бачить лише замовлення конкретної філії
     Page<OrderProjections.UserOrderView> findByBranch_Name(String branchName, Pageable pageable);
+
+    // Коротке представлення (наприклад, для дашбордів)
+    Page<OrderSummaryView> findAllSummaryBy(Pageable pageable);
 
 }

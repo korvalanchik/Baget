@@ -1,5 +1,6 @@
 package com.example.baget.buh;
 
+import com.example.baget.customer.Customer;
 import lombok.*;
 
 import java.time.OffsetDateTime;
@@ -13,6 +14,7 @@ public class TransactionDTO {
 
     private Long transactionId;
     private Long orderNo;
+    private Long customerId;
 
     private Long transactionTypeId;   // typeId
     private String transactionTypeCode;

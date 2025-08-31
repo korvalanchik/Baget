@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +18,86 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionTypeRepository transactionTypeRepository;
     private final OrdersRepository ordersRepository;
+
+
+    private Transaction processTransaction(Transaction transaction) {
+        // Встановлюємо дату, якщо не задано
+        if (transaction.getTransactionDate() == null) {
+            transaction.setTransactionDate(OffsetDateTime.now());
+        }
+
+        // Залежно від типу транзакції
+        String typeCode = transaction.getTransactionType().getCode();
+
+        if (transaction.getOrder().getOrderNo() != null) {
+            Orders order = ordersRepository.findById(transaction.getOrder().getOrderNo())
+                    .orElseThrow(() -> new RuntimeException("Order not found"));
+
+            switch (typeCode) {
+                case "INVOICE":
+                    // Просто створюємо рахунок – не змінюємо AmountPaid
+                    order.setStatusOrder(1); // наприклад, 1 = створено
+                    break;
+
+                case "PAYMENT":
+                    order.setAmountPaid(
+                            Optional.ofNullable(order.getAmountPaid()).orElse(0.0) + transaction.getAmount()
+                    );
+                    updateOrderStatus(order);
+                    break;
+
+                case "REFUND":
+                    order.setAmountPaid(
+                            Optional.ofNullable(order.getAmountPaid()).orElse(0.0) - transaction.getAmount()
+                    );
+                    updateOrderStatus(order);
+                    break;
+
+                case "ADJUSTMENT", "CHARGE":
+                    order.setAmountDueN(
+                            Optional.ofNullable(order.getAmountDueN()).orElse(0.0) + transaction.getAmount()
+                    );
+                    break;
+
+                case "TRANSFER":
+                    // Логіка переказу – можливо між рахунками/клієнтами
+                    break;
+
+                case "DISCOUNT":
+                    order.setAmountDueN(
+                            Optional.ofNullable(order.getAmountDueN()).orElse(0.0) - transaction.getAmount()
+                    );
+                    break;
+
+                case "CANCEL":
+                    order.setStatusOrder(0); // наприклад, 0 = скасовано
+                    break;
+
+                case "ADVANCE_PAYMENT":
+                    order.setAmountPaid(
+                            Optional.ofNullable(order.getAmountPaid()).orElse(0.0) + transaction.getAmount()
+                    );
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown transaction type: " + typeCode);
+            }
+
+            ordersRepository.save(order);
+        }
+
+        transaction.setStatus("Completed");
+        return transactionRepository.save(transaction);
+    }
+
+    private void updateOrderStatus(Orders order) {
+        if (order.getAmountPaid() >= order.getItemsTotal() + order.getFreight() + order.getTaxRate()) {
+            order.setStatusOrder(4); // 4 = оплачено / завершено
+        } else {
+            order.setStatusOrder(9); // 9 = частково оплачено
+        }
+    }
+
 
 
     @Transactional
@@ -50,6 +131,54 @@ public class TransactionService {
                 .toList();
     }
 
+
+    @Transactional
+    public void createOrderWithBalancePayment(Orders order) {
+        // 1. Поточний баланс
+        Double balance = transactionRepository.getCustomerBalance(order.getCustomer().getCustNo());
+
+        double orderTotal = order.getItemsTotal() + order.getTaxRate() + order.getFreight();
+
+        if (balance >= orderTotal) {
+            // 2. Повністю оплачено
+            order.setAmountPaid(orderTotal);
+            order.setStatusOrder(4); // 4 = Оплачено
+            ordersRepository.save(order);
+
+            // 3. Транзакція списання
+            Transaction debit = new Transaction();
+            debit.setCustomer(order.getCustomer()); // ✅ замість customerId
+            debit.setOrder(order); // ✅ замість orderNo
+            debit.setTransactionType(transactionTypeRepository.findByCode("PAYMENT")); // ✅
+            debit.setAmount(orderTotal);
+            debit.setTransactionDate(OffsetDateTime.now());
+            debit.setStatus("Completed");
+            transactionRepository.save(debit);
+
+        } else {
+            // 4. Часткова оплата
+            order.setAmountPaid(balance);
+            order.setStatusOrder(9); // Частково оплачено
+            ordersRepository.save(order);
+
+            if (balance > 0) {
+                Transaction partial = new Transaction();
+                partial.setCustomer(order.getCustomer()); // ✅
+                partial.setOrder(order); // ✅
+                partial.setTransactionType(transactionTypeRepository.findByCode("PAYMENT")); // ✅
+                partial.setAmount(balance);
+                partial.setTransactionDate(OffsetDateTime.now());
+                partial.setStatus("Completed");
+                transactionRepository.save(partial);
+            }
+        }
+    }
+
+
+
+
+
+
     @Transactional
     public TransactionDTO addTransaction(Long orderNo, TransactionDTO transactionDTO) {
         Orders order = ordersRepository.findById(orderNo)
@@ -67,12 +196,10 @@ public class TransactionService {
         return toDto(saved);
     }
 
-    public List<TransactionTypeDTO> getAllTransactionTypes() {
-        return transactionTypeRepository.findAll()
-                .stream()
-                .map(this::toDtoType)
-                .toList();
+    public List<TransactionTypeProjection> getAllTransactionTypes() {
+        return transactionTypeRepository.findAllProjectedBy();
     }
+
 
     public void completeTransaction(Long transactionId) {
         Transaction tx = transactionRepository.findById(transactionId)
@@ -86,14 +213,6 @@ public class TransactionService {
                 .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
         tx.setStatus("Canceled");
         transactionRepository.save(tx);
-    }
-
-    private TransactionTypeDTO toDtoType(TransactionType type) {
-        TransactionTypeDTO dto = new TransactionTypeDTO();
-        dto.setTypeId(type.getTypeId());
-        dto.setCode(type.getCode());
-        dto.setDescription(type.getDescription()); // або description, якщо так називається
-        return dto;
     }
 
 

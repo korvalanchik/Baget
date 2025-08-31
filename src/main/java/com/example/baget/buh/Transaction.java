@@ -1,5 +1,6 @@
 package com.example.baget.buh;
 
+import com.example.baget.customer.Customer;
 import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,8 +22,12 @@ public class Transaction {
     private Long transactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_no", nullable = false)
+    @JoinColumn(name = "order_no")
     private Orders order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "type_id", nullable = false)

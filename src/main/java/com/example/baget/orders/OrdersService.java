@@ -9,7 +9,6 @@ import com.example.baget.customer.CustomerService;
 import com.example.baget.items.*;
 import com.example.baget.users.Role;
 import com.example.baget.users.User;
-import com.example.baget.users.UserCacheService;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
 import jakarta.transaction.Transactional;
@@ -34,19 +33,17 @@ public class OrdersService {
     private final CustomerRepository customerRepository;
     private final CustomerService customerService;
     private final UsersRepository userRepository;
-    private final UserCacheService userCacheService;
     private final BranchRepository branchRepository;
     private final ItemsRepository itemsRepository;
     private final ItemsService itemsService;
     public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository,
                          CustomerService customerService, UsersRepository userRepository,
-                         UserCacheService userCacheService, BranchRepository branchRepository,
+                         BranchRepository branchRepository,
                          ItemsRepository itemsRepository, ItemsService itemsService) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
         this.customerService = customerService;
         this.userRepository = userRepository;
-        this.userCacheService = userCacheService;
         this.branchRepository = branchRepository;
         this.itemsRepository = itemsRepository;
         this.itemsService = itemsService;
@@ -153,7 +150,7 @@ public class OrdersService {
                 .collect(Collectors.toSet());
 
         if (userAndRoles.userRoles().contains("ROLE_ADMIN")) {
-            return ordersRepository.findAllBy(pageable);
+            return ordersRepository.findAllAdminBy(pageable);
         }
 
         if (userAndRoles.userRoles().contains("ROLE_COUNTER")) {
@@ -190,7 +187,7 @@ public class OrdersService {
 
         // ADMIN бачить усе
         if (result.userRoles.contains("ROLE_ADMIN")) {
-            return ordersRepository.findSummaryAllBy(pageable);
+            return ordersRepository.findAllSummaryBy(pageable);
         } else {
             throw new AccessDeniedException("Обмежено права доступу");
         }

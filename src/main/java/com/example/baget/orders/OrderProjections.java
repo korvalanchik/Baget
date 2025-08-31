@@ -21,9 +21,10 @@ public interface OrderProjections {
         @JsonProperty("addr1")
         String getCustomer_Addr1();
 
-        OffsetDateTime getSaleDate();
         @JsonProperty("branchName")
         String getBranch_Name(); // Orders.branch.name
+
+        OffsetDateTime getSaleDate();
 
         OffsetDateTime getShipDate();
 
@@ -32,20 +33,28 @@ public interface OrderProjections {
 
         Double getItemsTotal();
 
+        Integer getStatusOrder();
+
     }
 
     // для адміну
     interface AdminOrderView extends BaseOrdersView {
-        Integer getStatusOrder();
+        Double getTaxRate();
+        Double getFreight();
+        Double getAmountPaid();
+        Double getAmountDueN();
+        Double getIncome();
+        Double getTotalCost();
+        Integer getPriceLevel();
     }
 
     // для касира
     interface CounterOrderView extends BaseOrdersView {
-        // успадковує базові поля
+        Double getAmountPaid();
     }
 
     // для звичайного користувача
     interface UserOrderView extends BaseOrdersView {
-        // тільки базові поля
+        String getNotice();
     }
 }
