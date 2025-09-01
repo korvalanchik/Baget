@@ -1,5 +1,7 @@
 package com.example.baget.buh;
 
+import com.example.baget.customer.Customer;
+import com.example.baget.customer.CustomerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,7 +20,7 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionTypeRepository transactionTypeRepository;
     private final OrdersRepository ordersRepository;
-
+    private final CustomerRepository customerRepository;
 
     private Transaction processTransaction(Transaction transaction) {
         // Встановлюємо дату, якщо не задано
@@ -26,72 +28,99 @@ public class TransactionService {
             transaction.setTransactionDate(OffsetDateTime.now());
         }
 
-        // Залежно від типу транзакції
         String typeCode = transaction.getTransactionType().getCode();
 
-        if (transaction.getOrder().getOrderNo() != null) {
+        // Якщо є замовлення
+        if (transaction.getOrder() != null && transaction.getOrder().getOrderNo() != null) {
             Orders order = ordersRepository.findById(transaction.getOrder().getOrderNo())
                     .orElseThrow(() -> new RuntimeException("Order not found"));
 
             switch (typeCode) {
-                case "INVOICE":
-                    // Просто створюємо рахунок – не змінюємо AmountPaid
-                    order.setStatusOrder(1); // наприклад, 1 = створено
-                    break;
+                case "INVOICE" ->
+                    order.setStatusOrder(7); // До оплати
 
-                case "PAYMENT":
+                case "PAYMENT" -> {
                     order.setAmountPaid(
                             Optional.ofNullable(order.getAmountPaid()).orElse(0.0) + transaction.getAmount()
                     );
+                    order.setAmountDueN(
+                            Optional.ofNullable(order.getAmountDueN()).orElse(0.0) - transaction.getAmount()
+                    );
+                    order.setIncome(
+                            Optional.ofNullable(order.getIncome()).orElse(0.0) + transaction.getAmount()
+                    );
                     updateOrderStatus(order);
-                    break;
+                }
 
-                case "REFUND":
+                case "REFUND" -> {
                     order.setAmountPaid(
                             Optional.ofNullable(order.getAmountPaid()).orElse(0.0) - transaction.getAmount()
                     );
                     updateOrderStatus(order);
-                    break;
+                }
 
-                case "ADJUSTMENT", "CHARGE":
+                case "ADJUSTMENT", "CHARGE" ->
                     order.setAmountDueN(
                             Optional.ofNullable(order.getAmountDueN()).orElse(0.0) + transaction.getAmount()
                     );
-                    break;
 
-                case "TRANSFER":
-                    // Логіка переказу – можливо між рахунками/клієнтами
-                    break;
+                case "TRANSFER" -> {
+                    // логіка переказу по замовленню
+                }
 
-                case "DISCOUNT":
+                case "DISCOUNT" ->
                     order.setAmountDueN(
                             Optional.ofNullable(order.getAmountDueN()).orElse(0.0) - transaction.getAmount()
                     );
-                    break;
 
-                case "CANCEL":
-                    order.setStatusOrder(0); // наприклад, 0 = скасовано
-                    break;
+                case "CANCEL" ->
+                    order.setStatusOrder(5); // Скасовано
 
-                case "ADVANCE_PAYMENT":
+                case "ADVANCE_PAYMENT" ->
                     order.setAmountPaid(
                             Optional.ofNullable(order.getAmountPaid()).orElse(0.0) + transaction.getAmount()
                     );
-                    break;
 
-                default:
+                default ->
                     throw new IllegalArgumentException("Unknown transaction type: " + typeCode);
             }
-
             ordersRepository.save(order);
-        }
 
+        } else if (transaction.getCustomer() != null) {
+            // --- Логіка для клієнта ---
+            Customer customer = transaction.getCustomer();
+
+            switch (typeCode) {
+                // клієнт поповнив баланс (аванс)
+                // баланс рахується через репозиторій, тому просто зберігаємо транзакцію
+                case "ADVANCE_PAYMENT" ->
+                    transaction.setNote("Авансовий платіж клієнта");
+
+                // контроль, щоб повернення не перевищило поточного балансу клієнта
+                case "REFUND" -> {
+                    Double currentBalance = transactionRepository.getCustomerBalance(customer.getCustNo());
+                    if (transaction.getAmount() > currentBalance) {
+                        throw new IllegalArgumentException("Refund перевищує баланс клієнта");
+                    }
+                    transaction.setNote("Повернення коштів клієнту");
+                }
+
+                case "TRANSFER" ->
+                    // Наприклад, переказ між клієнтами
+                    transaction.setNote("Переказ між клієнтами");
+                    // Тут можна додати логіку пошуку отримувача і створення "дзеркальної" транзакції
+
+                default -> throw new IllegalArgumentException("Transaction type " + typeCode + " requires orderNo");
+            }
+        } else {
+            throw new IllegalArgumentException("Transaction must be linked to Order or Customer");
+        }
         transaction.setStatus("Completed");
         return transactionRepository.save(transaction);
     }
 
     private void updateOrderStatus(Orders order) {
-        if (order.getAmountPaid() >= order.getItemsTotal() + order.getFreight() + order.getTaxRate()) {
+        if (order.getAmountDueN() > 0d) {
             order.setStatusOrder(4); // 4 = оплачено / завершено
         } else {
             order.setStatusOrder(9); // 9 = частково оплачено
@@ -102,23 +131,41 @@ public class TransactionService {
 
     @Transactional
     public TransactionDTO createTransaction(TransactionDTO dto) {
-        // 1. шукаємо замовлення
-        Orders order = ordersRepository.findById(dto.getOrderNo())
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + dto.getOrderNo()));
-
-        // 2. шукаємо тип транзакції
+        // 1. шукаємо тип транзакції
         TransactionType transactionType = transactionTypeRepository.findById(dto.getTransactionTypeId())
                 .orElseThrow(() -> new IllegalArgumentException("TransactionType not found with id: " + dto.getTransactionTypeId()));
 
-        // 3. мапимо DTO -> Entity
         Transaction transaction = toEntity(dto);
-        transaction.setOrder(order);
         transaction.setTransactionType(transactionType);
 
-        // 4. зберігаємо
-        Transaction saved = transactionRepository.save(transaction);
+        if (dto.getOrderNo() != null) {
+            // --- транзакція по замовленню ---
+            Orders order = ordersRepository.findById(dto.getOrderNo())
+                    .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + dto.getOrderNo()));
 
-        // 5. повертаємо DTO
+            transaction.setOrder(order);
+
+        } else if (dto.getCustomerId() != null) {
+            // --- транзакція по клієнту ---
+            Customer customer = customerRepository.findById(dto.getCustomerId())
+                    .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + dto.getCustomerId()));
+
+            transaction.setCustomer(customer);
+
+            switch (transactionType.getCode()) {
+                case "ADVANCE_PAYMENT" -> transaction.setNote("Авансовий платіж без замовлення");
+                case "REFUND" -> transaction.setNote("Повернення коштів клієнту");
+                case "TRANSFER" -> transaction.setNote("Переказ між клієнтами");
+                default -> throw new IllegalArgumentException("Transaction type " + transactionType.getCode() + " requires orderNo");
+            }
+
+        } else {
+            throw new IllegalArgumentException("Either orderNo or customerId must be provided");
+        }
+
+        // --- тут викликаємо універсальний метод ---
+        Transaction saved = processTransaction(transaction);
+
         return toDto(saved);
     }
 
