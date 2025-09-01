@@ -120,7 +120,7 @@ public class TransactionService {
     }
 
     private void updateOrderStatus(Orders order) {
-        if (order.getAmountDueN() > 0d) {
+        if (order.getAmountDueN() == 0d) {
             order.setStatusOrder(4); // 4 = оплачено / завершено
         } else {
             order.setStatusOrder(9); // 9 = частково оплачено
