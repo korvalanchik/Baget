@@ -4,7 +4,6 @@ import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,10 +52,44 @@ public class TransactionService {
                 }
 
                 case "REFUND" -> {
-                    order.setAmountPaid(
-                            Optional.ofNullable(order.getAmountPaid()).orElse(0.0) - transaction.getAmount()
-                    );
+                    double currentPaid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+                    double refundAmount = transaction.getAmount();
+
+                    if (refundAmount < currentPaid) {
+                        // Частковий REFUND
+                        order.setAmountPaid(currentPaid - refundAmount);
+                        order.setAmountDueN(order.getAmountDueN() + refundAmount);
+                        order.setIncome(order.getIncome() - refundAmount);
+
+                    } else {
+                        // Повний REFUND → скасування замовлення
+                        order.setAmountPaid(0.0);
+                        order.setAmountDueN(0.0);
+
+                        order.setStatusOrder(10);
+
+                        // Створюємо додаткову транзакцію на клієнта, якщо потрібно
+                        createRefundTransaction(
+                                order.getCustomer(),
+                                refundAmount - currentPaid,
+                                "REFUND напряму клієнту через неможливість виконати замовлення"
+                        );
+                    }
+
                     updateOrderStatus(order);
+                }
+
+                case "CANCEL" -> {
+                    order.setStatusOrder(5);
+                    order.setAmountDueN(0.0);
+
+                    double paid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+                    createRefundTransaction(
+                            order.getCustomer(),
+                            paid,
+                            "Автоматичне повернення після відміни замовлення"
+                    );
+                    order.setAmountPaid(0.0);
                 }
 
                 case "ADJUSTMENT", "CHARGE" ->
@@ -72,9 +105,6 @@ public class TransactionService {
                     order.setAmountDueN(
                             Optional.ofNullable(order.getAmountDueN()).orElse(0.0) - transaction.getAmount()
                     );
-
-                case "CANCEL" ->
-                    order.setStatusOrder(5); // Скасовано
 
                 case "ADVANCE_PAYMENT" ->
                     order.setAmountPaid(
@@ -118,6 +148,21 @@ public class TransactionService {
         transaction.setStatus("Completed");
         return transactionRepository.save(transaction);
     }
+
+    private void createRefundTransaction(Customer customer, double amount, String note) {
+        if (amount <= 0) return; // нічого не робимо, якщо сума <= 0
+
+        Transaction refund = new Transaction();
+        refund.setCustomer(customer);
+        refund.setTransactionType(transactionTypeRepository.findByCode("REFUND"));
+        refund.setAmount(amount);
+        refund.setTransactionDate(OffsetDateTime.now());
+        refund.setStatus("Completed");
+        refund.setNote(note);
+
+        transactionRepository.save(refund);
+    }
+
 
     private void updateOrderStatus(Orders order) {
         if (order.getAmountDueN() == 0d) {
@@ -179,69 +224,7 @@ public class TransactionService {
     }
 
 
-    @Transactional
-    public void createOrderWithBalancePayment(Orders order) {
-        // 1. Поточний баланс
-        Double balance = transactionRepository.getCustomerBalance(order.getCustomer().getCustNo());
 
-        double orderTotal = order.getItemsTotal() + order.getTaxRate() + order.getFreight();
-
-        if (balance >= orderTotal) {
-            // 2. Повністю оплачено
-            order.setAmountPaid(orderTotal);
-            order.setStatusOrder(4); // 4 = Оплачено
-            ordersRepository.save(order);
-
-            // 3. Транзакція списання
-            Transaction debit = new Transaction();
-            debit.setCustomer(order.getCustomer()); // ✅ замість customerId
-            debit.setOrder(order); // ✅ замість orderNo
-            debit.setTransactionType(transactionTypeRepository.findByCode("PAYMENT")); // ✅
-            debit.setAmount(orderTotal);
-            debit.setTransactionDate(OffsetDateTime.now());
-            debit.setStatus("Completed");
-            transactionRepository.save(debit);
-
-        } else {
-            // 4. Часткова оплата
-            order.setAmountPaid(balance);
-            order.setStatusOrder(9); // Частково оплачено
-            ordersRepository.save(order);
-
-            if (balance > 0) {
-                Transaction partial = new Transaction();
-                partial.setCustomer(order.getCustomer()); // ✅
-                partial.setOrder(order); // ✅
-                partial.setTransactionType(transactionTypeRepository.findByCode("PAYMENT")); // ✅
-                partial.setAmount(balance);
-                partial.setTransactionDate(OffsetDateTime.now());
-                partial.setStatus("Completed");
-                transactionRepository.save(partial);
-            }
-        }
-    }
-
-
-
-
-
-
-    @Transactional
-    public TransactionDTO addTransaction(Long orderNo, TransactionDTO transactionDTO) {
-        Orders order = ordersRepository.findById(orderNo)
-                .orElseThrow(() -> new EntityNotFoundException("Order not found with id " + orderNo));
-
-        TransactionType type = transactionTypeRepository.findById(transactionDTO.getTransactionTypeId())
-                .orElseThrow(() -> new EntityNotFoundException("TransactionType not found with id " + transactionDTO.getTransactionTypeId()));
-
-        Transaction transaction = toEntity(transactionDTO);
-        transaction.setOrder(order);
-        transaction.setTransactionType(type);
-
-        Transaction saved = transactionRepository.save(transaction);
-
-        return toDto(saved);
-    }
 
     public List<TransactionTypeProjection> getAllTransactionTypes() {
         return transactionTypeRepository.findAllProjectedBy();
