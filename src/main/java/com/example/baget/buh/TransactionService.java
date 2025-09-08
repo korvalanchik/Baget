@@ -39,15 +39,32 @@ public class TransactionService {
                     order.setStatusOrder(7); // До оплати
 
                 case "PAYMENT" -> {
-                    order.setAmountPaid(
-                            Optional.ofNullable(order.getAmountPaid()).orElse(0.0) + transaction.getAmount()
-                    );
-                    order.setAmountDueN(
-                            Optional.ofNullable(order.getAmountDueN()).orElse(0.0) - transaction.getAmount()
-                    );
+                    double currentPaid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+                    double currentDue  = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
+
+                    double newPaid = currentPaid + transaction.getAmount();
+
+                    if (newPaid <= currentDue) {
+                        // Немає переплати
+                        order.setAmountPaid(newPaid);
+                        order.setAmountDueN(currentDue - transaction.getAmount());
+                    } else {
+                        // Є переплата
+                        order.setAmountPaid(currentDue); // замовлення закриваємо
+                        order.setAmountDueN(0.0);
+
+                        double overpayment = newPaid - currentDue;
+                        createRefundTransaction(
+                                order.getCustomer(),
+                                overpayment,
+                                "Переплата по замовленню №" + order.getOrderNo()
+                        );
+                    }
+
                     order.setIncome(
                             Optional.ofNullable(order.getIncome()).orElse(0.0) + transaction.getAmount()
                     );
+
                     updateOrderStatus(order);
                 }
 
@@ -212,6 +229,22 @@ public class TransactionService {
         Transaction saved = processTransaction(transaction);
 
         return toDto(saved);
+    }
+
+
+    public TransactionInfoDTO getTransactionInfo(Long orderNo) {
+        Orders order = ordersRepository.findById(orderNo)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+
+        Double balance = transactionRepository.getCustomerBalance(order.getCustomer().getCustNo());
+
+        return new TransactionInfoDTO(
+                order.getOrderNo(),
+                order.getItemsTotal(),
+                order.getAmountPaid(),
+                order.getAmountDueN(),
+                balance
+        );
     }
 
 

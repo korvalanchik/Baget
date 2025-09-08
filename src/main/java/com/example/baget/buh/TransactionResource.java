@@ -22,11 +22,10 @@ public class TransactionResource {
         return transactionService.getAllTransactionTypes();
     }
 
-//    @PostMapping("/{orderNo}")
-//    public TransactionDTO addTransaction(@PathVariable Long orderNo,
-//                                         @RequestBody TransactionDTO dto) {
-//        return transactionService.addTransaction(orderNo, dto);
-//    }
+    @GetMapping("/{orderNo}/transaction-info")
+    public TransactionInfoDTO getTransactionInfo(@PathVariable Long orderNo) {
+        return transactionService.getTransactionInfo(orderNo);
+    }
 
     @PostMapping("/{orderNo}")
     public TransactionDTO createTransaction(@RequestBody TransactionDTO dto) {
