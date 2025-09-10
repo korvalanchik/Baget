@@ -61,13 +61,13 @@ public class TransactionService {
                         order.setAmountPaid(currentPaid + currentDue); // замовлення закриваємо
                         order.setAmountDueN(0.0);
                         order.setIncome(currentIncome + currentDue);
-
-                        double overpayment = transaction.getAmount() - currentDue;
-                        createRefundTransaction(
-                                order.getCustomer(),
-                                overpayment,
-                                "Переплата по замовленню №" + order.getOrderNo()
-                        );
+                        transaction.setNote("Оплата замовлення №" + order.getOrderNo() + " з поповненням балансу");
+//                        double overpayment = transaction.getAmount() - currentDue;
+//                        createRefundTransaction(
+//                                order.getCustomer(),
+//                                overpayment,
+//                                "Переплата по замовленню №" + order.getOrderNo()
+//                        );
                     }
 
 //                    order.setIncome(Optional.ofNullable(order.getIncome()).orElse(0.0) + transaction.getAmount());
@@ -93,13 +93,13 @@ public class TransactionService {
                         order.setAmountDueN(0.0);
 
                         order.setStatusOrder(10);
-
+                        transaction.setNote("Повний REFUND → скасування замовлення №" + order.getOrderNo());
                         // Створюємо додаткову транзакцію на клієнта, якщо потрібно
-                        createRefundTransaction(
-                                order.getCustomer(),
-                                refundAmount - currentPaid,
-                                "REFUND напряму клієнту через неможливість виконати замовлення"
-                        );
+//                        createRefundTransaction(
+//                                order.getCustomer(),
+//                                refundAmount - currentPaid,
+//                                "REFUND напряму клієнту через неможливість виконати замовлення"
+//                        );
                     }
 
                     updateOrderStatus(order);
@@ -109,13 +109,14 @@ public class TransactionService {
                     order.setStatusOrder(5);
                     order.setAmountDueN(0.0);
 
-                    double paid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
-                    createRefundTransaction(
-                            order.getCustomer(),
-                            paid,
-                            "Автоматичне повернення після відміни замовлення"
-                    );
+//                    double paid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+//                    createRefundTransaction(
+//                            order.getCustomer(),
+//                            paid,
+//                            "Автоматичне повернення після відміни замовлення"
+//                    );
                     order.setAmountPaid(0.0);
+                    transaction.setNote("Автоматичне повернення після відміни замовлення №" + order.getOrderNo());
                 }
 
                 case "ADJUSTMENT", "CHARGE" ->
