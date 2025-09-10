@@ -31,16 +31,12 @@ public class TransactionService {
 
         // Якщо є замовлення
         if (transaction.getOrder() != null && transaction.getOrder().getOrderNo() != null) {
-            Orders order = ordersRepository.findById(transaction.getOrder().getOrderNo())
-                    .orElseThrow(() -> new RuntimeException("Order not found"));
-
+            Orders order = transaction.getOrder();
             switch (typeCode) {
                 case "INVOICE" -> {
-                    createRefundTransaction(
-                            order.getCustomer(),
-                            -transaction.getAmount(),
-                            "Виставлено рахунок до замовлення №" + order.getOrderNo()
-                    );
+                    transaction.setAmount(-transaction.getAmount());
+                    transaction.setStatus("Completed");
+                    transaction.setNote("Виставлено рахунок до замовлення №" + order.getOrderNo());
                     order.setStatusOrder(7); // До оплати
                 }
                 case "PAYMENT" -> {
@@ -205,42 +201,28 @@ public class TransactionService {
 
     @Transactional
     public TransactionDTO createTransaction(TransactionDTO dto) {
-        // 1. шукаємо тип транзакції
-        TransactionType transactionType = transactionTypeRepository.findById(dto.getTransactionTypeId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "TransactionType not found with id: " + dto.getTransactionTypeId()));
-
         Transaction transaction = toEntity(dto);
-        transaction.setTransactionType(transactionType);
 
-        // --- завжди встановлюємо клієнта ---
-        if (dto.getCustomerId() == null) {
-            throw new IllegalArgumentException("CustomerId must be provided");
-        }
-        Customer customer = customerRepository.findById(dto.getCustomerId())
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + dto.getCustomerId()));
-        transaction.setCustomer(customer);
+        transaction.setTransactionType(
+                transactionTypeRepository.findById(dto.getTransactionTypeId())
+                        .orElseThrow(() -> new IllegalArgumentException("Unknown type: " + dto.getTransactionTypeId()))
+        );
 
-        // --- якщо є замовлення ---
+        transaction.setCustomer(
+                customerRepository.findById(dto.getCustomerId())
+                        .orElseThrow(() -> new IllegalArgumentException("Customer not found: " + dto.getCustomerId()))
+        );
+
         if (dto.getOrderNo() != null) {
             Orders order = ordersRepository.findById(dto.getOrderNo())
-                    .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + dto.getOrderNo()));
+                    .orElseThrow(() -> new IllegalArgumentException("Order not found: " + dto.getOrderNo()));
             transaction.setOrder(order);
-        } else {
-            // --- транзакція тільки по клієнту ---
-            switch (transactionType.getCode()) {
-                case "ADVANCE_PAYMENT" -> transaction.setNote("Авансовий платіж без замовлення");
-                case "REFUND" -> transaction.setNote("Повернення коштів клієнту");
-                case "TRANSFER" -> transaction.setNote("Переказ між клієнтами");
-                default -> throw new IllegalArgumentException(
-                        "Transaction type " + transactionType.getCode() + " requires orderNo");
-            }
         }
 
         // --- універсальна обробка ---
         Transaction saved = processTransaction(transaction);
 
-        return toDto(saved);
+        return toDTO(saved);
     }
 
 
@@ -265,7 +247,7 @@ public class TransactionService {
         List<Transaction> transactions = transactionRepository.findByOrder_OrderNo(orderNo);
 
         return transactions.stream()
-                .map(this::toDto)
+                .map(this::toDTO)
                 .toList();
     }
 
@@ -292,7 +274,7 @@ public class TransactionService {
     }
 
 
-    public TransactionDTO toDto(Transaction entity) {
+    public TransactionDTO toDTO(Transaction entity) {
         if (entity == null) {
             return null;
         }
@@ -317,7 +299,7 @@ public class TransactionService {
             return null;
         }
 
-        Transaction transaction = Transaction.builder()
+        return Transaction.builder()
                 .transactionId(dto.getTransactionId())
                 .transactionDate(dto.getTransactionDate() != null ? dto.getTransactionDate() : OffsetDateTime.now())
                 .amount(dto.getAmount())
@@ -326,19 +308,5 @@ public class TransactionService {
                 .note(dto.getNote())
                 .build();
 
-        // 👇 Customer встановлюємо тільки по ID (без завантаження ентіті тут)
-        if (dto.getCustomerId() != null) {
-            Customer customer = new Customer();
-            customer.setCustNo(dto.getCustomerId());
-            transaction.setCustomer(customer);
-        }
-
-        // 👇 Order також можна проставляти "proxy"-об’єктом
-        if (dto.getOrderNo() != null) {
-            Orders order = new Orders();
-            order.setOrderNo(dto.getOrderNo());
-            transaction.setOrder(order);
-        }
-
-        return transaction;    }
+    }
 }
