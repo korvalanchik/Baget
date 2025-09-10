@@ -180,7 +180,7 @@ public class TransactionService {
     }
 
     private void createRefundTransaction(Customer customer, double amount, String note) {
-        if (amount <= 0) return; // нічого не робимо, якщо сума <= 0
+        //        if (amount <= 0) return; // нічого не робимо, якщо сума <= 0
 
         Transaction refund = new Transaction();
         refund.setCustomer(customer);
