@@ -41,6 +41,7 @@ public class TransactionService {
                 case "PAYMENT" -> {
                     double currentPaid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
                     double currentDue  = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
+                    double currentIncome  = Optional.ofNullable(order.getIncome()).orElse(0.0);
 
                     double newPaid = currentPaid + transaction.getAmount();
 
@@ -48,10 +49,12 @@ public class TransactionService {
                         // Немає переплати
                         order.setAmountPaid(newPaid);
                         order.setAmountDueN(currentDue - transaction.getAmount());
+                        order.setIncome(currentIncome + transaction.getAmount());
                     } else {
                         // Є переплата
-                        order.setAmountPaid(currentDue); // замовлення закриваємо
+                        order.setAmountPaid(currentPaid + currentDue); // замовлення закриваємо
                         order.setAmountDueN(0.0);
+                        order.setIncome(currentIncome + currentDue);
 
                         double overpayment = newPaid - currentDue;
                         createRefundTransaction(
@@ -61,10 +64,7 @@ public class TransactionService {
                         );
                     }
 
-                    order.setIncome(
-                            Optional.ofNullable(order.getIncome()).orElse(0.0) + transaction.getAmount()
-                    );
-
+//                    order.setIncome(Optional.ofNullable(order.getIncome()).orElse(0.0) + transaction.getAmount());
                     updateOrderStatus(order);
                 }
 
@@ -190,42 +190,41 @@ public class TransactionService {
     }
 
 
-
     @Transactional
     public TransactionDTO createTransaction(TransactionDTO dto) {
         // 1. шукаємо тип транзакції
         TransactionType transactionType = transactionTypeRepository.findById(dto.getTransactionTypeId())
-                .orElseThrow(() -> new IllegalArgumentException("TransactionType not found with id: " + dto.getTransactionTypeId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "TransactionType not found with id: " + dto.getTransactionTypeId()));
 
         Transaction transaction = toEntity(dto);
         transaction.setTransactionType(transactionType);
 
+        // --- завжди встановлюємо клієнта ---
+        if (dto.getCustomerId() == null) {
+            throw new IllegalArgumentException("CustomerId must be provided");
+        }
+        Customer customer = customerRepository.findById(dto.getCustomerId())
+                .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + dto.getCustomerId()));
+        transaction.setCustomer(customer);
+
+        // --- якщо є замовлення ---
         if (dto.getOrderNo() != null) {
-            // --- транзакція по замовленню ---
             Orders order = ordersRepository.findById(dto.getOrderNo())
                     .orElseThrow(() -> new IllegalArgumentException("Order not found with id: " + dto.getOrderNo()));
-
             transaction.setOrder(order);
-
-        } else if (dto.getCustomerId() != null) {
-            // --- транзакція по клієнту ---
-            Customer customer = customerRepository.findById(dto.getCustomerId())
-                    .orElseThrow(() -> new IllegalArgumentException("Customer not found with id: " + dto.getCustomerId()));
-
-            transaction.setCustomer(customer);
-
+        } else {
+            // --- транзакція тільки по клієнту ---
             switch (transactionType.getCode()) {
                 case "ADVANCE_PAYMENT" -> transaction.setNote("Авансовий платіж без замовлення");
                 case "REFUND" -> transaction.setNote("Повернення коштів клієнту");
                 case "TRANSFER" -> transaction.setNote("Переказ між клієнтами");
-                default -> throw new IllegalArgumentException("Transaction type " + transactionType.getCode() + " requires orderNo");
+                default -> throw new IllegalArgumentException(
+                        "Transaction type " + transactionType.getCode() + " requires orderNo");
             }
-
-        } else {
-            throw new IllegalArgumentException("Either orderNo or customerId must be provided");
         }
 
-        // --- тут викликаємо універсальний метод ---
+        // --- універсальна обробка ---
         Transaction saved = processTransaction(transaction);
 
         return toDto(saved);
