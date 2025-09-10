@@ -239,6 +239,7 @@ public class TransactionService {
 
         return new TransactionInfoDTO(
                 order.getOrderNo(),
+                order.getCustomer().getCustNo(),
                 order.getItemsTotal(),
                 order.getAmountPaid(),
                 order.getAmountDueN(),
