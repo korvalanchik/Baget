@@ -35,9 +35,14 @@ public class TransactionService {
                     .orElseThrow(() -> new RuntimeException("Order not found"));
 
             switch (typeCode) {
-                case "INVOICE" ->
+                case "INVOICE" -> {
+                    createRefundTransaction(
+                            order.getCustomer(),
+                            -transaction.getAmount(),
+                            "Виставлено рахунок до замовлення №" + order.getOrderNo()
+                    );
                     order.setStatusOrder(7); // До оплати
-
+                }
                 case "PAYMENT" -> {
                     double currentPaid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
                     double currentDue  = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
@@ -50,6 +55,11 @@ public class TransactionService {
                         order.setAmountPaid(newPaid);
                         order.setAmountDueN(currentDue - transaction.getAmount());
                         order.setIncome(currentIncome + transaction.getAmount());
+                        if (transaction.getAmount() < currentDue) {
+                            transaction.setNote("Часткова оплата замовлення №" + order.getOrderNo());
+                        } else {
+                            transaction.setNote("Оплата замовлення №" + order.getOrderNo());
+                        }
                     } else {
                         // Є переплата
                         order.setAmountPaid(currentPaid + currentDue); // замовлення закриваємо
@@ -79,6 +89,9 @@ public class TransactionService {
                         order.setIncome(order.getIncome() - refundAmount);
 
                     } else {
+                        if (refundAmount > currentPaid) {
+                            throw new IllegalArgumentException("It is impossible to return more than the amount paid.");
+                        }
                         // Повний REFUND → скасування замовлення
                         order.setAmountPaid(0.0);
                         order.setAmountDueN(0.0);
