@@ -45,7 +45,7 @@ public class TransactionService {
 
                     double newPaid = currentPaid + transaction.getAmount();
 
-                    if (newPaid <= currentDue) {
+                    if (transaction.getAmount() <= currentDue) {
                         // Немає переплати
                         order.setAmountPaid(newPaid);
                         order.setAmountDueN(currentDue - transaction.getAmount());
@@ -56,7 +56,7 @@ public class TransactionService {
                         order.setAmountDueN(0.0);
                         order.setIncome(currentIncome + currentDue);
 
-                        double overpayment = newPaid - currentDue;
+                        double overpayment = transaction.getAmount() - currentDue;
                         createRefundTransaction(
                                 order.getCustomer(),
                                 overpayment,
@@ -286,6 +286,7 @@ public class TransactionService {
 
         return TransactionDTO.builder()
                 .transactionId(entity.getTransactionId())
+                .customerId(entity.getCustomer() != null ? entity.getCustomer().getCustNo() : null)
                 .orderNo(entity.getOrder() != null ? entity.getOrder().getOrderNo() : null)
                 .transactionTypeId(entity.getTransactionType() != null ? entity.getTransactionType().getTypeId() : null)
                 .transactionTypeCode(entity.getTransactionType() != null ? entity.getTransactionType().getCode() : null)
@@ -303,7 +304,7 @@ public class TransactionService {
             return null;
         }
 
-        return Transaction.builder()
+        Transaction transaction = Transaction.builder()
                 .transactionId(dto.getTransactionId())
                 .transactionDate(dto.getTransactionDate() != null ? dto.getTransactionDate() : OffsetDateTime.now())
                 .amount(dto.getAmount())
@@ -311,5 +312,20 @@ public class TransactionService {
                 .status(dto.getStatus())
                 .note(dto.getNote())
                 .build();
-    }
+
+        // 👇 Customer встановлюємо тільки по ID (без завантаження ентіті тут)
+        if (dto.getCustomerId() != null) {
+            Customer customer = new Customer();
+            customer.setCustNo(dto.getCustomerId());
+            transaction.setCustomer(customer);
+        }
+
+        // 👇 Order також можна проставляти "proxy"-об’єктом
+        if (dto.getOrderNo() != null) {
+            Orders order = new Orders();
+            order.setOrderNo(dto.getOrderNo());
+            transaction.setOrder(order);
+        }
+
+        return transaction;    }
 }
