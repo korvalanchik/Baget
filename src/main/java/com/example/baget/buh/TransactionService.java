@@ -4,6 +4,7 @@ import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
+import com.example.baget.util.TransactionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,15 +63,8 @@ public class TransactionService {
                         order.setAmountDueN(0.0);
                         order.setIncome(currentIncome + currentDue);
                         transaction.setNote("Оплата замовлення №" + order.getOrderNo() + " з поповненням балансу");
-//                        double overpayment = transaction.getAmount() - currentDue;
-//                        createRefundTransaction(
-//                                order.getCustomer(),
-//                                overpayment,
-//                                "Переплата по замовленню №" + order.getOrderNo()
-//                        );
                     }
 
-//                    order.setIncome(Optional.ofNullable(order.getIncome()).orElse(0.0) + transaction.getAmount());
                     updateOrderStatus(order);
                 }
 
@@ -86,7 +80,7 @@ public class TransactionService {
 
                     } else {
                         if (refundAmount > currentPaid) {
-                            throw new IllegalArgumentException("It is impossible to return more than the amount paid.");
+                            throw new TransactionException("It is impossible to return more than the amount paid.");
                         }
                         // Повний REFUND → скасування замовлення
                         order.setAmountPaid(0.0);
@@ -94,12 +88,6 @@ public class TransactionService {
 
                         order.setStatusOrder(10);
                         transaction.setNote("Повний REFUND → скасування замовлення №" + order.getOrderNo());
-                        // Створюємо додаткову транзакцію на клієнта, якщо потрібно
-//                        createRefundTransaction(
-//                                order.getCustomer(),
-//                                refundAmount - currentPaid,
-//                                "REFUND напряму клієнту через неможливість виконати замовлення"
-//                        );
                     }
 
                     updateOrderStatus(order);
@@ -157,7 +145,7 @@ public class TransactionService {
                 case "REFUND" -> {
                     Double currentBalance = transactionRepository.getCustomerBalance(customer.getCustNo());
                     if (transaction.getAmount() > currentBalance) {
-                        throw new IllegalArgumentException("Refund перевищує баланс клієнта");
+                        throw new TransactionException("Refund перевищує баланс клієнта");
                     }
                     transaction.setNote("Повернення коштів клієнту");
                 }
@@ -167,7 +155,7 @@ public class TransactionService {
                     transaction.setNote("Переказ між клієнтами");
                     // Тут можна додати логіку пошуку отримувача і створення "дзеркальної" транзакції
 
-                default -> throw new IllegalArgumentException("Transaction type " + typeCode + " requires orderNo");
+                default -> throw new TransactionException("Transaction type " + typeCode + " requires orderNo");
             }
         } else {
             throw new IllegalArgumentException("Transaction must be linked to Order or Customer");
