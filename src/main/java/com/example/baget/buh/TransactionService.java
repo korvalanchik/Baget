@@ -72,59 +72,60 @@ public class TransactionService {
                     double currentPaid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
                     double refundAmount = transaction.getAmount();
 
-                    if (refundAmount < currentPaid) {
+                    if (refundAmount <= currentPaid) {
                         // Частковий REFUND
                         order.setAmountPaid(currentPaid - refundAmount);
                         order.setAmountDueN(order.getAmountDueN() + refundAmount);
                         order.setIncome(order.getIncome() - refundAmount);
-
+                        transaction.setNote(
+                                (refundAmount < currentPaid ? "Часткове " : "") +
+                                        "Повернення коштів за замовлення №" + order.getOrderNo()
+                        );
                     } else {
-                        if (refundAmount > currentPaid) {
-                            throw new TransactionException("It is impossible to return more than the amount paid.");
-                        }
-                        // Повний REFUND → скасування замовлення
-                        order.setAmountPaid(0.0);
-                        order.setAmountDueN(0.0);
-
-                        order.setStatusOrder(10);
-                        transaction.setNote("Повний REFUND → скасування замовлення №" + order.getOrderNo());
+                        throw new TransactionException("Не можливо повернути за замовлення більше ніж сплачено.");
                     }
 
                     updateOrderStatus(order);
                 }
 
                 case "CANCEL" -> {
+                    int aCents = (int) Math.round(transaction.getAmount() * 100);
+                    int bCents = (int) Math.round(order.getAmountDueN() * 100);
+
+                    if (aCents != bCents) {
+                        throw new TransactionException(
+                                "Сума повинна збігатися з авансом (" + order.getAmountDueN() + ")."
+                        );
+                    }
                     order.setStatusOrder(5);
                     order.setAmountDueN(0.0);
-
-//                    double paid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
-//                    createRefundTransaction(
-//                            order.getCustomer(),
-//                            paid,
-//                            "Автоматичне повернення після відміни замовлення"
-//                    );
                     order.setAmountPaid(0.0);
-                    transaction.setNote("Автоматичне повернення після відміни замовлення №" + order.getOrderNo());
+                    transaction.setAmount(-order.getAmountDueN());
+                    transaction.setNote("Кошти списано як дохід при відмові від замовлення №" + order.getOrderNo());
                 }
 
-                case "ADJUSTMENT", "CHARGE" ->
-                    order.setAmountDueN(
-                            Optional.ofNullable(order.getAmountDueN()).orElse(0.0) + transaction.getAmount()
-                    );
+                case "ADJUSTMENT", "CHARGE" -> {
+//                    order.setAmountDueN(Optional.ofNullable(order.getAmountDueN()).orElse(0.0) + transaction.getAmount());
+                }
 
                 case "TRANSFER" -> {
                     // логіка переказу по замовленню
                 }
 
-                case "DISCOUNT" ->
-                    order.setAmountDueN(
-                            Optional.ofNullable(order.getAmountDueN()).orElse(0.0) - transaction.getAmount()
-                    );
+                case "DISCOUNT" -> {
+                    double currentDue = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
+                    double discountAmount = transaction.getAmount();
+
+                    if (discountAmount <= currentDue) {
+                        order.setAmountDueN(currentDue - discountAmount);
+                        transaction.setNote("Дисконт до замовлення №" + order.getOrderNo());
+                    } else {
+                        throw new TransactionException("Занадто великий дисконт");
+                    }
+                }
 
                 case "ADVANCE_PAYMENT" ->
-                    order.setAmountPaid(
-                            Optional.ofNullable(order.getAmountPaid()).orElse(0.0) + transaction.getAmount()
-                    );
+                    transaction.setNote("Поповнення балансу клієнта" + order.getCustomer().getCompany());
 
                 default ->
                     throw new IllegalArgumentException("Unknown transaction type: " + typeCode);
@@ -162,20 +163,6 @@ public class TransactionService {
         }
         transaction.setStatus("Completed");
         return transactionRepository.save(transaction);
-    }
-
-    private void createRefundTransaction(Customer customer, double amount, String note) {
-        //        if (amount <= 0) return; // нічого не робимо, якщо сума <= 0
-
-        Transaction refund = new Transaction();
-        refund.setCustomer(customer);
-        refund.setTransactionType(transactionTypeRepository.findByCode("REFUND"));
-        refund.setAmount(amount);
-        refund.setTransactionDate(OffsetDateTime.now());
-        refund.setStatus("Completed");
-        refund.setNote(note);
-
-        transactionRepository.save(refund);
     }
 
 
