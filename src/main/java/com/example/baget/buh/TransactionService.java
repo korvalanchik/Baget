@@ -77,6 +77,7 @@ public class TransactionService {
                         order.setAmountPaid(currentPaid - refundAmount);
                         order.setAmountDueN(order.getAmountDueN() + refundAmount);
                         order.setIncome(order.getIncome() - refundAmount);
+                        transaction.setAmount(-refundAmount);
                         transaction.setNote(
                                 (refundAmount < currentPaid ? "Часткове " : "") +
                                         "Повернення коштів за замовлення №" + order.getOrderNo()
@@ -100,7 +101,7 @@ public class TransactionService {
                     order.setStatusOrder(5);
                     order.setAmountDueN(0.0);
                     order.setAmountPaid(0.0);
-                    transaction.setAmount(-order.getAmountDueN());
+                    transaction.setAmount(order.getAmountDueN());
                     transaction.setNote("Кошти списано як дохід при відмові від замовлення №" + order.getOrderNo());
                 }
 
