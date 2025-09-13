@@ -98,10 +98,10 @@ public class TransactionService {
                                 "Сума повинна збігатися з авансом (" + order.getAmountDueN() + ")."
                         );
                     }
+                    transaction.setAmount(order.getAmountDueN());
                     order.setStatusOrder(5);
                     order.setAmountDueN(0.0);
                     order.setAmountPaid(0.0);
-                    transaction.setAmount(order.getAmountDueN());
                     transaction.setNote("Кошти списано як дохід при відмові від замовлення №" + order.getOrderNo());
                 }
 
