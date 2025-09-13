@@ -18,7 +18,6 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = Map.of(
                 "status", HttpStatus.BAD_REQUEST.value(),
                 "error", "Transaction Error",
-                "code", ex.getCode(),
                 "message", ex.getMessage(),
                 "path", request.getRequestURI()
         );
