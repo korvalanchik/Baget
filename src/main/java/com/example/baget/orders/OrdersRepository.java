@@ -26,5 +26,6 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
 
     // Коротке представлення (наприклад, для дашбордів)
     Page<OrderSummaryView> findAllSummaryBy(Pageable pageable);
+    boolean existsByRahFacNo(Long rahFacNo);
 
 }

@@ -9,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -202,6 +205,58 @@ public class TransactionService {
         return toDTO(saved);
     }
 
+    @Transactional
+    public List<TransactionDTO> createInvoices(List<Long> orderNos) {
+
+        List<TransactionDTO> createdInvoices = new ArrayList<>();
+
+        Long invoiceNo = generateTodayCode();
+        while (ordersRepository.existsByRahFacNo(invoiceNo)) {
+            invoiceNo++;
+        }
+        List<Orders> orders = ordersRepository.findAllById(orderNos);
+
+        List<Transaction> transactionsToSave = new ArrayList<>();
+        List<Orders> ordersToSave = new ArrayList<>();
+
+        for (Orders order : orders) {
+
+            Transaction invoice = new Transaction();
+            invoice.setOrder(order);
+            invoice.setTransactionType(
+                    transactionTypeRepository.findById(1L)
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown type: 1"))
+            );
+            invoice.setCustomer(
+                    customerRepository.findById(order.getCustomer().getCustNo())
+                            .orElseThrow(() -> new IllegalArgumentException("Customer not found: " + order.getCustomer().getCustNo()))
+            );
+            invoice.setAmount(order.getAmountDueN());
+            invoice.setStatus("Completed");
+            invoice.setTransactionDate(OffsetDateTime.now());
+            invoice.setNote("Рахунок-фактура №" + invoiceNo + " до замовлення №" + order.getOrderNo());
+
+            transactionsToSave.add(invoice);
+
+            order.setStatusOrder(7); // До оплати
+            order.setRahFacNo(invoiceNo);
+            ordersToSave.add(order);
+        }
+
+        ordersRepository.saveAll(ordersToSave);
+        transactionRepository.saveAll(transactionsToSave);
+
+        for (Transaction invoice : transactionsToSave) {
+            createdInvoices.add(toDTO(invoice));
+        }
+
+        return createdInvoices;
+    }
+
+
+
+
+
 
     public TransactionInfoDTO getTransactionInfo(Long orderNo) {
         Orders order = ordersRepository.findById(orderNo)
@@ -286,4 +341,12 @@ public class TransactionService {
                 .build();
 
     }
+
+    public Long generateTodayCode() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        String result = today.format(formatter) + "001";
+        return Long.parseLong(result);
+    }
+
 }

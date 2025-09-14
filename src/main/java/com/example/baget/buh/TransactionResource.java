@@ -32,6 +32,11 @@ public class TransactionResource {
         return transactionService.createTransaction(dto);
     }
 
+    @PostMapping("/invoices")
+    public List<TransactionDTO> createInvoices(@RequestBody List<Long> orderNos) {
+        return transactionService.createInvoices(orderNos);
+    }
+
     @PostMapping("/{transactionId}/complete")
     public void completeTransaction(@PathVariable Long transactionId) {
         transactionService.completeTransaction(transactionId);
