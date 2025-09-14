@@ -10,5 +10,8 @@ public interface OrderSummaryView {
     OffsetDateTime getSaleDate();
     @JsonProperty("branchName")
     String getBranch_Name();
-
+    @JsonProperty("company")
+    String getCustomer_Company();
+    @JsonProperty("mobile")
+    String getCustomer_Mobile();
 }
