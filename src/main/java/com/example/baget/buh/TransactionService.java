@@ -206,7 +206,23 @@ public class TransactionService {
     }
 
     @Transactional
-    public List<TransactionDTO> createInvoices(List<Long> orderNos) {
+    public Long createCollectiveInvoice(List<Long> orderNos) {
+
+        Long invoiceNo = generateTodayCode();
+        while (ordersRepository.existsByRahFacNo(invoiceNo)) {
+            invoiceNo++;
+        }
+        List<Orders> orders = ordersRepository.findAllById(orderNos);
+        for (Orders order : orders) {
+            order.setStatusOrder(8); // До оплати
+            order.setRahFacNo(invoiceNo);
+        }
+        ordersRepository.saveAll(orders);
+        return invoiceNo;
+    }
+
+    @Transactional
+    public List<TransactionDTO> createBatchPayments(List<Long> orderNos) {
 
         List<TransactionDTO> createdInvoices = new ArrayList<>();
 
@@ -224,8 +240,8 @@ public class TransactionService {
             Transaction invoice = new Transaction();
             invoice.setOrder(order);
             invoice.setTransactionType(
-                    transactionTypeRepository.findById(1L)
-                            .orElseThrow(() -> new IllegalArgumentException("Unknown type: 1"))
+                    transactionTypeRepository.findById(10L)
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown transaction's type"))
             );
             invoice.setCustomer(
                     customerRepository.findById(order.getCustomer().getCustNo())

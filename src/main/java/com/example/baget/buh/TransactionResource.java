@@ -1,6 +1,7 @@
 package com.example.baget.buh;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,9 +33,14 @@ public class TransactionResource {
         return transactionService.createTransaction(dto);
     }
 
-    @PostMapping("/invoices")
-    public List<TransactionDTO> createInvoices(@RequestBody List<Long> orderNos) {
-        return transactionService.createInvoices(orderNos);
+    @PostMapping("/collective-invoice")
+    public ResponseEntity<Long> createCollectiveInvoice(@RequestBody List<Long> orderNos) {
+        return ResponseEntity.ok(transactionService.createCollectiveInvoice(orderNos));
+    }
+
+    @PostMapping("/payments")
+    public List<TransactionDTO> createBatchPayments(@RequestBody List<Long> orderNos) {
+        return transactionService.createBatchPayments(orderNos);
     }
 
     @PostMapping("/{transactionId}/complete")
