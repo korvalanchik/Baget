@@ -238,7 +238,7 @@ public class TransactionService {
 
             transactionsToSave.add(invoice);
 
-            order.setStatusOrder(7); // До оплати
+            order.setStatusOrder(8); // До оплати
             order.setRahFacNo(invoiceNo);
             ordersToSave.add(order);
         }
