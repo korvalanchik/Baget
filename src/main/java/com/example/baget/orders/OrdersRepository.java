@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -26,6 +27,7 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
 
     // Коротке представлення (наприклад, для дашбордів)
     Page<OrderSummaryView> findAllSummaryBy(Pageable pageable);
+    List<Orders> findByRahFacNo(Long rahFacNo);
     boolean existsByRahFacNo(Long rahFacNo);
 
 }

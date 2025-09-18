@@ -2,9 +2,11 @@ package com.example.baget.buh;
 
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
+import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.util.TransactionException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -219,6 +221,50 @@ public class TransactionService {
         }
         ordersRepository.saveAll(orders);
         return invoiceNo;
+    }
+
+    public TransactionCollectiveInvoiceDTO getCollectiveInvoice(Long invoiceNo) {
+        // 1. Отримуємо рахунок-фактуру
+//        Invoice invoice = invoiceRepository.findById(invoiceNo)
+//                .orElseThrow(() -> new EntityNotFoundException("Invoice " + invoiceNo + " not found"));
+
+        // 2. Отримуємо замовлення, які входять у цей рахунок
+        List<Orders> orders = ordersRepository.findByRahFacNo(invoiceNo);
+        if (orders.isEmpty()) {
+            throw new IllegalArgumentException("Invoice " + invoiceNo + " not found");
+        }
+
+        List<OrderPaySummaryDTO> orderSummaries = new ArrayList<>();
+        double totalBilled = 0.0;
+        double totalPaid   = 0.0;
+
+        for (Orders order : orders) {
+            Double billed = order.getAmountDueN(); // або обчислення
+            Double paid   = transactionRepository.sumPaidByOrder(order.getOrderNo()); // SQL SUM()
+            if (paid == null) paid = 0.0;
+
+            double due = billed - paid;
+
+            orderSummaries.add(new OrderPaySummaryDTO(order.getOrderNo(), billed, paid, due));
+
+            totalBilled += billed;
+            totalPaid   += paid;
+        }
+
+        double totalDue = totalBilled - totalPaid;
+
+        // 3. Баланс клієнта
+//        Customer customer = invoice.getCustomer(); // якщо є зв'язок invoice → customer
+        Double customerBalance = 1000000.0; //customerRepository.getBalance(customer.getId());
+
+        return new TransactionCollectiveInvoiceDTO(
+                invoiceNo,
+                orderSummaries,
+                totalBilled,
+                totalPaid,
+                totalDue,
+                customerBalance
+        );
     }
 
     @Transactional

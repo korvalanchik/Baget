@@ -38,6 +38,11 @@ public class TransactionResource {
         return ResponseEntity.ok(transactionService.createCollectiveInvoice(orderNos));
     }
 
+    @GetMapping("/collective-invoice/{invoiceNo}")
+    public ResponseEntity<TransactionCollectiveInvoiceDTO> getCollectiveInvoice(@PathVariable Long invoiceNo) {
+        return ResponseEntity.ok(transactionService.getCollectiveInvoice(invoiceNo));
+    }
+
     @PostMapping("/payments")
     public List<TransactionDTO> createBatchPayments(@RequestBody List<Long> orderNos) {
         return transactionService.createBatchPayments(orderNos);

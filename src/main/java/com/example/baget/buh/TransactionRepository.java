@@ -12,4 +12,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             "FROM Transaction t " +
             "WHERE t.customer.custNo = :custNo AND t.status = 'Completed'")
     Double getCustomerBalance(@Param("custNo") Long custNo);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.order.orderNo = :orderNo")
+    Double sumPaidByOrder(@Param("orderNo") Long orderNo);
+
 }
