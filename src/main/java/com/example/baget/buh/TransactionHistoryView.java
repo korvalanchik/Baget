@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 public interface TransactionHistoryView {
     Long getTransactionId();
     OffsetDateTime getTransactionDate();
-    String getTransactionType();
+    TransactionType getTransactionType();
     Double getAmount();
     String getReference();
     String getNote();
