@@ -6,6 +6,7 @@ import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.util.TransactionException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -223,38 +224,34 @@ public class TransactionService {
     }
 
     public TransactionCollectiveInvoiceDTO getCollectiveInvoice(Long invoiceNo) {
-        // 1. Отримуємо рахунок-фактуру
-//        Invoice invoice = invoiceRepository.findById(invoiceNo)
-//                .orElseThrow(() -> new EntityNotFoundException("Invoice " + invoiceNo + " not found"));
 
-        // 2. Отримуємо замовлення, які входять у цей рахунок
+        // Отримуємо замовлення
         List<Orders> orders = ordersRepository.findByRahFacNo(invoiceNo);
         if (orders.isEmpty()) {
-            throw new IllegalArgumentException("Invoice " + invoiceNo + " not found");
+            throw new EntityNotFoundException("Invoice " + invoiceNo + " not found");
         }
 
-        List<OrderPaySummaryDTO> orderSummaries = new ArrayList<>();
-        double totalBilled = 0.0;
-        double totalPaid   = 0.0;
+        // Формуємо зведення по замовленнях
+        List<OrderPaySummaryDTO> orderSummaries = orders.stream()
+                .map(order -> {
+                    double billed = order.getAmountDueN() + order.getAmountPaid();
+                    double paid   = order.getAmountPaid();
+                    double due    = order.getAmountDueN();
+                    return new OrderPaySummaryDTO(order.getOrderNo(), billed, paid, due);
+                })
+                .toList();
 
-        for (Orders order : orders) {
-            Double billed = order.getAmountDueN(); // або обчислення
-            Double paid   = transactionRepository.sumPaidByOrder(order.getOrderNo()); // SQL SUM()
-            if (paid == null) paid = 0.0;
+        // Підсумкові значення
+        double totalBilled = orderSummaries.stream().mapToDouble(OrderPaySummaryDTO::billed).sum();
+        double totalPaid   = orderSummaries.stream().mapToDouble(OrderPaySummaryDTO::paid).sum();
+        double totalDue    = orderSummaries.stream().mapToDouble(OrderPaySummaryDTO::due).sum();
 
-            double due = billed - paid;
-
-            orderSummaries.add(new OrderPaySummaryDTO(order.getOrderNo(), billed, paid, due));
-
-            totalBilled += billed;
-            totalPaid   += paid;
-        }
-
-        double totalDue = totalBilled - totalPaid;
-
-        // 3. Баланс клієнта
-//        Customer customer = invoice.getCustomer(); // якщо є зв'язок invoice → customer
-        Double customerBalance = 1000000.0; //customerRepository.getBalance(customer.getId());
+        // Баланс по всіх клієнтах цього інвойсу
+        double totalCustomerBalance = orders.stream()
+                .map(o -> o.getCustomer().getCustNo())
+                .distinct()
+                .mapToDouble(transactionRepository::getCustomerBalance)
+                .sum();
 
         return new TransactionCollectiveInvoiceDTO(
                 invoiceNo,
@@ -262,7 +259,7 @@ public class TransactionService {
                 totalBilled,
                 totalPaid,
                 totalDue,
-                customerBalance
+                totalCustomerBalance
         );
     }
 

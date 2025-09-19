@@ -10,5 +10,5 @@ public record TransactionCollectiveInvoiceDTO(
         Double totalBilled,           // нараховано
         Double totalPaid,             // сплачено
         Double totalDue,              // залишок
-        Double customerBalance        // баланс клієнта
+        Double totalCustomerBalance        // баланс клієнта
 ) {}
