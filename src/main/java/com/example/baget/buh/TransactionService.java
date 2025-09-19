@@ -266,6 +266,11 @@ public class TransactionService {
         );
     }
 
+    public List<TransactionHistoryView> getTransactionsHistoryByInvoice(Long invoiceNo) {
+        return transactionRepository.findByOrder_RahFacNoOrderByTransactionDateDesc(invoiceNo);
+    }
+
+
     @Transactional
     public List<TransactionDTO> createBatchPayments(List<Long> orderNos) {
 

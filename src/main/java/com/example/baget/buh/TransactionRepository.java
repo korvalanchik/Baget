@@ -16,4 +16,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.order.orderNo = :orderNo")
     Double sumPaidByOrder(@Param("orderNo") Long orderNo);
 
+    List<TransactionHistoryView> findByOrder_RahFacNoOrderByTransactionDateDesc(Long invoiceNo);
+
 }

@@ -43,6 +43,12 @@ public class TransactionResource {
         return ResponseEntity.ok(transactionService.getCollectiveInvoice(invoiceNo));
     }
 
+    @GetMapping("/history/invoice/{invoiceNo}")
+    public ResponseEntity<List<TransactionHistoryView>> getTransactionsHistoryByInvoice(
+            @PathVariable Long invoiceNo) {
+        return ResponseEntity.ok(transactionService.getTransactionsHistoryByInvoice(invoiceNo));
+    }
+
     @PostMapping("/payments")
     public List<TransactionDTO> createBatchPayments(@RequestBody List<Long> orderNos) {
         return transactionService.createBatchPayments(orderNos);
