@@ -17,6 +17,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -131,7 +133,7 @@ public class TransactionService {
                 }
 
                 case "ADVANCE_PAYMENT" ->
-                    transaction.setNote("Поповнення балансу клієнта" + order.getCustomer().getCompany());
+                    transaction.setNote("Поповнення балансу клієнта: " + order.getCustomer().getCompany());
 
                 default ->
                     throw new IllegalArgumentException("Unknown transaction type: " + typeCode);
@@ -146,7 +148,7 @@ public class TransactionService {
                 // клієнт поповнив баланс (аванс)
                 // баланс рахується через репозиторій, тому просто зберігаємо транзакцію
                 case "ADVANCE_PAYMENT" ->
-                    transaction.setNote("Авансовий платіж клієнта");
+                    transaction.setNote("Авансовий платіж клієнта: " + customer.getCompany());
 
                 // контроль, щоб повернення не перевищило поточного балансу клієнта
                 case "REFUND" -> {
@@ -206,6 +208,73 @@ public class TransactionService {
 
         return toDTO(saved);
     }
+
+
+    @Transactional
+    public List<TransactionDTO> createInvoiceTransactions(Long invoiceNo, double amount) {
+        List<Orders> orders = ordersRepository.findByRahFacNo(invoiceNo);
+        if (orders.isEmpty()) {
+            throw new EntityNotFoundException("Invoice " + invoiceNo + " not found");
+        }
+
+        Set<Long> customerNos = orders.stream()
+                .map(o -> o.getCustomer().getCustNo())
+                .collect(Collectors.toSet());
+
+        double totalDue = orders.stream()
+                .mapToDouble(Orders::getAmountDueN)
+                .sum();
+
+        if (customerNos.size() > 1 && amount > totalDue) {
+            throw new IllegalArgumentException("Оплата перевищує суму інвойсу для кількох клієнтів");
+        }
+
+        List<TransactionDTO> results = new ArrayList<>();
+        double remaining = amount;
+
+        Long paymentTypeId = transactionTypeRepository.findByCode("PAYMENT").getTypeId();
+        Long advanceTypeId = transactionTypeRepository.findByCode("ADVANCE_PAYMENT").getTypeId();
+
+        for (Orders order : orders) {
+            if (remaining <= 0) break;
+
+            double due = order.getAmountDueN();
+            if (due > 0) {
+                double payment = Math.min(remaining, due);
+
+                TransactionDTO dto = new TransactionDTO();
+                dto.setTransactionTypeId(paymentTypeId);
+                dto.setOrderNo(order.getOrderNo());
+                dto.setCustomerId(order.getCustomer().getCustNo());
+                dto.setAmount(payment);
+                dto.setNote("Оплата замовлення " + order.getOrderNo() + " за інвойсом " + invoiceNo);
+                dto.setTransactionDate(OffsetDateTime.now());
+
+                TransactionDTO txResult = createTransaction(dto);
+                results.add(txResult);
+
+                remaining -= payment;
+            }
+        }
+
+        // переплата → аванс
+        if (remaining > 0 && customerNos.size() == 1) {
+            Long custNo = customerNos.iterator().next();
+
+            TransactionDTO dto = new TransactionDTO();
+            dto.setTransactionTypeId(advanceTypeId);
+            dto.setCustomerId(custNo);
+            dto.setAmount(remaining);
+            dto.setNote("Авансовий платіж за інвойсом " + invoiceNo);
+            dto.setTransactionDate(OffsetDateTime.now());
+
+            TransactionDTO txResult = createTransaction(dto);
+            results.add(txResult);
+        }
+
+        return results;
+    }
+
 
     @Transactional
     public Long createCollectiveInvoice(List<Long> orderNos) {
