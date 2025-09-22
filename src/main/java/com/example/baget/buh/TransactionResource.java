@@ -51,9 +51,9 @@ public class TransactionResource {
 
     @PostMapping("/invoice")
     public ResponseEntity<List<TransactionDTO>> createInvoiceTransaction(
-            @RequestBody Long invoiceNo, Double amount) {
+            @RequestBody TransactionInvoiceRequest request) {
 
-        List<TransactionDTO> txId = transactionService.createInvoiceTransactions(invoiceNo, amount);
+        List<TransactionDTO> txId = transactionService.createInvoiceTransactions(request.invoiceNo(), request.amount());
         return ResponseEntity.ok(txId);
     }
 
