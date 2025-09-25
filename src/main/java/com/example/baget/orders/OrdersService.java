@@ -274,7 +274,7 @@ public class OrdersService {
     private void mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
         Customer customer;
         if (ordersDTO.getCustNo() != null) {
-            customer = customerRepository.findById(ordersDTO.getCustNo())
+            customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(ordersDTO.getPhone())
                     .orElseThrow(() -> new NotFoundException("Customer not found"));
         } else {
             // Створюємо нового клієнта
