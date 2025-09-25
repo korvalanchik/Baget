@@ -1,9 +1,14 @@
 package com.example.baget.buh;
 
+import com.example.baget.util.InvoiceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 
 @RestController
@@ -12,6 +17,7 @@ import java.util.List;
 public class TransactionResource {
 
     private final TransactionService transactionService;
+    private final InvoiceService invoiceService;
 
     @GetMapping("/{orderNo}")
     public List<TransactionDTO> getTransactions(@PathVariable Long orderNo) {
@@ -55,6 +61,17 @@ public class TransactionResource {
 
         List<TransactionDTO> txId = transactionService.createInvoiceTransactions(request.invoiceNo(), request.amount());
         return ResponseEntity.ok(txId);
+    }
+
+    @GetMapping("/{invoiceNo}/pdf")
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long invoiceNo) throws Exception {
+        File pdf = invoiceService.generateInvoicePdf(invoiceNo);
+        byte[] contents = Files.readAllBytes(pdf.toPath());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + invoiceNo + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(contents);
     }
 
     @PostMapping("/payments")
