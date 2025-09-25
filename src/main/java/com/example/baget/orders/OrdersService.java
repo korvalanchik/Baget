@@ -274,20 +274,23 @@ public class OrdersService {
     private void mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
         Customer customer;
         if (ordersDTO.getCustNo() != null) {
-            customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(ordersDTO.getPhone())
+            customer = customerRepository.findById(ordersDTO.getCustNo())
                     .orElseThrow(() -> new NotFoundException("Customer not found"));
         } else {
-            // Створюємо нового клієнта
-            CustomerDTO customerDTO = new CustomerDTO();
-            customerDTO.setCompany(ordersDTO.getCompany());
-            customerDTO.setMobile(ordersDTO.getPhone());
-            customerDTO.setAddr1(ordersDTO.getAddr1());
 
-            Long newCustNo = customerService.create(customerDTO);
-            customer = customerRepository.findById(newCustNo)
-                    .orElseThrow(() -> new RuntimeException("Newly created customer not found"));
+            customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(ordersDTO.getPhone())
+                    .orElseGet(() -> {
+                        // Якщо не знайшли — створюємо нового
+                        CustomerDTO customerDTO = new CustomerDTO();
+                        customerDTO.setCompany(ordersDTO.getCompany());
+                        customerDTO.setMobile(ordersDTO.getPhone());
+                        customerDTO.setAddr1(ordersDTO.getAddr1());
+
+                        Long newCustNo = customerService.create(customerDTO);
+                        return customerRepository.findById(newCustNo)
+                                .orElseThrow(() -> new RuntimeException("Newly created customer not found"));
+                    });
         }
-
         Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
                 .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
 
