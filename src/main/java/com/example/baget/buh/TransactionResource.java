@@ -66,7 +66,7 @@ public class TransactionResource {
         byte[] contents = invoiceService.generateInvoicePdf(invoiceNo);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + invoiceNo + ".pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=invoice_" + invoiceNo + ".pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(contents);
     }
