@@ -7,8 +7,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.util.List;
 
 @RestController
@@ -64,9 +62,8 @@ public class TransactionResource {
     }
 
     @GetMapping("/{invoiceNo}/pdf")
-    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long invoiceNo) throws Exception {
-        File pdf = invoiceService.generateInvoicePdf(invoiceNo);
-        byte[] contents = Files.readAllBytes(pdf.toPath());
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long invoiceNo) {
+        byte[] contents = invoiceService.generateInvoicePdf(invoiceNo);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice_" + invoiceNo + ".pdf")

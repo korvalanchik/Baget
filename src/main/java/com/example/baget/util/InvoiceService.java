@@ -2,7 +2,6 @@ package com.example.baget.util;
 
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
-
 import com.lowagie.text.Document;
 import com.lowagie.text.Font;
 import com.lowagie.text.PageSize;
@@ -11,8 +10,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -26,24 +24,15 @@ public class InvoiceService {
         this.ordersRepository = ordersRepository;
     }
 
-    public File generateInvoicePdf(Long invoiceNo) throws Exception {
+    public byte[] generateInvoicePdf(Long invoiceNo) {
         List<Orders> orders = ordersRepository.findByRahFacNo(invoiceNo);
         if (orders.isEmpty()) {
             throw new IllegalArgumentException("Invoice " + invoiceNo + " not found");
         }
 
-        // Папка для збереження
-        File dir = new File("files/invoices");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        String filename = "Invoice_" + invoiceNo + ".pdf";
-        File file = new File(dir, filename);
-
-        // Документ
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Document document = new Document(PageSize.A4, 36, 36, 54, 36);
-        PdfWriter.getInstance(document, new FileOutputStream(file));
+        PdfWriter.getInstance(document, baos);
         document.open();
 
         Font bold = new Font(Font.HELVETICA, 10, Font.BOLD);
@@ -82,11 +71,10 @@ public class InvoiceService {
         double total = 0.0;
         for (Orders o : orders) {
             double price = o.getAmountDueN() + o.getAmountPaid(); // приклад
-//            double due = o.getAmountDueN();
 
             table.addCell(String.valueOf(idx++));
             table.addCell(String.valueOf(o.getOrderNo()));
-            table.addCell("Виготовлення багетної рами"); // можна брати з item-опису
+            table.addCell("Виготовлення багетної рами");
             table.addCell("1");
             table.addCell(String.format("%.2f", price));
             table.addCell(String.format("%.2f", price));
@@ -100,10 +88,10 @@ public class InvoiceService {
         document.add(new Paragraph("\nВсього: " + String.format("%.2f грн", total), bold));
         document.add(new Paragraph("Всього на суму: " + MoneyToWordsUA.convert(total), normal));
         document.add(new Paragraph("ПДВ: —\n\n", normal));
-
         document.add(new Paragraph("Виписав(ла): Петров В.А.", normal));
 
         document.close();
-        return file;
+
+        return baos.toByteArray();
     }
 }
