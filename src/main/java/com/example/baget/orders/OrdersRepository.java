@@ -6,10 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 
 public interface OrdersRepository extends JpaRepository<Orders, Long> {
+
     @NonNull
     Page<Orders> findAll(@NonNull Pageable pageable);
 
@@ -30,4 +32,5 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     List<Orders> findByRahFacNo(Long rahFacNo);
     boolean existsByRahFacNo(Long rahFacNo);
 
+    Optional<OrderPublicSummaryView> findByOrderNo(Long orderNo);
 }

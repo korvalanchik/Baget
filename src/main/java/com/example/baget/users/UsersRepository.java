@@ -16,4 +16,6 @@ public interface UsersRepository extends JpaRepository<User, Long> {
     @Query("SELECT u.id, u.username FROM User u")
     List<Object[]> findAllUserIdAndUsername();
 
+//    boolean userBelongsToBranch(Optional<User> user, Long branchId);
+
 }
