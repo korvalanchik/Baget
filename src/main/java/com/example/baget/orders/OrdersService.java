@@ -22,6 +22,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -276,21 +277,15 @@ public class OrdersService {
         if (ordersDTO.getCustNo() != null) {
             customer = customerRepository.findById(ordersDTO.getCustNo())
                     .orElseThrow(() -> new NotFoundException("Customer not found"));
-        } else {
-
+        } else if (ordersDTO.getPhone() != null && !ordersDTO.getPhone().trim().isEmpty()) {
+            // якщо телефон є — шукаємо по телефону
             customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(ordersDTO.getPhone())
-                    .orElseGet(() -> {
-                        // Якщо не знайшли — створюємо нового
-                        CustomerDTO customerDTO = new CustomerDTO();
-                        customerDTO.setCompany(ordersDTO.getCompany());
-                        customerDTO.setMobile(ordersDTO.getPhone());
-                        customerDTO.setAddr1(ordersDTO.getAddr1());
-
-                        Long newCustNo = customerService.create(customerDTO);
-                        return customerRepository.findById(newCustNo)
-                                .orElseThrow(() -> new RuntimeException("Newly created customer not found"));
-                    });
+                    .orElseGet(() -> createWithAnonymousCustomer(ordersDTO));
+        } else {
+            // якщо телефону немає — створюємо нового клієнта
+            customer = createWithAnonymousCustomer(ordersDTO);
         }
+
         Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
                 .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
 
@@ -323,6 +318,43 @@ public class OrdersService {
         orders.setRahFacNo(ordersDTO.getRahFacNo());
         orders.setNotice(ordersDTO.getNotice());
     }
+
+    private Customer createWithAnonymousCustomer(OrdersDTO ordersDTO) {
+        CustomerDTO customerDTO = new CustomerDTO();
+
+        // Якщо клієнт не дав назву компанії і телефону
+        if ((ordersDTO.getPhone() == null || ordersDTO.getPhone().trim().isEmpty())
+                && (ordersDTO.getCompany() == null || ordersDTO.getCompany().trim().isEmpty())) {
+
+            // шукаємо останнього "інкогніто" клієнта
+            String prefix = "Інкогніто-";
+            Optional<Customer> lastIncognito = customerRepository
+                    .findTopByCompanyStartingWithOrderByCustNoDesc(prefix);
+
+            int nextNumber = 1;
+            if (lastIncognito.isPresent()) {
+                String lastCompany = lastIncognito.get().getCompany();
+                try {
+                    nextNumber = Integer.parseInt(lastCompany.replace(prefix, "")) + 1;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+
+            customerDTO.setCompany(prefix + nextNumber);
+        } else {
+            // Якщо назва компанії вказана — зберігаємо її
+            customerDTO.setCompany(ordersDTO.getCompany());
+        }
+
+        customerDTO.setMobile(ordersDTO.getPhone());
+        customerDTO.setAddr1(ordersDTO.getAddr1());
+
+        Long newCustNo = customerService.create(customerDTO);
+        return customerRepository.findById(newCustNo)
+                .orElseThrow(() -> new RuntimeException("Newly created customer not found"));
+    }
+
+
 
     private void saveItems(Long itemNo, final Orders orders, final OrdersDTO ordersDTO) {
         if(ordersDTO.getItems() != null) {

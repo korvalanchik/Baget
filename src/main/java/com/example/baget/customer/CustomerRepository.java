@@ -15,6 +15,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     List<Customer> findByMobileContaining(String prefix);
     Optional<Customer> findFirstByMobileContainingOrderByCustNoAsc(String phone);
+    Optional<Customer> findTopByCompanyStartingWithOrderByCustNoDesc(String prefix);
 
 //    Customer findPhoneByCustNo(Long custNo);
 
