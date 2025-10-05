@@ -34,9 +34,9 @@ public class QrResource {
         Optional<Orders> inv = Optional.ofNullable(ordersRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Invoice not found: " + id)));
         // приклад: токен дійсний 24 години (86400 sec)
-        String token = scanService.createToken(id, inv.get().getBranch().getBranchNo(), 86400);
+        String token = scanService.createToken(id, inv.get().getBranch().getBranchNo(), 259200);
         String url = serverUrl + "/qrcode/invoices/scan?token=" + token;
-        byte[] png = qrGenerator.generateQrPng(url, 400, 400);
+        byte[] png = qrGenerator.generateQrPng(url, 300, 300);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_PNG);
         return new ResponseEntity<>(png, headers, HttpStatus.OK);
