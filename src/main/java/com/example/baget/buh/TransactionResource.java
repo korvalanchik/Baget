@@ -86,6 +86,4 @@ public class TransactionResource {
         transactionService.cancelTransaction(transactionId);
     }
 
-
-
 }
