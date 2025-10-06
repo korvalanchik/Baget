@@ -2,7 +2,7 @@ ALTER TABLE orders
     ADD COLUMN PublicId VARCHAR(36) DEFAULT NULL;
 
 UPDATE orders
-SET PublicId = UUID()
+SET PublicId = (SELECT UUID())
 WHERE PublicId IS NULL;
 
 ALTER TABLE orders
