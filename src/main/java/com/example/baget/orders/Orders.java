@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -112,5 +113,15 @@ public class Orders {
 
     @Column(name = "Notice")
     private String notice;
+
+    @Column(name = "PublicId", unique = true, nullable = false, length = 36)
+    private String publicId;
+
+    @PrePersist
+    public void prePersist() {
+        if (publicId == null || publicId.isEmpty()) {
+            publicId = UUID.randomUUID().toString();
+        }
+   }
 
 }

@@ -33,4 +33,5 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     boolean existsByRahFacNo(Long rahFacNo);
 
     Optional<OrderPublicSummaryView> findByOrderNo(Long orderNo);
+    Optional<Orders> findByPublicId(String publicId);
 }
