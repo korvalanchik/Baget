@@ -57,4 +57,25 @@ public interface OrderProjections {
     interface UserOrderView extends BaseOrdersView {
         String getNotice();
     }
+
+    interface PublicOrderView {
+        Long getOrderNo();     // Номер рахунку
+        OffsetDateTime getSaleDate();     // Дата створення/виписки
+        Double getItemsTotal();   // Загальна сума рахунку
+    }
+    interface PrivateOrderView extends PublicOrderView{
+        @JsonProperty("company")
+        String getCustomer_Company();
+
+        @JsonProperty("phone")
+        String getCustomer_Mobile();
+        @JsonProperty("branchName")
+        String getBranch_Name(); // Orders.branch.name
+        OffsetDateTime getShipDate();
+        @JsonProperty("empNo")
+        String getEmployee_Username();
+        Integer getStatusOrder();
+        String getNotice();
+    }
+
 }

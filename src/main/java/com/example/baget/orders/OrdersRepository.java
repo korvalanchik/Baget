@@ -15,9 +15,6 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     @NonNull
     Page<Orders> findAll(@NonNull Pageable pageable);
 
-//    Page<Orders> findByBranch_Name(String branchName, Pageable pageable);
-//    Page<Orders> findByBranchNameIn(Set<String> branchNames, Pageable pageable);
-
     // ADMIN бачить усі замовлення
     Page<OrderProjections.AdminOrderView> findAllAdminBy(Pageable pageable);
 
@@ -32,6 +29,8 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
     List<Orders> findByRahFacNo(Long rahFacNo);
     boolean existsByRahFacNo(Long rahFacNo);
 
-    Optional<OrderPublicSummaryView> findByOrderNo(Long orderNo);
+    //    Optional<OrderPublicSummaryView> findByOrderNo(Long orderNo);
+    Optional<OrderProjections.PublicOrderView> findPublicByOrderNo(Long orderNo);
+    Optional<OrderProjections.PrivateOrderView> findPrivateByOrderNo(Long orderNo);
     Optional<Orders> findByPublicId(String publicId);
 }
