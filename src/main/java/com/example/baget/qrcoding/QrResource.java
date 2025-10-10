@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.Optional;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("api/qrcode/invoices")
 public class QrResource {
@@ -25,14 +25,14 @@ public class QrResource {
     private final QrGenerator qrGenerator;
     private final OrdersRepository ordersRepository;
 
-    @Value("${api.server.url}")
-    private String serverUrl;
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @GetMapping("/{id}/qr.png")
     public ResponseEntity<byte[]> getInvoiceQr(@PathVariable Long id) throws Exception {
         Optional<Orders> inv = Optional.ofNullable(ordersRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Invoice not found: " + id)));
-        String url = serverUrl + "/api/qrcode/invoices/public/" + inv.get().getPublicId();
+        String url = frontendUrl + "/orders/order-info.html?publicId=" + inv.get().getPublicId();
 
         byte[] png = qrGenerator.generateQrPng(url, 300, 300);
         HttpHeaders headers = new HttpHeaders();
@@ -44,21 +44,10 @@ public class QrResource {
     @GetMapping("/public/{publicId}")
     public Object getPublicOrder(
             @PathVariable String publicId,
-            Principal principal,
-            Model model,
-            @RequestHeader(value = "Accept", required = false) String acceptHeader
-    ) {
-        boolean wantsJson = acceptHeader == null || acceptHeader.contains("application/json");
+            Principal principal) {
+
         Object result = scanService.scanOrder(publicId, principal);
-
-        // 🔹 Якщо клієнт просить JSON (API-запит або SPA)
-        if (wantsJson) {
-            return ResponseEntity.ok(result);
-        }
-
-        // 🔹 Якщо клієнт звичайний браузер → повертаємо HTML через Thymeleaf
-        model.addAttribute("order", result);
-        return "orders/public-order";
+        return ResponseEntity.ok(result);
     }
 
     @PutMapping("/scan/{publicId}/status")
