@@ -33,7 +33,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
 
         // Пропускаємо фільтр для Telegram-авторизації
-        if (requestURI.equals("/auth/loginTelegram") || requestURI.startsWith("/api/qrcode/invoices/public/")) {
+        if (requestURI.equals("/auth/loginTelegram")) {
             chain.doFilter(request, response);
             return;
         }

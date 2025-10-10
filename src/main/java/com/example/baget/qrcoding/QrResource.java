@@ -1,5 +1,6 @@
 package com.example.baget.qrcoding;
 
+import com.example.baget.orders.OrderProjections;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.util.NotFoundException;
@@ -9,8 +10,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -42,11 +41,8 @@ public class QrResource {
 
 
     @GetMapping("/public/{publicId}")
-    public Object getPublicOrder(
-            @PathVariable String publicId,
-            Principal principal) {
-
-        Object result = scanService.scanOrder(publicId, principal);
+    public ResponseEntity<OrderProjections.OrderView> getPublicOrder(@PathVariable String publicId, Principal principal) {
+        OrderProjections.OrderView result = scanService.scanOrder(publicId, principal);
         return ResponseEntity.ok(result);
     }
 
