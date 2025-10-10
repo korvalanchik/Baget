@@ -67,15 +67,15 @@ public interface OrderProjections {
     }
     interface PrivateOrderView extends PublicOrderView {
         @JsonProperty("company")
-        String getCustomer_Company();
+        String getCustomerCompany();
 
         @JsonProperty("phone")
-        String getCustomer_Mobile();
+        String getCustomerMobile();
         @JsonProperty("branchName")
-        String getBranch_Name(); // Orders.branch.name
+        String getBranchName(); // Orders.branch.name
         OffsetDateTime getShipDate();
         @JsonProperty("empNo")
-        String getEmployee_Username();
+        String getEmployeeUsername();
         Integer getStatusOrder();
         String getNotice();
     }
