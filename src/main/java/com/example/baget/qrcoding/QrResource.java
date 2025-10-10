@@ -9,12 +9,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Optional;
 
-@RestController
+@Controller
 @RequiredArgsConstructor
 @RequestMapping("api/qrcode/invoices")
 public class QrResource {
@@ -38,10 +40,25 @@ public class QrResource {
         return new ResponseEntity<>(png, headers, HttpStatus.OK);
     }
 
+
     @GetMapping("/public/{publicId}")
-    public ResponseEntity<?> scanPublicQr(@PathVariable String publicId, Principal principal) {
+    public Object getPublicOrder(
+            @PathVariable String publicId,
+            Principal principal,
+            Model model,
+            @RequestHeader(value = "Accept", required = false) String acceptHeader
+    ) {
+        boolean wantsJson = acceptHeader == null || acceptHeader.contains("application/json");
         Object result = scanService.scanOrder(publicId, principal);
-        return ResponseEntity.ok(result);
+
+        // 🔹 Якщо клієнт просить JSON (API-запит або SPA)
+        if (wantsJson) {
+            return ResponseEntity.ok(result);
+        }
+
+        // 🔹 Якщо клієнт звичайний браузер → повертаємо HTML через Thymeleaf
+        model.addAttribute("order", result);
+        return "orders/public-order";
     }
 
     @PutMapping("/scan/{publicId}/status")

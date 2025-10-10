@@ -1,10 +1,12 @@
 package com.example.baget.qrcoding;
 
+import com.example.baget.orders.OrderProjections;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -21,7 +23,7 @@ public class ScanService {
         this.userRepository = userRepository;
     }
 
-    public Object scanOrder(String publicId, Principal principal) {
+    public OrderProjections.OrderView scanOrder(String publicId, Principal principal) {
         Orders order = ordersRepository.findByPublicId(publicId)
                 .orElseThrow(() -> new NotFoundException("Order not found for publicId: " + publicId));
 
@@ -43,6 +45,7 @@ public class ScanService {
                 .orElseThrow(() -> new NotFoundException("Private summary not found"));
     }
 
+    @Transactional
     public void updateOrderStatus(String publicId, Integer newStatus, Principal principal) {
         if (principal == null) {
             throw new AccessDeniedException("Login required");
@@ -59,11 +62,11 @@ public class ScanService {
         }
 
         order.setStatusOrder(newStatus);
-        ordersRepository.save(order);
     }
 
     private boolean hasAccessToBranch(User user, Long branchId) {
         return user.getAllowedBranches().stream()
                 .anyMatch(b -> b.getBranchNo().equals(branchId));
     }
+
 }

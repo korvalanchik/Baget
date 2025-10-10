@@ -58,12 +58,14 @@ public interface OrderProjections {
         String getNotice();
     }
 
-    interface PublicOrderView {
+    public interface OrderView {}
+
+    interface PublicOrderView extends OrderView {
         Long getOrderNo();     // Номер рахунку
         OffsetDateTime getSaleDate();     // Дата створення/виписки
         Double getItemsTotal();   // Загальна сума рахунку
     }
-    interface PrivateOrderView extends PublicOrderView{
+    interface PrivateOrderView extends PublicOrderView {
         @JsonProperty("company")
         String getCustomer_Company();
 
