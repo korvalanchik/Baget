@@ -68,80 +68,6 @@ public class OrdersService {
                 .orElseThrow(NotFoundException::new);
     }
 
-//    public Page<OrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
-//
-//        System.out.println("Pageable: " + pageable);
-//        System.out.println("Сортування: " + pageable.getSort());
-//
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//        String username = auth.getName();
-//
-//        User user = userRepository.findByUsername(username)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//
-//        Set<String> userRoles = user.getRoles().stream()
-//                .map(Role::getName)
-//                .collect(Collectors.toSet());
-//
-//        Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
-//
-//        // ADMIN бачить усе
-//        if (userRoles.contains("ROLE_ADMIN")) {
-//            return ordersRepository.findAll(pageable)
-//                    .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
-//        }
-//
-//        // Дозволені філії для користувача
-//        Set<String> allowedBranches = user.getAllowedBranches().stream()
-//                .map(Branch::getName)
-//                .collect(Collectors.toSet());
-//
-//        // Якщо роль — COUNTER, то показуємо всі замовлення по доступних філіях
-//        if (userRoles.contains("ROLE_COUNTER")) {
-//            return ordersRepository.findByBranchNameIn(allowedBranches, pageable)
-//                    .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
-//        }
-//
-//        // Якщо requestedBranchName не входить до дозволених
-//        if (!allowedBranches.contains(requestedBranchName)) {
-//            throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
-//        }
-//
-//        // Виводимо замовлення лише по requestedBranchName
-//        return ordersRepository.findByBranchName(requestedBranchName, pageable)
-//                .map(order -> mapToDTO(order, new OrdersDTO(), userIdUsernameMap));
-//    }
-
-// previous
-//    public Page<? extends BaseOrdersDTO> getOrders(Pageable pageable, String requestedBranchName) {
-//        UserAndRoles result = getUserAndRoles();
-//
-//        Map<Long, String> userIdUsernameMap = userCacheService.loadMap();
-//
-//        // ADMIN бачить усе
-//        if (result.userRoles().contains("ROLE_ADMIN")) {
-//            return ordersRepository.findAll(pageable)
-//                    .map(order -> mapToAdminDTO(order, userIdUsernameMap));
-//        }
-//
-//        Set<String> allowedBranches = result.user().getAllowedBranches().stream()
-//                .map(Branch::getName)
-//                .collect(Collectors.toSet());
-//
-//        // COUNTER бачить замовлення по дозволених філіях
-//        if (result.userRoles().contains("ROLE_COUNTER")) {
-//            return ordersRepository.findByBranchNameIn(allowedBranches, pageable)
-//                    .map(order -> mapToCounterDTO(order, userIdUsernameMap));
-//        }
-//
-//        // USER — лише для одного філіалу
-//        if (!allowedBranches.contains(requestedBranchName)) {
-//            throw new AccessDeniedException("Немає доступу до філіалу: " + requestedBranchName);
-//        }
-//
-//        return ordersRepository.findByBranch_Name(requestedBranchName, pageable)
-//                .map(order -> mapToUserDTO(order, userIdUsernameMap));
-//    }
     public Page<? extends OrderProjections.BaseOrdersView> getOrders(Pageable pageable, String requestedBranchName) {
         UserAndRoles userAndRoles = getUserAndRoles();
 
@@ -205,6 +131,7 @@ public class OrdersService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Orders order = new Orders();
+        order.setOrderNo(ordersDTO.getOrderNo());
         mapToEntity(ordersDTO, order);
         order.setEmployee(user);
 //        order.setEmpNo(user.getId()); // Присвоюємо userId як empNo
@@ -232,9 +159,6 @@ public class OrdersService {
         ordersDTO.setCustNo(orders.getCustomer().getCustNo());
         ordersDTO.setCompany(orders.getCustomer().getCompany());
         ordersDTO.setPhone(orders.getCustomer().getMobile());
-//        ordersDTO.setItems(orders.getItems().stream()
-//                .map(item -> itemsService.mapItemsToDTO(item, new ItemsDTO()))
-//                .collect(Collectors.toList()));
         ordersDTO.setItems(itemsService.findByOrderNo(orders.getOrderNo()));
         ordersDTO.setBranchName(orders.getBranch().getName());
         ordersDTO.setSaleDate(orders.getSaleDate());
@@ -289,7 +213,6 @@ public class OrdersService {
         Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
                 .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
 
-        orders.setOrderNo(ordersDTO.getOrderNo());
         orders.setCustomer(customer);
         orders.setBranch(branch);
         orders.setSaleDate(ordersDTO.getSaleDate());
