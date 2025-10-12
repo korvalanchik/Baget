@@ -45,8 +45,8 @@ public class Orders {
     @JoinColumn(name = "EmpNo", referencedColumnName = "id")
     private User employee;
 
-    @Column(name = "ShipToContact", length = 20)
-    private String shipToContact;
+    @Column(name = "ReceivedDate", length = 20)
+    private OffsetDateTime ReceivedDate;
 
     @Column(name = "ShipToAddr1", length = 30)
     private String shipToAddr1;

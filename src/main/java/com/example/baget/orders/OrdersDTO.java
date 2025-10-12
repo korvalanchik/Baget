@@ -40,7 +40,7 @@ public class OrdersDTO {
     private String empNo;
 
     @Size(max = 20)
-    private String shipToContact;
+    private OffsetDateTime ReceivedDate;
 
     @Size(max = 30)
     private String shipToAddr1;
