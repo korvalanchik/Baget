@@ -23,8 +23,8 @@
                 <th scope="col">[[#{orders.saleDate.label}]]</th>
                 <th scope="col">[[#{orders.shipDate.label}]]</th>
                 <th scope="col">[[#{orders.empNo.label}]]</th>
-                <th scope="col">[[#{orders.ReceivedDate.label}]]</th>
-                <th scope="col">[[#{orders.shipToAddr1.label}]]</th>
+                <th scope="col">[[#{orders.receivedDate.label}]]</th>
+                <th scope="col">[[#{orders.clientReceivedDate.label}]]</th>
                 <th><!-- --></th>
             </tr>
             </thead>
@@ -35,8 +35,8 @@
                 <td>[[${orders.saleDate}]]</td>
                 <td>[[${orders.shipDate}]]</td>
                 <td>[[${orders.empNo}]]</td>
-                <td>[[${orders.ReceivedDate}]]</td>
-                <td>[[${orders.shipToAddr1}]]</td>
+                <td>[[${orders.receivedDate}]]</td>
+                <td>[[${orders.clientReceivedDate}]]</td>
                 <td>
                     <div class="float-end text-nowrap">
                         <a th:href="@{/orders/edit/{orderNo}(orderNo=${orders.orderNo})}"

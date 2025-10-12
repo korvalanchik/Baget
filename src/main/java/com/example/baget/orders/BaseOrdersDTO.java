@@ -39,11 +39,9 @@ public class BaseOrdersDTO {
 
     private String empNo;
 
-    @Size(max = 20)
-    private OffsetDateTime ReceivedDate;
+    private OffsetDateTime receivedDate;
 
-    @Size(max = 30)
-    private String shipToAddr1;
+    private OffsetDateTime clientReceivedDate;
 
     @Size(max = 30)
     private String shipToAddr2;

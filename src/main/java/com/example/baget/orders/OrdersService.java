@@ -247,7 +247,7 @@ public class OrdersService {
             ordersDTO.setEmpNo(null);
         }
         ordersDTO.setReceivedDate(orders.getReceivedDate());
-        ordersDTO.setShipToAddr1(orders.getShipToAddr1());
+        ordersDTO.setClientReceivedDate(orders.getClientReceivedDate());
         ordersDTO.setShipToAddr2(orders.getShipToAddr2());
         ordersDTO.setShipToCity(orders.getShipToCity());
         ordersDTO.setShipToState(orders.getShipToState());
@@ -295,7 +295,7 @@ public class OrdersService {
         orders.setSaleDate(ordersDTO.getSaleDate());
         orders.setShipDate(ordersDTO.getShipDate());
         orders.setReceivedDate(ordersDTO.getReceivedDate());
-        orders.setShipToAddr1(ordersDTO.getShipToAddr1());
+        orders.setClientReceivedDate(ordersDTO.getClientReceivedDate());
         orders.setShipToAddr2(ordersDTO.getShipToAddr2());
         orders.setShipToCity(ordersDTO.getShipToCity());
         orders.setShipToState(ordersDTO.getShipToState());
