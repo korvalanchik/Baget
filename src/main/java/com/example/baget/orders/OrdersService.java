@@ -197,14 +197,20 @@ public class OrdersService {
     }
 
     private void mapToEntity(final OrdersDTO dto, final Orders entity) {
-
         if (dto.getCustNo() != null) {
+            // Якщо вказано ID клієнта — шукаємо в базі
             Customer customer = customerRepository.findById(dto.getCustNo())
                     .orElseThrow(() -> new NotFoundException("Customer not found"));
             entity.setCustomer(customer);
-        } else if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
-            Customer customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(dto.getPhone())
-                    .orElseGet(() -> createWithAnonymousCustomer(dto));
+
+        } else if (dto.getPhone() != null) {
+            String phone = dto.getPhone().trim();
+
+            Customer customer = !phone.isEmpty()
+                    ? customerRepository.findFirstByMobileContainingOrderByCustNoAsc(phone)
+                    .orElseGet(() -> createWithAnonymousCustomer(dto))
+                    : createWithAnonymousCustomer(dto);
+
             entity.setCustomer(customer);
         }
 
