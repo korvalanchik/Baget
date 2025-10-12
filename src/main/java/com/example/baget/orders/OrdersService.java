@@ -154,92 +154,92 @@ public class OrdersService {
     }
 
 
-    private OrdersDTO mapToDTO(final Orders orders, final OrdersDTO ordersDTO) {
-        ordersDTO.setOrderNo(orders.getOrderNo());
-        ordersDTO.setCustNo(orders.getCustomer().getCustNo());
-        ordersDTO.setCompany(orders.getCustomer().getCompany());
-        ordersDTO.setPhone(orders.getCustomer().getMobile());
-        ordersDTO.setItems(itemsService.findByOrderNo(orders.getOrderNo()));
-        ordersDTO.setBranchName(orders.getBranch().getName());
-        ordersDTO.setSaleDate(orders.getSaleDate());
-        ordersDTO.setShipDate(orders.getShipDate());
+    private OrdersDTO mapToDTO(final Orders entity, final OrdersDTO dto) {
+        dto.setOrderNo(entity.getOrderNo());
+        dto.setCustNo(entity.getCustomer().getCustNo());
+        dto.setCompany(entity.getCustomer().getCompany());
+        dto.setPhone(entity.getCustomer().getMobile());
+        dto.setItems(itemsService.findByOrderNo(entity.getOrderNo()));
+        dto.setBranchName(entity.getBranch().getName());
+        dto.setSaleDate(entity.getSaleDate());
+        dto.setShipDate(entity.getShipDate());
 
-        User user = orders.getEmployee();
+        User user = entity.getEmployee();
         if (user != null) {
-            ordersDTO.setEmpNo(user.getUsername()); // записуємо username в DTO
+            dto.setEmpNo(user.getUsername()); // записуємо username в DTO
         } else {
-            ordersDTO.setEmpNo(null);
+            dto.setEmpNo(null);
         }
-        ordersDTO.setReceivedDate(orders.getReceivedDate());
-        ordersDTO.setClientReceivedDate(orders.getClientReceivedDate());
-        ordersDTO.setShipToAddr2(orders.getShipToAddr2());
-        ordersDTO.setShipToCity(orders.getShipToCity());
-        ordersDTO.setShipToState(orders.getShipToState());
-        ordersDTO.setShipToZip(orders.getShipToZip());
-        ordersDTO.setShipToCountry(orders.getShipToCountry());
-        ordersDTO.setShipToPhone(orders.getShipToPhone());
-        ordersDTO.setShipVia(orders.getShipVia());
-        ordersDTO.setPo(orders.getPo());
-        ordersDTO.setTerms(orders.getTerms());
-        ordersDTO.setPaymentMethod(orders.getPaymentMethod());
-        ordersDTO.setItemsTotal(orders.getItemsTotal());
-        ordersDTO.setTaxRate(orders.getTaxRate());
-        ordersDTO.setFreight(orders.getFreight());
-        ordersDTO.setAmountPaid(orders.getAmountPaid());
-        ordersDTO.setAmountDueN(orders.getAmountDueN());
-        ordersDTO.setIncome(orders.getIncome());
-        ordersDTO.setTotalCost(orders.getTotalCost());
-        ordersDTO.setPriceLevel(orders.getPriceLevel());
-        ordersDTO.setStatusOrder(orders.getStatusOrder());
-        ordersDTO.setRahFacNo(orders.getRahFacNo());
-        ordersDTO.setNotice(orders.getNotice());
-        return ordersDTO;
+        dto.setReceivedDate(entity.getReceivedDate());
+        dto.setClientReceivedDate(entity.getClientReceivedDate());
+        dto.setShipToAddr2(entity.getShipToAddr2());
+        dto.setShipToCity(entity.getShipToCity());
+        dto.setShipToState(entity.getShipToState());
+        dto.setShipToZip(entity.getShipToZip());
+        dto.setShipToCountry(entity.getShipToCountry());
+        dto.setShipToPhone(entity.getShipToPhone());
+        dto.setShipVia(entity.getShipVia());
+        dto.setPo(entity.getPo());
+        dto.setTerms(entity.getTerms());
+        dto.setPaymentMethod(entity.getPaymentMethod());
+        dto.setItemsTotal(entity.getItemsTotal());
+        dto.setTaxRate(entity.getTaxRate());
+        dto.setFreight(entity.getFreight());
+        dto.setAmountPaid(entity.getAmountPaid());
+        dto.setAmountDueN(entity.getAmountDueN());
+        dto.setIncome(entity.getIncome());
+        dto.setTotalCost(entity.getTotalCost());
+        dto.setPriceLevel(entity.getPriceLevel());
+        dto.setStatusOrder(entity.getStatusOrder());
+        dto.setRahFacNo(entity.getRahFacNo());
+        dto.setNotice(entity.getNotice());
+        return dto;
     }
 
-    private void mapToEntity(final OrdersDTO ordersDTO, final Orders orders) {
-        Customer customer;
-        if (ordersDTO.getCustNo() != null) {
-            customer = customerRepository.findById(ordersDTO.getCustNo())
+    private void mapToEntity(final OrdersDTO dto, final Orders entity) {
+
+        if (dto.getCustNo() != null) {
+            Customer customer = customerRepository.findById(dto.getCustNo())
                     .orElseThrow(() -> new NotFoundException("Customer not found"));
-        } else if (ordersDTO.getPhone() != null && !ordersDTO.getPhone().trim().isEmpty()) {
-            // якщо телефон є — шукаємо по телефону
-            customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(ordersDTO.getPhone())
-                    .orElseGet(() -> createWithAnonymousCustomer(ordersDTO));
-        } else {
-            // якщо телефону немає — створюємо нового клієнта
-            customer = createWithAnonymousCustomer(ordersDTO);
+            entity.setCustomer(customer);
+        } else if (dto.getPhone() != null && !dto.getPhone().trim().isEmpty()) {
+            Customer customer = customerRepository.findFirstByMobileContainingOrderByCustNoAsc(dto.getPhone())
+                    .orElseGet(() -> createWithAnonymousCustomer(dto));
+            entity.setCustomer(customer);
         }
 
-        Branch branch = branchRepository.findByName(ordersDTO.getBranchName())
-                .orElseThrow(() -> new RuntimeException("Branch not found: " + ordersDTO.getBranchName()));
+        if (dto.getBranchName() != null) {
+            Branch branch = branchRepository.findByName(dto.getBranchName())
+                    .orElseThrow(() -> new RuntimeException("Branch not found: " + dto.getBranchName()));
+            entity.setBranch(branch);
+        }
 
-        orders.setCustomer(customer);
-        orders.setBranch(branch);
-        orders.setSaleDate(ordersDTO.getSaleDate());
-        orders.setShipDate(ordersDTO.getShipDate());
-        orders.setReceivedDate(ordersDTO.getReceivedDate());
-        orders.setClientReceivedDate(ordersDTO.getClientReceivedDate());
-        orders.setShipToAddr2(ordersDTO.getShipToAddr2());
-        orders.setShipToCity(ordersDTO.getShipToCity());
-        orders.setShipToState(ordersDTO.getShipToState());
-        orders.setShipToZip(ordersDTO.getShipToZip());
-        orders.setShipToCountry(ordersDTO.getShipToCountry());
-        orders.setShipToPhone(ordersDTO.getShipToPhone());
-        orders.setShipVia(ordersDTO.getShipVia());
-        orders.setPo(ordersDTO.getPo());
-        orders.setTerms(ordersDTO.getTerms());
-        orders.setPaymentMethod(ordersDTO.getPaymentMethod());
-        orders.setItemsTotal(ordersDTO.getItemsTotal());
-        orders.setTaxRate(ordersDTO.getTaxRate());
-        orders.setFreight(ordersDTO.getFreight());
-        orders.setAmountPaid(ordersDTO.getAmountPaid());
-        orders.setAmountDueN(ordersDTO.getAmountDueN());
-        orders.setIncome(ordersDTO.getIncome());
-        orders.setTotalCost(ordersDTO.getTotalCost());
-        orders.setPriceLevel(ordersDTO.getPriceLevel());
-        orders.setStatusOrder(ordersDTO.getStatusOrder());
-        orders.setRahFacNo(ordersDTO.getRahFacNo());
-        orders.setNotice(ordersDTO.getNotice());
+        if (dto.getSaleDate() != null) entity.setSaleDate(dto.getSaleDate());
+        if (dto.getShipDate() != null) entity.setShipDate(dto.getShipDate());
+        if (dto.getReceivedDate() != null) entity.setReceivedDate(dto.getReceivedDate());
+        if (dto.getClientReceivedDate() != null) entity.setClientReceivedDate(dto.getClientReceivedDate());
+
+        if (dto.getShipToAddr2() != null) entity.setShipToAddr2(dto.getShipToAddr2());
+        if (dto.getShipToCity() != null) entity.setShipToCity(dto.getShipToCity());
+        if (dto.getShipToState() != null) entity.setShipToState(dto.getShipToState());
+        if (dto.getShipToZip() != null) entity.setShipToZip(dto.getShipToZip());
+        if (dto.getShipToCountry() != null) entity.setShipToCountry(dto.getShipToCountry());
+        if (dto.getShipToPhone() != null) entity.setShipToPhone(dto.getShipToPhone());
+        if (dto.getShipVia() != null) entity.setShipVia(dto.getShipVia());
+        if (dto.getPo() != null) entity.setPo(dto.getPo());
+        if (dto.getTerms() != null) entity.setTerms(dto.getTerms());
+        if (dto.getPaymentMethod() != null) entity.setPaymentMethod(dto.getPaymentMethod());
+        if (dto.getItemsTotal() != null) entity.setItemsTotal(dto.getItemsTotal());
+        if (dto.getTaxRate() != null) entity.setTaxRate(dto.getTaxRate());
+        if (dto.getFreight() != null) entity.setFreight(dto.getFreight());
+        if (dto.getAmountPaid() != null) entity.setAmountPaid(dto.getAmountPaid());
+        if (dto.getAmountDueN() != null) entity.setAmountDueN(dto.getAmountDueN());
+        if (dto.getIncome() != null) entity.setIncome(dto.getIncome());
+        if (dto.getTotalCost() != null) entity.setTotalCost(dto.getTotalCost());
+        if (dto.getPriceLevel() != null) entity.setPriceLevel(dto.getPriceLevel());
+        if (dto.getStatusOrder() != null) entity.setStatusOrder(dto.getStatusOrder());
+        if (dto.getRahFacNo() != null) entity.setRahFacNo(dto.getRahFacNo());
+        if (dto.getNotice() != null) entity.setNotice(dto.getNotice());
     }
 
     private Customer createWithAnonymousCustomer(OrdersDTO ordersDTO) {
@@ -307,11 +307,15 @@ public class OrdersService {
         }
     }
 
-    private void updateItems(final Orders existingOrder, final OrdersDTO ordersDTO) {
-        Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(existingOrder.getOrderNo());
-        Long nextItemNo = (maxItemNo != null ? maxItemNo : 0L) + 1;
-        deleteAllItemsByOrderNo(existingOrder.getOrderNo());
-        saveItems(nextItemNo, existingOrder, ordersDTO);
+    private void updateItems(final Orders existingOrder, final OrdersDTO dto) {
+        if (dto.getItems() != null) {
+            Long maxItemNo = itemsRepository.findMaxItemNoByOrderNo(existingOrder.getOrderNo());
+            Long nextItemNo = (maxItemNo != null ? maxItemNo : 0L) + 1;
+            deleteAllItemsByOrderNo(existingOrder.getOrderNo());
+            if (!dto.getItems().isEmpty()) {
+                saveItems(nextItemNo, existingOrder, dto);
+            }
+        }
     }
 
     public void deleteAllItemsByOrderNo(Long orderNo) {
