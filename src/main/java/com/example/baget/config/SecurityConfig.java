@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/signup").hasRole("ADMIN") // ОБМЕЖЕННЯ ПЕРШИМ
                         .requestMatchers("/auth/login", "/auth/password-recovery", "/auth/reset-password").permitAll()
                         .requestMatchers("/api/qrcode/invoices/public/**").permitAll()
+                        .requestMatchers("/api/chat").permitAll()
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
 

@@ -39,11 +39,11 @@ public class QrResource {
         return new ResponseEntity<>(png, headers, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}/publicId")
-    public ResponseEntity<String> getPublicId(@PathVariable Long id) {
-        Optional<Orders> inv = Optional.ofNullable(ordersRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Invoice not found: " + id)));
-        return ResponseEntity.ok(inv.get().getPublicId());
+    @GetMapping("/{orderNo}/publicId")
+    public ResponseEntity<String> getPublicId(@PathVariable(name = "orderNo") final Long orderNo) {
+        Orders order = ordersRepository.findById(orderNo)
+                .orElseThrow(() -> new NotFoundException("Invoice not found: " + orderNo));
+        return ResponseEntity.ok(order.getPublicId());
     }
 
     @GetMapping("/public/{publicId}")
