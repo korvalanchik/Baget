@@ -40,8 +40,8 @@ public class InvoiceService {
         PdfWriter.getInstance(document, baos);
         document.open();
 
-        BaseFont bfBold = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-        BaseFont bfNormal = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        BaseFont bfBold = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.CP1252, BaseFont.EMBEDDED);
+        BaseFont bfNormal = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.EMBEDDED);
 
         Font bold = new Font(bfBold, 10);
         Font normal = new Font(bfNormal, 10);
