@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -62,7 +63,7 @@ public class TransactionResource {
     }
 
     @GetMapping("/{invoiceNo}/pdf")
-    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long invoiceNo) {
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long invoiceNo) throws IOException {
         byte[] contents = invoiceService.generateInvoicePdf(invoiceNo);
 
         return ResponseEntity.ok()

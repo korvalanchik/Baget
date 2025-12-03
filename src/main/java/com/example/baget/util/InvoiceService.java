@@ -7,9 +7,11 @@ import com.example.baget.orders.OrdersRepository;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.BaseFont;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,7 +27,7 @@ public class InvoiceService {
         this.companyDetailsService = companyDetailsService;
     }
 
-    public byte[] generateInvoicePdf(Long invoiceNo) {
+    public byte[] generateInvoicePdf(Long invoiceNo) throws IOException {
         List<Orders> orders = ordersRepository.findByRahFacNo(invoiceNo);
         if (orders.isEmpty()) {
             throw new IllegalArgumentException("Invoice " + invoiceNo + " not found");
@@ -38,8 +40,11 @@ public class InvoiceService {
         PdfWriter.getInstance(document, baos);
         document.open();
 
-        Font bold = new Font(Font.HELVETICA, 10, Font.BOLD);
-        Font normal = new Font(Font.HELVETICA, 10, Font.NORMAL);
+        BaseFont bfBold = BaseFont.createFont(BaseFont.HELVETICA_BOLD, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        BaseFont bfNormal = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+
+        Font bold = new Font(bfBold, 10);
+        Font normal = new Font(bfNormal, 10);
 
         // --- РЕКВІЗИТИ БЕРЕМО З БД ---
         document.add(new Paragraph("Постачальник: " + details.getFullName(), bold));
@@ -54,23 +59,6 @@ public class InvoiceService {
         if(details.getAddress() != null)
             document.add(new Paragraph("Адреса: " + details.getAddress() + "\n\n", normal));
 
-
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        Document document = new Document(PageSize.A4, 36, 36, 54, 36);
-//        PdfWriter.getInstance(document, baos);
-//        document.open();
-//
-//        Font bold = new Font(Font.HELVETICA, 10, Font.BOLD);
-//        Font normal = new Font(Font.HELVETICA, 10, Font.NORMAL);
-//
-//        // Шапка постачальника
-//        document.add(new Paragraph("Постачальник:  ФОП Петров Валерій Афрікановіч", bold));
-//        document.add(new Paragraph("ЄДРПОУ 2512702072, тел. (063)433-28-91", normal));
-//        document.add(new Paragraph("Р/р UA893220010000026005320012345 в АТ «УНІВЕРСАЛ БАНК» МФО 322001", normal));
-//        document.add(new Paragraph("ІПН 15224372 № свідоцтва 8768534", normal));
-//        document.add(new Paragraph("Не є платником податку на прибуток на загальних підставах", normal));
-//        document.add(new Paragraph("Адреса: 54020, Миколаїв, Велика, 223/98\n\n", normal));
-
         // Одержувач
         document.add(new Paragraph("Одержувач: " + resolveCustomerName(orders), bold));
         document.add(new Paragraph("Платник: той самий\n\n", normal));
@@ -84,7 +72,7 @@ public class InvoiceService {
         p.setAlignment(Element.ALIGN_CENTER);
         document.add(p);
 
-        Paragraph d = new Paragraph("від " + dateStr, normal);
+        Paragraph d = new Paragraph("від " + dateStr + "\n", normal);
         d.setAlignment(Element.ALIGN_CENTER);
         document.add(d);
 
@@ -122,7 +110,7 @@ public class InvoiceService {
         document.add(s);
         document.add(new Paragraph("Всього на суму: " + MoneyToWordsUA.convert(total), bold));
         document.add(new Paragraph("ПДВ: —\n\n", normal));
-        document.add(new Paragraph("Виписав(ла): " + details.getInitials(), normal));
+        document.add(new Paragraph("Виписав(ла): " + details.getInitials() + " ____________", normal));
 
         document.close();
 
