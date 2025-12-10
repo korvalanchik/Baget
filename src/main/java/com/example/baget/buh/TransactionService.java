@@ -29,6 +29,231 @@ public class TransactionService {
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
 
+
+    @Transactional
+    public Transaction processTransaction(Transaction txInput) {
+
+        Customer customer = txInput.getCustomer();
+        Orders order = txInput.getOrder();
+        String typeCode = txInput.getTransactionType().getCode();
+        double amount = txInput.getAmount();
+
+        // встановлюємо дату транзакції
+        if (txInput.getTransactionDate() == null) {
+            txInput.setTransactionDate(OffsetDateTime.now());
+        }
+
+        // 1️⃣ ВАЛІДАЦІЯ
+        if (customer == null) {
+            throw new TransactionException("Transaction must have customerId");
+        }
+
+        if (amount <= 0) {
+            throw new TransactionException("Amount must be positive");
+        }
+
+        // 2️⃣ ОТРИМАННЯ БАЛАНСУ
+        double balance = Optional.ofNullable(
+                transactionRepository.getCustomerBalance(customer.getCustNo())
+        ).orElse(0.0);
+
+        // 3️⃣ ЛОГІКА ДЛЯ ВНЕСЕННЯ КОШТІВ (PAYMENT)
+        if (typeCode.equals("PAYMENT")) {
+
+            // Це завжди означає, що клієнт вніс гроші.
+            txInput.setNote("Внесення коштів клієнтом");
+
+            // Створюємо транзакцію надходження на баланс
+            Transaction incoming = new Transaction();
+            incoming.setTransactionDate(txInput.getTransactionDate());
+            incoming.setTransactionType(txInput.getTransactionType()); // PAYMENT
+            incoming.setCustomer(customer);
+            incoming.setAmount(amount); // +amount (поповнення)
+            incoming.setStatus("Completed");
+            incoming.setReference(txInput.getReference());
+            incoming.setNote("Поповнення балансу клієнта");
+
+            transactionRepository.save(incoming);
+
+            // Оновлюємо баланс
+            balance += amount;
+
+            // Якщо замовлення не вибрано → просто поповнення
+            if (order == null) {
+                return incoming;
+            }
+
+            // 4️⃣ ОПЛАТА ЗАМОВЛЕННЯ ІЗ БАЛАНСУ
+            double orderDue = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
+            double orderPaid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+            double orderIncome = Optional.ofNullable(order.getIncome()).orElse(0.0);
+
+            if (orderDue <= 0) {
+                // замовлення вже оплачене
+                Transaction noop = new Transaction();
+                noop.setTransactionDate(txInput.getTransactionDate());
+                noop.setTransactionType(txInput.getTransactionType());
+                noop.setCustomer(customer);
+                noop.setOrder(order);
+                noop.setAmount(0.0);
+                noop.setStatus("Completed");
+                noop.setNote("Замовлення вже оплачено. Кошти додано на баланс.");
+                return transactionRepository.save(noop);
+            }
+
+            // сума, яку реально можна списати
+            double toPay = Math.min(balance, orderDue);
+
+            // створюємо транзакцію списання
+            Transaction deduction = new Transaction();
+            deduction.setTransactionDate(txInput.getTransactionDate());
+            deduction.setTransactionType(transactionTypeRepository.findByCode("ORDER_PAYMENT")
+                    .orElseThrow(() -> new IllegalArgumentException("Missing ORDER_PAYMENT type")));
+            deduction.setCustomer(customer);
+            deduction.setOrder(order);
+            deduction.setAmount(-toPay); // списання = мінус
+            deduction.setStatus("Completed");
+            deduction.setNote("Списання з балансу на оплату замовлення №" + order.getOrderNo());
+
+            transactionRepository.save(deduction);
+
+            // оновлюємо баланс після списання
+            balance -= toPay;
+
+            // 5️⃣ ОНОВЛЕННЯ ЗАМОВЛЕННЯ
+            order.setAmountPaid(orderPaid + toPay);
+            order.setAmountDueN(orderDue - toPay);
+            order.setIncome(orderIncome + toPay);
+
+            updateOrderStatusFromPayments(order);
+            ordersRepository.save(order);
+
+            return deduction;
+        }
+
+        if(typeCode.equals("INVOICE")) {
+            if (order == null) {
+                throw new TransactionException("Не встановлено № замовлення для інвойсу.");
+            }
+
+            Transaction invoiceTx = new Transaction();
+            invoiceTx.setTransactionDate(txInput.getTransactionDate());
+            invoiceTx.setTransactionType(txInput.getTransactionType()); // INVOICE
+            invoiceTx.setCustomer(customer);
+            invoiceTx.setOrder(order);
+            invoiceTx.setAmount(0.0); // інвойс — без реальних грошей
+            invoiceTx.setStatus("Issued"); // відрізняємо від Completed
+            invoiceTx.setReference(txInput.getReference());
+            invoiceTx.setNote("Виставлено рахунок на замовлення №" + order.getOrderNo());
+
+            transactionRepository.save(invoiceTx);
+        }
+
+        if(typeCode.equals("REFUND")) {
+            if (order != null) {
+                // Повернення за конкретне замовлення
+                double paid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+                double refundAmount = amount;
+
+                if (refundAmount > paid) {
+                    throw new TransactionException("Неможливо повернути більше, ніж сплачено за замовлення.");
+                }
+
+                Transaction refundTx = new Transaction();
+                refundTx.setTransactionDate(txInput.getTransactionDate());
+                refundTx.setTransactionType(txInput.getTransactionType());
+                refundTx.setCustomer(customer);
+                refundTx.setOrder(order);
+                refundTx.setAmount(-refundAmount); // списуємо як негативну транзакцію
+                refundTx.setStatus("Completed");
+                refundTx.setReference(txInput.getReference());
+                refundTx.setNote("Повернення коштів за замовлення №" + order.getOrderNo());
+                transactionRepository.save(refundTx);
+
+                // Оновлюємо замовлення
+                order.setAmountPaid(paid - refundAmount);
+                order.setAmountDueN(Optional.ofNullable(order.getAmountDueN()).orElse(0.0) + refundAmount);
+                order.setIncome(Optional.ofNullable(order.getIncome()).orElse(0.0) - refundAmount);
+                updateOrderStatusFromPayments(order);
+                ordersRepository.save(order);
+
+            } else {
+                // Повернення загального балансу клієнта
+                if (amount > balance) {
+                    throw new TransactionException("Повернення перевищує баланс клієнта.");
+                }
+
+                Transaction refundTx = new Transaction();
+                refundTx.setTransactionDate(txInput.getTransactionDate());
+                refundTx.setTransactionType(txInput.getTransactionType());
+                refundTx.setCustomer(customer);
+                refundTx.setAmount(-amount);
+                refundTx.setStatus("Completed");
+                refundTx.setReference(txInput.getReference());
+                refundTx.setNote("Повернення коштів клієнту");
+                transactionRepository.save(refundTx);
+            }
+        }
+
+        if(typeCode.equals("DISCOUNT")) {
+
+            if (order == null) throw new TransactionException("Не встановлено № замовлення для дисконту.");
+
+            double due = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
+            if (amount > due) throw new TransactionException("Сума дисконту перевищує залишок до оплати.");
+
+            order.setAmountDueN(due - amount);
+
+            Transaction discountTx = new Transaction();
+            discountTx.setTransactionDate(txInput.getTransactionDate());
+            discountTx.setTransactionType(txInput.getTransactionType());
+            discountTx.setCustomer(customer);
+            discountTx.setOrder(order);
+            discountTx.setAmount(-amount);
+            discountTx.setStatus("Completed");
+            discountTx.setReference(txInput.getReference());
+            discountTx.setNote("Дисконт до замовлення №" + order.getOrderNo());
+            transactionRepository.save(discountTx);
+
+            ordersRepository.save(order);
+        }
+
+        if(typeCode.equals("CANCEL")) {
+            if (order == null) throw new TransactionException("Не встановлено № замовлення для відміни.");
+
+            double due = Optional.ofNullable(order.getAmountDueN()).orElse(0.0);
+            double paid = Optional.ofNullable(order.getAmountPaid()).orElse(0.0);
+
+            if (Math.round(amount*100) != Math.round(due*100)) {
+                throw new TransactionException("Сума повинна збігатися з залишком авансу (" + due + ")");
+            }
+
+            // Закриваємо замовлення
+            order.setAmountDueN(0.0);
+            order.setAmountPaid(0.0);
+            order.setStatusOrder(5); // відміна
+            updateOrderStatusFromPayments(order);
+            ordersRepository.save(order);
+
+            Transaction cancelTx = new Transaction();
+            cancelTx.setTransactionDate(txInput.getTransactionDate());
+            cancelTx.setTransactionType(txInput.getTransactionType());
+            cancelTx.setCustomer(customer);
+            cancelTx.setOrder(order);
+            cancelTx.setAmount(due); // записуємо як дохід
+            cancelTx.setStatus("Completed");
+            cancelTx.setReference(txInput.getReference());
+            cancelTx.setNote("Списано як дохід при відмові від замовлення №" + order.getOrderNo());
+            transactionRepository.save(cancelTx);
+        }
+
+        throw new TransactionException("Unsupported transaction type: " + typeCode);
+    }
+
+
+
+
+/*
     private Transaction processTransaction(Transaction transaction) {
         // Встановлюємо дату, якщо не задано
         if (transaction.getTransactionDate() == null) {
@@ -172,13 +397,28 @@ public class TransactionService {
         transaction.setStatus("Completed");
         return transactionRepository.save(transaction);
     }
-
-
+*/
+/*
     private void updateOrderStatus(Orders order) {
         if (order.getAmountDueN() == 0d) {
             order.setStatusOrder(4); // 4 = оплачено / завершено
         } else {
             order.setStatusOrder(9); // 9 = частково оплачено
+        }
+    }
+*/
+
+    private void updateOrderStatusFromPayments(Orders order) {
+
+        double paid = transactionRepository.sumPaidByOrder(order.getOrderNo());
+        double total = order.getAmountPaid();
+
+        if (paid >= total) {
+            order.setStatusOrder(9); // Оплачено
+        } else if (paid > 0) {
+            order.setStatusOrder(8); // Частково оплачено
+        } else {
+            order.setStatusOrder(7); // До оплати
         }
     }
 
@@ -232,8 +472,13 @@ public class TransactionService {
         List<TransactionDTO> results = new ArrayList<>();
         double remaining = amount;
 
-        Long paymentTypeId = transactionTypeRepository.findByCode("PAYMENT").getTypeId();
-        Long advanceTypeId = transactionTypeRepository.findByCode("ADVANCE_PAYMENT").getTypeId();
+        Long paymentTypeId = transactionTypeRepository.findByCode("PAYMENT")
+                .orElseThrow(() -> new IllegalArgumentException("Missing PAYMENT type"))
+                .getTypeId();
+        Long advanceTypeId = transactionTypeRepository.findByCode("ADVANCE_PAYMENT")
+                .orElseThrow(() -> new IllegalArgumentException("Missing ADVANCE_PAYMENT type"))
+                .getTypeId();
+
 
         for (Orders order : orders) {
             if (remaining <= 0) break;

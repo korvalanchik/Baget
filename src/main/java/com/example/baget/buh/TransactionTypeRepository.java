@@ -7,5 +7,5 @@ import java.util.Optional;
 
 public interface TransactionTypeRepository extends JpaRepository<TransactionType, Long> {
     List<TransactionTypeProjection> findAllProjectedBy();
-    TransactionType findByCode(String code);
+    Optional<TransactionType>  findByCode(String code);
 }
