@@ -146,7 +146,7 @@ public class TransactionService {
             invoiceTx.setReference(txInput.getReference());
             invoiceTx.setNote("Виставлено рахунок на замовлення №" + order.getOrderNo());
 
-            transactionRepository.save(invoiceTx);
+            return transactionRepository.save(invoiceTx);
         }
 
         if(typeCode.equals("REFUND")) {
@@ -176,6 +176,7 @@ public class TransactionService {
                 order.setIncome(Optional.ofNullable(order.getIncome()).orElse(0.0) - refundAmount);
                 updateOrderStatusFromPayments(order);
                 ordersRepository.save(order);
+                return refundTx;
 
             } else {
                 // Повернення загального балансу клієнта
@@ -191,7 +192,7 @@ public class TransactionService {
                 refundTx.setStatus("Completed");
                 refundTx.setReference(txInput.getReference());
                 refundTx.setNote("Повернення коштів клієнту");
-                transactionRepository.save(refundTx);
+                return transactionRepository.save(refundTx);
             }
         }
 
@@ -213,9 +214,10 @@ public class TransactionService {
             discountTx.setStatus("Completed");
             discountTx.setReference(txInput.getReference());
             discountTx.setNote("Дисконт до замовлення №" + order.getOrderNo());
-            transactionRepository.save(discountTx);
-
             ordersRepository.save(order);
+
+            return transactionRepository.save(discountTx);
+
         }
 
         if(typeCode.equals("CANCEL")) {
@@ -244,7 +246,7 @@ public class TransactionService {
             cancelTx.setStatus("Completed");
             cancelTx.setReference(txInput.getReference());
             cancelTx.setNote("Списано як дохід при відмові від замовлення №" + order.getOrderNo());
-            transactionRepository.save(cancelTx);
+            return transactionRepository.save(cancelTx);
         }
 
         throw new TransactionException("Unsupported transaction type: " + typeCode);
@@ -414,9 +416,9 @@ public class TransactionService {
         double total = order.getAmountPaid();
 
         if (paid >= total) {
-            order.setStatusOrder(9); // Оплачено
+            order.setStatusOrder(4); // Оплачено
         } else if (paid > 0) {
-            order.setStatusOrder(8); // Частково оплачено
+            order.setStatusOrder(9); // Частково оплачено
         } else {
             order.setStatusOrder(7); // До оплати
         }
