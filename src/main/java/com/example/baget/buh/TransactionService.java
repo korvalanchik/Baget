@@ -71,7 +71,7 @@ public class TransactionService {
             incoming.setAmount(amount); // +amount (поповнення)
             incoming.setStatus("Completed");
             incoming.setReference(txInput.getReference());
-            incoming.setNote("Поповнення балансу клієнта");
+            incoming.setNote("Поповнення балансу клієнта №" + customer.getCustNo());
 
             transactionRepository.save(incoming);
 
@@ -412,7 +412,7 @@ public class TransactionService {
 
     private void updateOrderStatusFromPayments(Orders order) {
 
-        double paid = transactionRepository.sumPaidByOrder(order.getOrderNo());
+        double paid = transactionRepository.getOrderPaymentsSum(order.getOrderNo());
         double total = order.getAmountPaid();
 
         if (paid >= total) {
