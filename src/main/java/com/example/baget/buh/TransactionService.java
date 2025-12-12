@@ -97,7 +97,7 @@ public class TransactionService {
                 noop.setOrder(order);
                 noop.setAmount(0.0);
                 noop.setStatus("Completed");
-                noop.setNote("Замовлення вже оплачено. Кошти додано на баланс.");
+                noop.setNote("Замовлення вже оплачено. Кошти додано на баланс клієнта №" + customer.getCustNo());
                 return transactionRepository.save(noop);
             }
 
@@ -113,7 +113,8 @@ public class TransactionService {
             deduction.setOrder(order);
             deduction.setAmount(-toPay); // списання = мінус
             deduction.setStatus("Completed");
-            deduction.setNote("Списання з балансу на оплату замовлення №" + order.getOrderNo());
+            deduction.setNote("Списання з балансу клієнта №" + customer.getCustNo() +
+                              " на оплату замовлення №" + order.getOrderNo());
 
             transactionRepository.save(deduction);
 
