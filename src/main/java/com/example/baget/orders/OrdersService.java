@@ -362,7 +362,7 @@ public class OrdersService {
     private void checkOrderEditable(Orders order) {
         Status status = statusRepository.findByStatusNo(order.getStatusOrder())
                 .orElseThrow(() -> new IllegalStateException("Status not found"));
-        if (!EDITABLE_STATUSES.contains(status.getStatusName().toUpperCase())) {
+        if (!EDITABLE_STATUSES.contains(status.getStatusName())) {
             throw new TransactionException(
                     "Замовлення зі статусом " + status.getStatusName() + " не можна редагувати чи видалити"
             );
