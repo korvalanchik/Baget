@@ -7,10 +7,13 @@ import com.example.baget.customer.CustomerDTO;
 import com.example.baget.customer.CustomerRepository;
 import com.example.baget.customer.CustomerService;
 import com.example.baget.items.*;
+import com.example.baget.status.Status;
+import com.example.baget.status.StatusRepository;
 import com.example.baget.users.Role;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
+import com.example.baget.util.TransactionException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,10 +40,13 @@ public class OrdersService {
     private final BranchRepository branchRepository;
     private final ItemsRepository itemsRepository;
     private final ItemsService itemsService;
+    private final StatusRepository statusRepository;
+
+    private static final Set<String> EDITABLE_STATUSES = Set.of("Не вказано", "Прийнято");
     public OrdersService(final OrdersRepository ordersRepository, CustomerRepository customerRepository,
                          CustomerService customerService, UsersRepository userRepository,
                          BranchRepository branchRepository,
-                         ItemsRepository itemsRepository, ItemsService itemsService) {
+                         ItemsRepository itemsRepository, ItemsService itemsService, StatusRepository statusRepository) {
         this.ordersRepository = ordersRepository;
         this.customerRepository = customerRepository;
         this.customerService = customerService;
@@ -48,6 +54,7 @@ public class OrdersService {
         this.branchRepository = branchRepository;
         this.itemsRepository = itemsRepository;
         this.itemsService = itemsService;
+        this.statusRepository = statusRepository;
     }
 
     public List<OrdersDTO> findAll() {
@@ -140,19 +147,43 @@ public class OrdersService {
         return order.getOrderNo();
     }
 
+//    @Transactional
+//    public void update(final Long orderNo, final OrdersDTO ordersDTO) {
+//        final Orders existingOrder = ordersRepository.findById(orderNo)
+//                .orElseThrow(() -> new NotFoundException("Order not found"));
+//        mapToEntity(ordersDTO, existingOrder);
+//        ordersRepository.save(existingOrder);
+//        updateItems(existingOrder, ordersDTO);
+//    }
+
     @Transactional
     public void update(final Long orderNo, final OrdersDTO ordersDTO) {
+
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
+
         mapToEntity(ordersDTO, existingOrder);
-        ordersRepository.save(existingOrder);
         updateItems(existingOrder, ordersDTO);
+
+        ordersRepository.save(existingOrder);
     }
 
+//    public void delete(final Long orderNo) {
+//        ordersRepository.deleteById(orderNo);
+//    }
+
+    @Transactional
     public void delete(final Long orderNo) {
-        ordersRepository.deleteById(orderNo);
-    }
 
+        final Orders existingOrder = ordersRepository.findById(orderNo)
+                .orElseThrow(() -> new NotFoundException("Order not found"));
+
+        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
+
+        ordersRepository.delete(existingOrder);
+    }
 
     private OrdersDTO mapToDTO(final Orders entity, final OrdersDTO dto) {
         dto.setOrderNo(entity.getOrderNo());
@@ -328,4 +359,12 @@ public class OrdersService {
         itemsRepository.deleteByOrderOrderNo(orderNo);
     }
 
+    private void checkOrderEditable(Orders order) {
+        Status status = statusRepository.findByStatusNo(order.getStatusOrder())
+                .orElseThrow(() -> new IllegalStateException("Status not found"));
+        if (!EDITABLE_STATUSES.contains(status.getStatusName().toUpperCase())) {
+            throw new TransactionException(
+                    "Замовлення зі статусом " + status.getStatusName() + " не можна редагувати чи видалити"
+            );
+        }    }
 }
