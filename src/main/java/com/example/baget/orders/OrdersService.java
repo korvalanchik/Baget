@@ -162,7 +162,7 @@ public class OrdersService {
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
+//        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
 
         mapToEntity(ordersDTO, existingOrder);
         updateItems(existingOrder, ordersDTO);
@@ -180,7 +180,7 @@ public class OrdersService {
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
-        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
+//        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
 
         ordersRepository.delete(existingOrder);
     }
@@ -366,5 +366,6 @@ public class OrdersService {
             throw new TransactionException(
                     "Замовлення зі статусом " + status.getStatusName() + " не можна редагувати чи видалити"
             );
-        }    }
+        }
+    }
 }
