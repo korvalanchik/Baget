@@ -147,22 +147,15 @@ public class OrdersService {
         return order.getOrderNo();
     }
 
-//    @Transactional
-//    public void update(final Long orderNo, final OrdersDTO ordersDTO) {
-//        final Orders existingOrder = ordersRepository.findById(orderNo)
-//                .orElseThrow(() -> new NotFoundException("Order not found"));
-//        mapToEntity(ordersDTO, existingOrder);
-//        ordersRepository.save(existingOrder);
-//        updateItems(existingOrder, ordersDTO);
-//    }
-
     @Transactional
     public void update(final Long orderNo, final OrdersDTO ordersDTO) {
 
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
-//        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
+        if (isNotAdmin()) {
+            checkOrderEditable(existingOrder);
+        }
 
         mapToEntity(ordersDTO, existingOrder);
         updateItems(existingOrder, ordersDTO);
@@ -170,18 +163,14 @@ public class OrdersService {
         ordersRepository.save(existingOrder);
     }
 
-//    public void delete(final Long orderNo) {
-//        ordersRepository.deleteById(orderNo);
-//    }
-
     @Transactional
     public void delete(final Long orderNo) {
 
         final Orders existingOrder = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-
-//        checkOrderEditable(existingOrder); // 👈 ГОЛОВНЕ
-
+        if (isNotAdmin()) {
+            checkOrderEditable(existingOrder);
+        }
         ordersRepository.delete(existingOrder);
     }
 
@@ -368,4 +357,14 @@ public class OrdersService {
             );
         }
     }
+
+    private boolean isNotAdmin() {
+        Authentication auth = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
 }
