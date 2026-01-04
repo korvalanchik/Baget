@@ -364,7 +364,7 @@ public class OrdersService {
                 .getAuthentication();
 
         return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 
 }
