@@ -1,6 +1,5 @@
 package com.example.baget.branch;
 
-import com.example.baget.users.User;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,8 +11,10 @@ import java.util.List;
 @RequestMapping(value = "/api/branch", produces = MediaType.APPLICATION_JSON_VALUE)
 public class BranchResource {
     private final BranchRepository branchRepository;
-    public BranchResource(final BranchRepository branchRepository) {
+    private final BranchService branchService;
+    public BranchResource(final BranchRepository branchRepository, final BranchService branchService) {
         this.branchRepository = branchRepository;
+        this.branchService = branchService;
     }
     @GetMapping("/exists")
     public ResponseEntity<Boolean> existsBranch(@RequestParam("name") String branchName) {
@@ -22,11 +23,7 @@ public class BranchResource {
     }
 
     @GetMapping("/manager")
-    public List<BranchDTO> getAllowedBranches(Authentication auth) {
-        User user = (User) auth.getPrincipal();
-
-        return user.getAllowedBranches().stream()
-                .map(b -> new BranchDTO(b.getBranchNo(), b.getName()))
-                .toList();
+    public List<BranchDTO> getAllowedBranches(Authentication authentication) {
+        return branchService.allowedBranches(authentication.getName());
     }
 }
