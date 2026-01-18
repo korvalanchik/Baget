@@ -42,8 +42,8 @@ public class CustomerTransaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Column(nullable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt = OffsetDateTime.now();
 
     @Column(length = 50)
     private String reference; // чек, платіжка, номер інвойсу
