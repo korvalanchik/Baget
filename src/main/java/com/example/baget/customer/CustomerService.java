@@ -1,8 +1,10 @@
 package com.example.baget.customer;
 
+import com.example.baget.branch.Branch;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -13,21 +15,18 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 
 @Service
+@RequiredArgsConstructor
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final UsersRepository usersRepository;
-
-    public CustomerService(final CustomerRepository customerRepository, UsersRepository usersRepository) {
-        this.customerRepository = customerRepository;
-        this.usersRepository = usersRepository;
-    }
 
     public List<CustomerDTO> findAll() {
         final List<Customer> customers = customerRepository.findAll(Sort.by("custNo"));
@@ -111,25 +110,28 @@ public class CustomerService {
 
     }
 
-//    public List<CustomerDTO> getClientsForManager(
-//            String username,
-//            Long branchNo
-//    ) {
-//        User user = usersRepository.findByUsername(username)
-//                .orElseThrow(() -> new UsernameNotFoundException(username));
-//
-//        Set<Long> allowedBranchNos = user.getAllowedBranches()
-//                .stream()
-//                .map(Branch::getBranchNo)
-//                .collect(Collectors.toSet());
-//
-//        // якщо філія передана — перевіряємо доступ
-//        if (branchNo != null && !allowedBranchNos.contains(branchNo)) {
-//            throw new AccessDeniedException("Branch not allowed");
-//        }
-//
-//        return customerRepository.findClientBalances(
-//                branchNo != null ? branchNo : allowedBranchNos
-//        );
-//    }
+    public List<CustomerBalanceDTO> getClientsForManager(
+            String username,
+            Long branchNo
+    ) {
+        User user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username));
+
+        Set<Long> allowedBranchNos = user.getAllowedBranches()
+                .stream()
+                .map(Branch::getBranchNo)
+                .collect(Collectors.toSet());
+
+        if (branchNo != null && !allowedBranchNos.contains(branchNo)) {
+            throw new AccessDeniedException("Branch not allowed");
+        }
+
+        Collection<Long> branchesToUse =
+                (branchNo != null)
+                        ? List.of(branchNo)
+                        : allowedBranchNos;
+
+        return customerRepository.findClientBalances(branchesToUse);
+    }
+
 }

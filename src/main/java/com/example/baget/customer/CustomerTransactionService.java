@@ -1,6 +1,7 @@
 package com.example.baget.customer;
 
 import com.example.baget.orders.Orders;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -8,14 +9,10 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerTransactionService {
 
     private final CustomerTransactionRepository customerTransactionRepository;
-
-    public CustomerTransactionService(CustomerTransactionRepository customerTransactionRepository) {
-        this.customerTransactionRepository = customerTransactionRepository;
-    }
-
 
     public BigDecimal getCustomerBalance(Long customerId) {
         return customerTransactionRepository.sumActiveAmountByCustomer(customerId)

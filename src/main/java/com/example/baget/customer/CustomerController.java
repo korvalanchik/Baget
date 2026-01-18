@@ -2,6 +2,7 @@ package com.example.baget.customer;
 
 import com.example.baget.util.WebUtils;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -14,14 +15,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
+@RequiredArgsConstructor
 @RequestMapping("/customers")
 public class CustomerController {
 
     private final CustomerService customerService;
-
-    public CustomerController(final CustomerService customerService) {
-        this.customerService = customerService;
-    }
 
     @GetMapping
     public String list(final Model model) {

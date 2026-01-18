@@ -3,6 +3,7 @@ package com.example.baget.customer;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/customers")
 public class CustomerPaymentResource {
 
@@ -17,13 +19,6 @@ public class CustomerPaymentResource {
     private final CustomerTransactionService customerTransactionService;
     private final CustomerRepository customerRepository;
     private final OrdersRepository ordersRepository;
-
-    public CustomerPaymentResource(CustomerPaymentService customerPaymentService, CustomerTransactionService customerTransactionService, CustomerRepository customerRepository, OrdersRepository ordersRepository) {
-        this.customerPaymentService = customerPaymentService;
-        this.customerTransactionService = customerTransactionService;
-        this.customerRepository = customerRepository;
-        this.ordersRepository = ordersRepository;
-    }
 
     @PostMapping("/payment")
     public ResponseEntity<Void> registerPayment(

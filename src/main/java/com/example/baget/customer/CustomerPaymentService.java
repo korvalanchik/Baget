@@ -7,22 +7,18 @@ import com.example.baget.finance.FinanceTransactionRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.users.User;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Service
+@RequiredArgsConstructor
 public class CustomerPaymentService {
 
     private final CustomerTransactionRepository customerTxRepository;
     private final FinanceTransactionRepository financeTxRepository;
-
-    public CustomerPaymentService(CustomerTransactionRepository customerTxRepository, FinanceTransactionRepository financeTxRepository) {
-        this.customerTxRepository = customerTxRepository;
-        this.financeTxRepository = financeTxRepository;
-    }
-
 
     @Transactional
     public void registerPayment(

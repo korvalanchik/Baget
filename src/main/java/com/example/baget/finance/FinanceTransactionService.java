@@ -11,7 +11,7 @@ import java.time.OffsetDateTime;
 @RequiredArgsConstructor
 public class FinanceTransactionService {
 
-    private final FinanceTransactionRepository repository;
+    private final FinanceTransactionRepository financeTransactionRepository;
 
     public FinanceTransaction registerExpense(
             FinanceCategory category,
@@ -19,7 +19,7 @@ public class FinanceTransactionService {
             String reference,
             User user
     ) {
-        return repository.save(
+        return financeTransactionRepository.save(
                 FinanceTransaction.builder()
                         .direction(FinanceDirection.OUT)
                         .category(category)
