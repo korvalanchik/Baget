@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -73,9 +74,9 @@ public class BaseOrdersDTO {
     @Size(max = 7)
     private String paymentMethod;
 
-    private Double itemsTotal;
+    private BigDecimal itemsTotal;
 
-    private Double freight;
+    private BigDecimal freight;
 
     private Integer statusOrder;
 

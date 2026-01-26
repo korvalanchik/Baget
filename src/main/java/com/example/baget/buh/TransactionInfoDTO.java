@@ -1,10 +1,12 @@
 package com.example.baget.buh;
 
+import java.math.BigDecimal;
+
 public record TransactionInfoDTO(
         Long orderNo,
         Long customerId,
-        Double itemsTotal,
-        Double amountPaid,
-        Double amountDueN,
-        Double customerBalance
+        BigDecimal itemsTotal,
+        BigDecimal amountPaid,
+        BigDecimal amountDueN,
+        BigDecimal customerBalance
 ) {}

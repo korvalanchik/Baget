@@ -1,3 +1,5 @@
 package com.example.baget.buh;
 
-public record TransactionInvoiceRequest(Long invoiceNo, Double amount) {}
+import java.math.BigDecimal;
+
+public record TransactionInvoiceRequest(Long invoiceNo, BigDecimal amount) {}

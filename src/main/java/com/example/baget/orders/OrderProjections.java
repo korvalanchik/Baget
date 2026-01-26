@@ -2,6 +2,7 @@ package com.example.baget.orders;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 public interface OrderProjections {
@@ -31,7 +32,7 @@ public interface OrderProjections {
         @JsonProperty("empNo")
         String getEmployee_Username();
 
-        Double getItemsTotal();
+        BigDecimal getItemsTotal();
 
         Integer getStatusOrder();
 
@@ -39,18 +40,18 @@ public interface OrderProjections {
 
     // для адміну
     interface AdminOrderView extends BaseOrdersView {
-        Double getTaxRate();
-        Double getFreight();
-        Double getAmountPaid();
-        Double getAmountDueN();
-        Double getIncome();
-        Double getTotalCost();
+        BigDecimal getTaxRate();
+        BigDecimal getFreight();
+        BigDecimal getAmountPaid();
+        BigDecimal getAmountDueN();
+        BigDecimal getIncome();
+        BigDecimal getTotalCost();
         Integer getPriceLevel();
     }
 
     // для касира
     interface CounterOrderView extends BaseOrdersView {
-        Double getAmountPaid();
+        BigDecimal getAmountPaid();
     }
 
     // для звичайного користувача
@@ -75,7 +76,7 @@ public interface OrderProjections {
         OffsetDateTime getShipDate();
         @JsonProperty("empNo")
         String getEmployee_Username();
-        Double getItemsTotal();   // Загальна сума рахунку
+        BigDecimal getItemsTotal();   // Загальна сума рахунку
         Integer getStatusOrder();
         String getNotice();
     }

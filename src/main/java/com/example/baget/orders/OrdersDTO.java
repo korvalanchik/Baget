@@ -2,6 +2,8 @@ package com.example.baget.orders;
 
 import com.example.baget.items.ItemsDTO;
 import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -73,19 +75,19 @@ public class OrdersDTO {
     @Size(max = 7)
     private String paymentMethod;
 
-    private Double itemsTotal;
+    private BigDecimal itemsTotal;
 
-    private Double taxRate;
+    private BigDecimal taxRate;
 
-    private Double freight;
+    private BigDecimal freight;
 
-    private Double amountPaid;
+    private BigDecimal amountPaid;
 
-    private Double amountDueN;
+    private BigDecimal amountDueN;
 
-    private Double income;
+    private BigDecimal income;
 
-    private Double totalCost;
+    private BigDecimal totalCost;
 
     private Integer priceLevel;
 

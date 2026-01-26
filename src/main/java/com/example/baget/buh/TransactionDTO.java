@@ -1,8 +1,8 @@
 package com.example.baget.buh;
 
-import com.example.baget.customer.Customer;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -21,7 +21,7 @@ public class TransactionDTO {
     private String transactionTypeDescription;
 
     private OffsetDateTime transactionDate;
-    private Double amount;
+    private BigDecimal amount;
     private String reference;
     private String status;
     private String note;

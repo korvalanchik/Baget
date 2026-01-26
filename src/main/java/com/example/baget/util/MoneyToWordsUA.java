@@ -1,5 +1,8 @@
 package com.example.baget.util;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public class MoneyToWordsUA {
     private static final String[] UNITS = {
             "", "одна", "дві", "три", "чотири", "п’ять",
@@ -26,13 +29,23 @@ public class MoneyToWordsUA {
             {"мільярд", "мільярди", "мільярдів"}
     };
 
-    public static String convert(double amount) {
-        long hryvnias = (long) amount;
-        long kopiykas = Math.round((amount - hryvnias) * 100);
+    public static String convert(BigDecimal amount) {
+        if (amount == null) {
+            return "";
+        }
+
+        // гривні
+        long hryvnias = amount.longValue();
+
+        // копійки (залишок після коми)
+        BigDecimal fractionalPart = amount.subtract(BigDecimal.valueOf(hryvnias));
+        long kopiykas = fractionalPart
+                .multiply(BigDecimal.valueOf(100))
+                .setScale(0, RoundingMode.HALF_UP)
+                .longValue();
 
         String hryvniasPart = numToWords(hryvnias);
         String kopiykasPart = String.format("%02d %s", kopiykas, getForm(kopiykas, 0));
-//        String kopiykasPart = numToWords(kopiykas, 0);
 
         return capitalizeFirstLetter(hryvniasPart + " " + kopiykasPart);
     }
@@ -103,9 +116,11 @@ public class MoneyToWordsUA {
     }
 
     public static void main(String[] args) {
-        System.out.println(MoneyToWordsUA.convert(1560.0));   // Одна тисяча п’ятсот шістдесят гривень нуль копійок
-        System.out.println(MoneyToWordsUA.convert(98.25));    // Дев’яносто вісім гривень двадцять п’ять копійок
-        System.out.println(MoneyToWordsUA.convert(1.01));     // Одна гривня одна копійка
-        System.out.println(MoneyToWordsUA.convert(30565.15));     // Одна гривня одна копійка
+        System.out.println(System.getProperty("file.encoding"));
+        System.out.println("Привіт, Україно!");
+        System.out.println(MoneyToWordsUA.convert(new BigDecimal("1560.0")));   // Одна тисяча п’ятсот шістдесят гривень нуль копійок
+        System.out.println(MoneyToWordsUA.convert(new BigDecimal("98.25")));    // Дев’яносто вісім гривень двадцять п’ять копійок
+        System.out.println(MoneyToWordsUA.convert(new BigDecimal("1.01")));     // Одна гривня одна копійка
+        System.out.println(MoneyToWordsUA.convert(new BigDecimal("30565.15")));     // Одна гривня одна копійка
     }
 }

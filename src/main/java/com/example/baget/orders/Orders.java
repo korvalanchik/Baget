@@ -6,6 +6,7 @@ import com.example.baget.items.Items;
 import com.example.baget.users.User;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -82,25 +83,25 @@ public class Orders {
     private String paymentMethod;
 
     @Column(name = "ItemsTotal")
-    private Double itemsTotal;
+    private BigDecimal itemsTotal;
 
     @Column(name = "TaxRate")
-    private Double taxRate;
+    private BigDecimal taxRate;
 
     @Column(name = "Freight")
-    private Double freight;
+    private BigDecimal freight;
 
     @Column(name = "AmountPaid")
-    private Double amountPaid;
+    private BigDecimal amountPaid;
 
     @Column(name = "AmountDueN")
-    private Double amountDueN;
+    private BigDecimal amountDueN;
 
     @Column(name = "Income")
-    private Double income;
+    private BigDecimal income;
 
     @Column(name = "TotalCost")
-    private Double totalCost;
+    private BigDecimal totalCost;
 
     @Column(name = "PriceLevel")
     private Integer priceLevel;

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -114,10 +115,10 @@ public class InvoiceService {
         table.addCell(h6);
 
         int idx = 1;
-        double total = 0.0;
+        BigDecimal total = BigDecimal.ZERO;
         for (Orders o : orders) {
 
-            double price = o.getAmountDueN() + o.getAmountPaid();
+            BigDecimal price = o.getAmountDueN().add(o.getAmountPaid());
 
             PdfPCell c1 = new PdfPCell(new Phrase(String.valueOf(idx++), normal));
             c1.setHorizontalAlignment(Element.ALIGN_RIGHT);
@@ -143,7 +144,8 @@ public class InvoiceService {
             c6.setHorizontalAlignment(Element.ALIGN_RIGHT);
             table.addCell(c6);
 
-            total += price;
+            total = total.add(price);
+
         }
         document.add(table);
 

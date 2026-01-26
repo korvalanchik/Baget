@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
@@ -11,10 +12,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT COALESCE(SUM(t.amount), 0) " +
             "FROM Transaction t " +
             "WHERE t.customer.custNo = :custNo AND t.status = 'Completed'")
-    Double getCustomerBalance(@Param("custNo") Long custNo);
+    BigDecimal getCustomerBalance(@Param("custNo") Long custNo);
 
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.order.orderNo = :orderNo")
-    Double sumPaidByOrder(@Param("orderNo") Long orderNo);
+    BigDecimal sumPaidByOrder(@Param("orderNo") Long orderNo);
 
     List<TransactionHistoryView> findByOrder_RahFacNoOrderByTransactionDateDesc(Long invoiceNo);
 
@@ -22,6 +23,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             "WHERE t.order.orderNo = :orderNo " +
             "AND t.transactionType.code = 'ORDER_PAYMENT' " +
             "AND t.status = 'Completed'")
-    double getOrderPaymentsSum(@Param("orderNo") Long orderNo);
+    BigDecimal getOrderPaymentsSum(@Param("orderNo") Long orderNo);
 
 }

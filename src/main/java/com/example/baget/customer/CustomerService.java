@@ -1,6 +1,7 @@
 package com.example.baget.customer;
 
 import com.example.baget.branch.Branch;
+import com.example.baget.orders.InvoiceDTO;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
@@ -132,6 +133,10 @@ public class CustomerService {
                         : allowedBranchNos;
 
         return customerRepository.findClientBalances(branchesToUse);
+    }
+
+    public List<InvoiceDTO> getInvoicesByCustomer(Long custNo) {
+        return customerRepository.findInvoicesByCustomer(custNo);
     }
 
 }

@@ -5,6 +5,7 @@ import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -38,7 +39,7 @@ public class Transaction {
     private OffsetDateTime transactionDate = OffsetDateTime.now();
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
     @Column(length = 50)
     private String reference;

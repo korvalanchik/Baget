@@ -43,7 +43,7 @@ public class CustomerTransaction {
     private BigDecimal amount;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+    private OffsetDateTime createdAt;
 
     @Column(length = 50)
     private String reference; // чек, платіжка, номер інвойсу
@@ -55,4 +55,9 @@ public class CustomerTransaction {
     @Builder.Default
     @Column(nullable = false)
     private Boolean active = true;
+
+    @PrePersist
+    public void prePersist() {
+        createdAt = OffsetDateTime.now();
+    }
 }

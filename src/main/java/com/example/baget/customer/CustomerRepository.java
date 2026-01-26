@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.orders.InvoiceDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,25 +22,43 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findTopByCompanyStartingWithOrderByCustNoDesc(String prefix);
     @SuppressWarnings("JpaQlInspection")
     @Query("""
-    select new com.example.baget.customer.CustomerBalanceDTO(c.custNo,
-        coalesce(c.company, c.contact),
-        c.phone,
-        count(distinct o.orderNo),
-        coalesce(sum(ct.amount), 0),
-        max(ct.createdAt)
-    )
-    from Customer c
-    join c.orders o
-    left join CustomerTransaction ct
-        on ct.customer = c
-        and ct.active = true
-    where o.branch.branchNo in :branchNos
-    group by c.custNo, c.company, c.contact, c.phone
-    having count(o.orderNo) > 0
-    order by coalesce(sum(ct.amount), 0) desc
-""")
+        select new com.example.baget.customer.CustomerBalanceDTO(c.custNo,
+            coalesce(c.company, c.contact),
+            c.phone,
+            count(distinct o.orderNo),
+            coalesce(sum(ct.amount), 0),
+            max(ct.createdAt)
+        )
+        from Customer c
+        join c.orders o
+        left join CustomerTransaction ct
+            on ct.customer = c
+            and ct.active = true
+        where o.branch.branchNo in :branchNos
+        group by c.custNo, c.company, c.contact, c.phone
+        having count(o.orderNo) > 0
+        order by coalesce(sum(ct.amount), 0) desc
+    """)
     List<CustomerBalanceDTO> findClientBalances(
             @Param("branchNos") Collection<Long> branchNos
     );
+
+    @SuppressWarnings("JpaQlInspection")
+    @Query("""
+        select new com.example.baget.orders.InvoiceDTO(
+            o.rahFacNo,
+            min(o.orderNo),
+            coalesce(sum(o.totalCost), 0),
+            coalesce(sum(o.amountPaid), 0),
+            coalesce(sum(o.amountDueN), 0),
+            max(o.saleDate)
+        )
+        from Orders o
+        where o.customer.custNo = :custNo
+          and o.rahFacNo is not null
+        group by o.rahFacNo
+        order by max(o.saleDate) desc
+    """)
+    List<InvoiceDTO> findInvoicesByCustomer(@Param("custNo") Long custNo);
 
 }

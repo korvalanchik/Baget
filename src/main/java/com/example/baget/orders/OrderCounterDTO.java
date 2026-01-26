@@ -3,15 +3,17 @@ package com.example.baget.orders;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 
 @Getter
 @Setter
 public class OrderCounterDTO extends BaseOrdersDTO {
 
-    private Double amountPaid;
+    private BigDecimal amountPaid;
 
-    private Double amountDueN;
+    private BigDecimal amountDueN;
 
-    private Double totalCost;
+    private BigDecimal totalCost;
 
 }
