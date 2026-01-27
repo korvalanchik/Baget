@@ -1,7 +1,12 @@
 package com.example.baget.orders;
 
+import com.example.baget.customer.CustomerInvoiceService;
+import com.example.baget.customer.CustomerIssueInvoiceRequestDTO;
+import com.example.baget.customer.CustomerTransaction;
+import com.example.baget.customer.CustomerTransactionDTO;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,14 +21,13 @@ import java.util.List;
 
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping(value = "/api/orders", produces = MediaType.APPLICATION_JSON_VALUE)
 public class OrdersResource {
 
     private final OrdersService ordersService;
+    private final CustomerInvoiceService customerInvoiceService;
 
-    public OrdersResource(final OrdersService ordersService) {
-        this.ordersService = ordersService;
-    }
 
     @GetMapping
     public Page<? extends OrderProjections.BaseOrdersView> getOrders(
@@ -85,4 +89,18 @@ public class OrdersResource {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "saleDate"));
         return ordersService.getOrderSummaries(pageable);
     }
+
+    @PostMapping("/{orderNo}/invoice")
+    public ResponseEntity<CustomerTransactionDTO> issueInvoice(
+            @PathVariable Long orderNo,
+            @RequestBody(required = false) CustomerIssueInvoiceRequestDTO request
+    ) {
+        String reference = request != null ? request.getReference() : null;
+
+        CustomerTransactionDTO tx = customerInvoiceService.issueInvoice(orderNo, reference);
+
+        return ResponseEntity.ok(tx);
+    }
+
 }
+

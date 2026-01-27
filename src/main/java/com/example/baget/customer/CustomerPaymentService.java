@@ -21,13 +21,7 @@ public class CustomerPaymentService {
     private final FinanceTransactionRepository financeTxRepository;
 
     @Transactional
-    public void registerPayment(
-            Customer customer,
-            Orders order,
-            BigDecimal amount,
-            String reference,
-            User user
-    ) {
+    public void registerPayment(Customer customer, Orders order, BigDecimal amount, String reference, User user) {
 
         // 1️⃣ клієнтський баланс
         CustomerTransaction customerTx = customerTxRepository.save(

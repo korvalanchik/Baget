@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.orders.Orders;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,4 +16,6 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
 
     @Query("SELECT ct FROM CustomerTransaction ct WHERE ct.customer.custNo = :customerId AND ct.active = true ORDER BY ct.createdAt DESC")
     List<CustomerTransaction> findByCustomerIdAndActiveTrueOrderByCreatedAtDesc(@Param("customerId") Long customerId);
+
+    boolean existsByOrder_OrderNoAndTypeAndActiveTrue(Long orderNo, CustomerTransactionType customerTransactionType);
 }
