@@ -90,17 +90,12 @@ public class OrdersResource {
         return ordersService.getOrderSummaries(pageable);
     }
 
-    @PostMapping("/{orderNo}/invoice")
+    @PostMapping("/{orderNo}/issue-invoice")
     public ResponseEntity<CustomerTransactionDTO> issueInvoice(
             @PathVariable Long orderNo,
-            @RequestBody(required = false) CustomerIssueInvoiceRequestDTO request
+            @RequestBody CustomerIssueInvoiceRequestDTO request
     ) {
-        String reference = request != null ? request.getReference() : null;
-
-        CustomerTransactionDTO tx = customerInvoiceService.issueInvoice(orderNo, reference);
-
-        return ResponseEntity.ok(tx);
+        return ResponseEntity.ok(customerInvoiceService.issueInvoice(orderNo, request));
     }
-
 }
 

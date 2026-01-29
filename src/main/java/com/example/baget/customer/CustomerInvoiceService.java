@@ -17,21 +17,32 @@ public class CustomerInvoiceService {
     private final OrdersRepository ordersRepository;
 
     @Transactional
-    public CustomerTransactionDTO issueInvoice(Long orderNo, String reference) {
+    public CustomerTransactionDTO issueInvoice(Long orderNo, CustomerIssueInvoiceRequestDTO request) {
 
         Orders order = ordersRepository.findById(orderNo)
                 .orElseThrow(() -> new TransactionException("Замовлення не знайдено: " + orderNo));
 
         Customer customer = order.getCustomer();
         if (customer == null) {
-            throw new IllegalStateException("Замовлення не має клієнта");
+            throw new TransactionException("Замовлення не має клієнта");
         }
 
-        BigDecimal amount = order.getAmountDueN();
+        // 1️⃣ Оновлюємо order (статус + дата відвантаження)
+        order.setStatusOrder(7); // INVOICED
+        if (request.getShipDate() != null) {
+            order.setShipDate(request.getShipDate());
+        }
+
+        // 2️⃣ Сума рахунку
+        BigDecimal amount = request.getAmount() != null
+                ? request.getAmount()
+                : order.getAmountDueN();
+
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TransactionException("Некоректна сума замовлення: " + amount);
+            throw new TransactionException("Некоректна сума рахунку: " + amount);
         }
 
+        // 3️⃣ Перевірка дублювання інвойсу
         boolean invoiceExists = customerTxRepository
                 .existsByOrder_OrderNoAndTypeAndActiveTrue(orderNo, CustomerTransactionType.INVOICE);
 
@@ -39,9 +50,15 @@ public class CustomerInvoiceService {
             throw new TransactionException("Рахунок уже виставлено для замовлення №" + orderNo);
         }
 
-        CustomerTransaction tx = CustomerTxFactory.invoice(customer, order, amount, reference);
+        // 4️⃣ Створюємо customer transaction
+        CustomerTransaction tx = CustomerTxFactory.invoice(customer, order, amount, request.getReference());
 
-        return toDto(customerTxRepository.save(tx));
+        customerTxRepository.save(tx);
+
+        // 5️⃣ Зберігаємо order
+        ordersRepository.save(order);
+
+        return toDto(tx);
     }
 
     public static CustomerTransactionDTO toDto(CustomerTransaction tx) {
