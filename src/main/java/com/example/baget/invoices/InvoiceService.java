@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -79,10 +80,9 @@ public class InvoiceService {
             invoiceOrderRepository.save(io);
 
             // 6️⃣ Оновлюємо order
-            order.setStatusOrder(7);
-            if (request.getShipDate() != null) {
-                order.setShipDate(request.getShipDate());
-            }
+            order.setStatusOrder(8);
+            order.setShipDate(request.getShipDate() != null ? request.getShipDate() : OffsetDateTime.now());
+
             ordersRepository.save(order);
 
             // 7️⃣ CustomerTransaction
