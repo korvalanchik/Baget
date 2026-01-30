@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/login", "/auth/password-recovery", "/auth/reset-password").permitAll()
                         .requestMatchers("/api/qrcode/invoices/public/**").permitAll()
                         .requestMatchers("/api/chat").permitAll()
+                        .requestMatchers("/api/invoices/**").hasAnyRole("ADMIN", "ACCOUNTANT")
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
 
