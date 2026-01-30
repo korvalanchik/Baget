@@ -1,9 +1,5 @@
 package com.example.baget.orders;
 
-import com.example.baget.customer.CustomerInvoiceService;
-import com.example.baget.customer.CustomerIssueInvoiceRequestDTO;
-import com.example.baget.customer.CustomerTransaction;
-import com.example.baget.customer.CustomerTransactionDTO;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +22,7 @@ import java.util.List;
 public class OrdersResource {
 
     private final OrdersService ordersService;
-    private final CustomerInvoiceService customerInvoiceService;
+//    private final CustomerInvoiceService customerInvoiceService;
 
 
     @GetMapping
@@ -90,12 +86,12 @@ public class OrdersResource {
         return ordersService.getOrderSummaries(pageable);
     }
 
-    @PostMapping("/{orderNo}/issue-invoice")
-    public ResponseEntity<CustomerTransactionDTO> issueInvoice(
-            @PathVariable Long orderNo,
-            @RequestBody CustomerIssueInvoiceRequestDTO request
-    ) {
-        return ResponseEntity.ok(customerInvoiceService.issueInvoice(orderNo, request));
-    }
+//    @PostMapping("/{orderNo}/issue-invoice")
+//    public ResponseEntity<CustomerTransactionDTO> issueInvoice(
+//            @PathVariable Long orderNo,
+//            @RequestBody CustomerIssueInvoiceRequestDTO request
+//    ) {
+//        return ResponseEntity.ok(customerInvoiceService.issueInvoice(orderNo, request));
+//    }
 }
 

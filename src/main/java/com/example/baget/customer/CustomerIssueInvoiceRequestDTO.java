@@ -1,13 +1,17 @@
 package com.example.baget.customer;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomerIssueInvoiceRequestDTO {
-    private BigDecimal amount; // опціонально (якщо хочеш дозволити корекцію)
-    private String reference;
-    private OffsetDateTime shipDate;
+    private List<Long> orderNos;      // список замовлень для інвойсу
+    private String reference;         // optional note / посилання
+    private OffsetDateTime shipDate;  // optional дата відвантаження
 }

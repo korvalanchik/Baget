@@ -20,12 +20,12 @@ import java.util.List;
 import java.util.Objects;
 
 @Service
-public class InvoiceService {
+public class InvoiceServiceUtil {
 
     private final OrdersRepository ordersRepository;
     private final CompanyDetailsService companyDetailsService;
 
-    public InvoiceService(OrdersRepository ordersRepository, CompanyDetailsService companyDetailsService) {
+    public InvoiceServiceUtil(OrdersRepository ordersRepository, CompanyDetailsService companyDetailsService) {
         this.ordersRepository = ordersRepository;
         this.companyDetailsService = companyDetailsService;
     }

@@ -1,6 +1,6 @@
 package com.example.baget.buh;
 
-import com.example.baget.util.InvoiceService;
+import com.example.baget.util.InvoiceServiceUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,7 +16,7 @@ import java.util.List;
 public class TransactionResource {
 
     private final TransactionService transactionService;
-    private final InvoiceService invoiceService;
+    private final InvoiceServiceUtil invoiceServiceUtil;
 
     @GetMapping("/{orderNo}")
     public List<TransactionDTO> getTransactions(@PathVariable Long orderNo) {
@@ -64,7 +64,7 @@ public class TransactionResource {
 
     @GetMapping("/{invoiceNo}/pdf")
     public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long invoiceNo) throws IOException {
-        byte[] contents = invoiceService.generateInvoicePdf(invoiceNo);
+        byte[] contents = invoiceServiceUtil.generateInvoicePdf(invoiceNo);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=invoice_" + invoiceNo + ".pdf")

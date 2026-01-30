@@ -5,14 +5,13 @@ import com.example.baget.customer.Customer;
 import com.example.baget.items.Items;
 import com.example.baget.users.User;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import lombok.Getter;
-import lombok.Setter;
 
 
 @Entity
@@ -111,6 +110,10 @@ public class Orders {
 
     @Column(name = "RahFacNo")
     private Long rahFacNo;
+
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "InvoiceId")
+//    private Invoice invoice;
 
     @Column(name = "Notice")
     private String notice;
