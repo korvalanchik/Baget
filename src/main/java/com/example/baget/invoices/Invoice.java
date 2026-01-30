@@ -42,7 +42,7 @@ public class Invoice {
     private InvoiceEnums.InvoiceStatus status;
 
     /** Загальна сума рахунку */
-    @Column(nullable = false)
+    @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
     /** Дата виставлення */
