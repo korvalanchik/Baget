@@ -36,7 +36,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     left join CustomerTransaction ct
         on ct.customer = c
         and ct.active = true
-        and (:date is null or ct.createdAt <= :dateEnd)
+        and (:dateEnd is null or ct.createdAt <= :dateEnd)
     where o.branch.branchNo in :branchNos
     group by c.custNo, c.company, c.contact, c.mobile
     having count(o.orderNo) > 0
