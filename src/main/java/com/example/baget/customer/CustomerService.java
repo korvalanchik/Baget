@@ -1,6 +1,7 @@
 package com.example.baget.customer;
 
 import com.example.baget.branch.Branch;
+import com.example.baget.invoices.InvoiceRepository;
 import com.example.baget.orders.InvoiceDTO;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
@@ -32,6 +33,7 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final UsersRepository usersRepository;
+    private final InvoiceRepository invoiceRepository;
 
     public List<CustomerDTO> findAll() {
         final List<Customer> customers = customerRepository.findAll(Sort.by("custNo"));
@@ -138,7 +140,7 @@ public class CustomerService {
 
 
     public List<InvoiceDTO> getInvoicesByCustomer(Long custNo) {
-        return customerRepository.findInvoicesByCustomer(custNo);
+        return invoiceRepository.findInvoicesByCustomer(custNo);
     }
 
 }

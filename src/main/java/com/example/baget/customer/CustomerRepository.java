@@ -1,6 +1,5 @@
 package com.example.baget.customer;
 
-import com.example.baget.orders.InvoiceDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -48,23 +47,5 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             @Param("debtOnly") boolean debtOnly,
             @Param("dateEnd") OffsetDateTime dateEnd
     );
-
-    @SuppressWarnings("JpaQlInspection")
-    @Query("""
-        select new com.example.baget.orders.InvoiceDTO(
-            o.rahFacNo,
-            min(o.orderNo),
-            coalesce(sum(o.totalCost), 0),
-            coalesce(sum(o.amountPaid), 0),
-            coalesce(sum(o.amountDueN), 0),
-            max(o.saleDate)
-        )
-        from Orders o
-        where o.customer.custNo = :custNo
-          and o.rahFacNo is not null
-        group by o.rahFacNo
-        order by max(o.saleDate) desc
-    """)
-    List<InvoiceDTO> findInvoicesByCustomer(@Param("custNo") Long custNo);
 
 }
