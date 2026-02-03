@@ -16,6 +16,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -111,10 +115,7 @@ public class CustomerService {
 
     }
 
-    public List<CustomerBalanceDTO> getClientsForManager(
-            String username,
-            Long branchNo
-    ) {
+    public List<CustomerBalanceDTO> getClientsForManager(String username, Long branchNo, boolean debtOnly, LocalDate date) {
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
 
@@ -128,12 +129,13 @@ public class CustomerService {
         }
 
         Collection<Long> branchesToUse =
-                (branchNo != null)
-                        ? List.of(branchNo)
-                        : allowedBranchNos;
+                (branchNo != null) ? List.of(branchNo) : allowedBranchNos;
 
-        return customerRepository.findClientBalances(branchesToUse);
+        OffsetDateTime dateEnd = (date != null) ? date.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC) : null;
+
+        return customerRepository.findClientBalances(branchesToUse, debtOnly, dateEnd);
     }
+
 
     public List<InvoiceDTO> getInvoicesByCustomer(Long custNo) {
         return customerRepository.findInvoicesByCustomer(custNo);
