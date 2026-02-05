@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final OrdersRepository ordersRepository;
+    private final CustomerRepository customerRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
     private final CustomerTransactionRepository customerTransactionRepository;
     private final InvoiceMapper invoiceMapper;
@@ -38,10 +41,24 @@ public class InvoiceService {
             throw new TransactionException("Деякі замовлення не знайдено");
         }
 
-        // 2️⃣ Беремо клієнта першого замовлення
-        Customer customer = orders.get(0).getCustomer();
-        if (customer == null) {
-            throw new TransactionException("Замовлення не має клієнта");
+        // 2️⃣ Визначаємо платника рахунку
+        Customer invoiceCustomer;
+
+        if (request.getInvoiceCustomerId() != null) {
+            invoiceCustomer = customerRepository.findById(request.getInvoiceCustomerId())
+                    .orElseThrow(() -> new TransactionException("Платника рахунку не знайдено"));
+        } else {
+            Set<Long> customerIds = orders.stream()
+                    .map(o -> o.getCustomer().getCustNo())
+                    .collect(Collectors.toSet());
+            if (customerIds.size() > 1) {
+                throw new TransactionException("Для рахунку з кількома клієнтами потрібно вибрати корпоративного платника");
+            }
+
+            invoiceCustomer = orders.get(0).getCustomer();
+            if (invoiceCustomer == null) {
+                throw new TransactionException("Замовлення не має клієнта");
+            }
         }
 
         // 3️⃣ Перевірка, чи жодне замовлення не в іншому invoice
@@ -62,7 +79,7 @@ public class InvoiceService {
 
         Invoice invoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
-                .customer(customer)
+                .customer(invoiceCustomer)
                 .type((orders.size() == 1) ? InvoiceEnums.InvoiceType.SIMPLE : InvoiceEnums.InvoiceType.CONSOLIDATED)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
                 .totalAmount(totalAmount)
@@ -87,7 +104,7 @@ public class InvoiceService {
 
             // 7️⃣ CustomerTransaction
             CustomerTransaction tx = CustomerTxFactory.invoice(
-                    customer,
+                    invoiceCustomer,
                     order,
                     order.getAmountDueN(),
                     String.valueOf(invoice.getInvoiceNo())
