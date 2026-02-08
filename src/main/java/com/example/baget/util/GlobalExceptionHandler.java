@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -17,12 +18,16 @@ public class GlobalExceptionHandler {
             TransactionException ex,
             HttpServletRequest request
     ) {
-        Map<String, Object> body = Map.of(
+        Map<String, Object> body = new HashMap<>(Map.of(
                 "status", HttpStatus.BAD_REQUEST.value(),
                 "error", "Transaction Error",
                 "message", ex.getMessage(),
                 "path", request.getRequestURI()
-        );
+        ));
+
+        if (ex.getCode() != null) {
+            body.put("code", ex.getCode());
+        }
 
         return ResponseEntity.badRequest().body(body);
     }

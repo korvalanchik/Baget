@@ -52,9 +52,11 @@ public class InvoiceService {
                     .map(o -> o.getCustomer().getCustNo())
                     .collect(Collectors.toSet());
             if (customerIds.size() > 1) {
-                throw new TransactionException("Для рахунку з кількома клієнтами потрібно вибрати корпоративного платника");
+                throw new TransactionException(
+                        "MULTIPLE_CUSTOMERS",
+                        "Для рахунку з кількома клієнтами потрібно вибрати корпоративного платника"
+                );
             }
-
             invoiceCustomer = orders.get(0).getCustomer();
             if (invoiceCustomer == null) {
                 throw new TransactionException("Замовлення не має клієнта");
