@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @NonNull
     Page<Customer> findAll(@NonNull Pageable pageable);
-
+    List<CustomerSelectView> findAllBy();
     List<Customer> findByMobileContaining(String prefix);
     Optional<Customer> findFirstByMobileContainingOrderByCustNoAsc(String phone);
     Optional<Customer> findTopByCompanyStartingWithOrderByCustNoDesc(String prefix);

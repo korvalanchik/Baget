@@ -143,4 +143,9 @@ public class CustomerService {
         return invoiceRepository.findInvoicesByCustomer(custNo);
     }
 
+    public List<CustomerSelectDTO> getCustomersForInvoice() {
+        return customerRepository.findAllBy().stream()
+                .map(c -> new CustomerSelectDTO(c.getCustNo(), c.getCompany()))
+                .toList();
+    }
 }

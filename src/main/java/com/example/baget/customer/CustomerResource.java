@@ -44,12 +44,6 @@ public class CustomerResource {
         return ResponseEntity.ok(customers);
     }
 
-//    @GetMapping("/searchPhoneByCustNo")
-//    public ResponseEntity<String> searchPhoneByCustNo(@RequestParam Long custNo) {
-//        String phone = customerService.findPhoneByCustNo(custNo);
-//        return ResponseEntity.ok(phone);
-//    }
-
     @PostMapping
     @ApiResponse(responseCode = "201")
     public ResponseEntity<Long> createCustomer(@RequestBody @Valid final CustomerDTO customerDTO) {
@@ -69,6 +63,11 @@ public class CustomerResource {
     public ResponseEntity<Void> deleteCustomer(@PathVariable(name = "custNo") final Long custNo) {
         customerService.delete(custNo);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/select")
+    public List<CustomerSelectDTO> getCustomersForInvoiceSelect() {
+        return customerService.getCustomersForInvoice();
     }
 
 }
