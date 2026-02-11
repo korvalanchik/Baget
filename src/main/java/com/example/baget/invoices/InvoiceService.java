@@ -24,7 +24,6 @@ public class InvoiceService {
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
-    private final CustomerTransactionRepository customerTransactionRepository;
     private final InvoiceMapper invoiceMapper;
 
     @Transactional
@@ -103,16 +102,19 @@ public class InvoiceService {
             order.setShipDate(request.getShipDate() != null ? request.getShipDate() : OffsetDateTime.now());
 
             ordersRepository.save(order);
-
-            // 7️⃣ CustomerTransaction
-            CustomerTransaction tx = CustomerTxFactory.invoice(
-                    invoiceCustomer,
-                    order,
-                    order.getAmountDueN(),
-                    String.valueOf(invoice.getInvoiceNo())
-            );
-            customerTransactionRepository.save(tx);
         }
+
+//        // 7️⃣ CustomerTransaction
+//        CustomerTransaction tx = CustomerTxFactory.invoice(
+//                invoiceCustomer,
+//                null, // або перший order, або null
+//                totalAmount,
+//                String.valueOf(invoice.getInvoiceNo())
+//        );
+//        tx.setInvoice(invoice);
+//
+//        customerTransactionRepository.save(tx);
+
 
         return invoiceMapper.toDto(invoice);
     }
