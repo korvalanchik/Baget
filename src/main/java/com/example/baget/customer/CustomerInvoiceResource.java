@@ -1,6 +1,5 @@
 package com.example.baget.customer;
 
-import com.example.baget.orders.InvoiceDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +15,7 @@ import java.util.List;
 public class CustomerInvoiceResource {
     private final CustomerService customerService;
     @GetMapping("/{custNo}/invoices")
-    public List<InvoiceDTO> getInvoices(@PathVariable Long custNo) {
+    public List<CustomerInvoiceDTO> getInvoices(@PathVariable Long custNo) {
         return customerService.getInvoicesByCustomer(custNo);
     }
 
