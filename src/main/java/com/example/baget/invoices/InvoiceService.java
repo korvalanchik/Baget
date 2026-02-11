@@ -117,6 +117,12 @@ public class InvoiceService {
         return invoiceMapper.toDto(invoice);
     }
 
+    public InvoiceDetailsDTO getInvoice(Long invoiceId) {
+        return invoiceRepository.findInvoiceDetails(invoiceId)
+                .orElseThrow(() -> new TransactionException("Invoice not found"));
+    }
+
+
     private Long generateTodayCode() {
         LocalDate today = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");

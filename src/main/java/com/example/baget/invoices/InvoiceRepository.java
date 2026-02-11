@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
@@ -29,5 +30,23 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     """)
     List<InvoiceDTO> findInvoicesByCustomer(@Param("custNo") Long custNo);
 
+    @SuppressWarnings("JpaQlInspection")
+    @Query("""
+    select new com.example.baget.invoices.InvoiceDetailsDTO(
+        i.id,
+        i.invoiceNo,
+        i.totalAmount,
+        coalesce(sum(case when ct.amount < 0 then -ct.amount else 0 end), 0),
+        i.totalAmount - coalesce(sum(case when ct.amount < 0 then -ct.amount else 0 end), 0),
+        i.createdAt
+    )
+    from Invoice i
+    left join CustomerTransaction ct
+        on ct.invoice = i
+        and ct.active = true
+    where i.id = :invoiceId
+    group by i.id, i.invoiceNo, i.totalAmount, i.createdAt
+    """)
+    Optional<InvoiceDetailsDTO> findInvoiceDetails(@Param("invoiceId") Long invoiceId);
 
 }

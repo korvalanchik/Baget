@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.invoices.Invoice;
 import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,6 +30,10 @@ public class CustomerTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_no")
     private Orders order;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invoice_id")
+    private Invoice invoice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
