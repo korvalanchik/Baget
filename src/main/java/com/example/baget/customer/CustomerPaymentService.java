@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,4 +49,9 @@ public class CustomerPaymentService {
                         .build()
         );
     }
+
+    public List<CustomerPaymentDTO> getPaymentsByInvoice(Long invoiceId) {
+        return customerTxRepository.findPaymentsByInvoiceId(invoiceId);
+    }
+
 }

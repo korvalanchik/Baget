@@ -1,6 +1,5 @@
 package com.example.baget.customer;
 
-import com.example.baget.orders.Orders;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +17,21 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
     List<CustomerTransaction> findByCustomerIdAndActiveTrueOrderByCreatedAtDesc(@Param("customerId") Long customerId);
 
     boolean existsByOrder_OrderNoAndTypeAndActiveTrue(Long orderNo, CustomerTransactionType customerTransactionType);
+
+    @SuppressWarnings("JpaQlInspection")
+    @Query("""
+    select new com.example.baget.customer.CustomerPaymentDTO(
+        ct.id,
+        ct.createdAt,
+        cast(ct.type as string),
+        abs(ct.amount),
+        ct.note
+    )
+    from CustomerTransaction ct
+    where ct.invoice.id = :invoiceId
+      and ct.type = com.example.baget.customer.CustomerTransactionType.PAYMENT
+      and ct.active = true
+    order by ct.createdAt asc
+    """)
+    List<CustomerPaymentDTO> findPaymentsByInvoiceId(@Param("invoiceId") Long invoiceId);
 }

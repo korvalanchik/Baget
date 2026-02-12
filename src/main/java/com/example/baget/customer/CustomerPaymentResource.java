@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,4 +50,10 @@ public class CustomerPaymentResource {
         return customerTransactionService.getCustomerBalance(id);
     }
 
+    @GetMapping("/payments")
+    public List<CustomerPaymentDTO> getPayments(
+            @RequestParam Long invoiceId
+    ) {
+        return customerPaymentService.getPaymentsByInvoice(invoiceId);
+    }
 }
