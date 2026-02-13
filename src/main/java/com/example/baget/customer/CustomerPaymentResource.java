@@ -1,7 +1,5 @@
 package com.example.baget.customer;
 
-import com.example.baget.orders.Orders;
-import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +16,6 @@ public class CustomerPaymentResource {
 
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
-    private final CustomerRepository customerRepository;
-    private final OrdersRepository ordersRepository;
 
     @PostMapping("/payment")
     public ResponseEntity<Void> registerPayment(
@@ -27,20 +23,7 @@ public class CustomerPaymentResource {
             @AuthenticationPrincipal User user
     ) {
 
-        Customer customer = customerRepository.findById(dto.customerId())
-                .orElseThrow();
-
-        Orders order = dto.orderNo() != null
-                ? ordersRepository.findById(dto.orderNo()).orElse(null)
-                : null;
-
-        customerPaymentService.registerPayment(
-                customer,
-                order,
-                dto.amount(),
-                dto.reference(),
-                user
-        );
+        customerPaymentService.registerPayment(dto, user);
 
         return ResponseEntity.ok().build();
     }

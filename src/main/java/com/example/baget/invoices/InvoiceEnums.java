@@ -10,6 +10,7 @@ public class InvoiceEnums {
         DRAFT,
         ISSUED,
         PAID,
+        PARTIALLY_PAID,
         CANCELLED
     }
 

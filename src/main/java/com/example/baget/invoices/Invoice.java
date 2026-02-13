@@ -58,6 +58,9 @@ public class Invoice {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @Version
+    private Long version;
+
     @PrePersist
     public void prePersist() {
         createdAt = OffsetDateTime.now();

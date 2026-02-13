@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public record CustomerPaymentRequest(
         Long customerId,
-        Long orderNo,
+        Long invoiceId,
         BigDecimal amount,
         String reference
 ) {}
