@@ -21,20 +21,28 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     @SuppressWarnings("JpaQlInspection")
     @Query("""
-    select new com.example.baget.customer.CustomerInvoiceDTO(
-        i.id,
-        i.invoiceNo,
-        i.totalAmount,
-        coalesce(sum(case when ct.amount < 0 then -ct.amount else 0 end), 0),
-        i.totalAmount - coalesce(sum(case when ct.amount < 0 then -ct.amount else 0 end), 0),
-        i.createdAt
+    select new CustomerInvoiceDTO(
+             i.id,
+             i.invoiceNo,
+             i.totalAmount,
+             coalesce((
+                 select sum(-ct.amount)
+                 from CustomerTransaction ct
+                 where ct.invoice = i
+                   and ct.active = true
+                   and ct.amount < 0
+             ), 0),
+             i.totalAmount - coalesce((
+                 select sum(-ct.amount)
+                 from CustomerTransaction ct
+                 where ct.invoice = i
+                   and ct.active = true
+                   and ct.amount < 0
+             ), 0),
+             i.createdAt
     )
     from Invoice i
-    left join CustomerTransaction ct
-        on ct.invoice = i
-        and ct.active = true
     where i.customer.custNo = :custNo
-    group by i.id, i.invoiceNo, i.totalAmount, i.createdAt
     order by i.createdAt desc
     """)
     List<CustomerInvoiceDTO> findInvoicesByCustomer(@Param("custNo") Long custNo);
