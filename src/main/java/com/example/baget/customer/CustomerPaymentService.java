@@ -6,8 +6,10 @@ import com.example.baget.finance.FinanceTransaction;
 import com.example.baget.finance.FinanceTransactionRepository;
 import com.example.baget.invoices.Invoice;
 import com.example.baget.invoices.InvoiceEnums;
+import com.example.baget.invoices.InvoicePaymentRequest;
 import com.example.baget.invoices.InvoiceRepository;
 import com.example.baget.users.User;
+import com.example.baget.util.TransactionException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,66 +24,71 @@ public class CustomerPaymentService {
 
     private final CustomerTransactionRepository customerTxRepository;
     private final FinanceTransactionRepository financeTxRepository;
-    private final CustomerRepository customerRepository;
     private final InvoiceRepository invoiceRepository;
 
     @Transactional
-    public void registerPayment(CustomerPaymentRequest dto, User user) {
+    public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, User user) {
 
-        Customer customer = customerRepository.findById(dto.customerId())
-                .orElseThrow();
+        // 1️⃣ Завантажуємо інвойс разом з клієнтом
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new TransactionException("Інвойс не знайдено: " + invoiceId));
 
-        Invoice invoice = invoiceRepository.findById(dto.invoiceId())
-                .orElseThrow();
+        Customer customer = invoice.getCustomer(); // вже в persistence context
 
-        if (!invoice.getCustomer().getCustNo().equals(customer.getCustNo())) {
-            throw new IllegalArgumentException("Invoice does not belong to customer");
-        }
-
-        if (dto.amount() == null || dto.amount().compareTo(BigDecimal.ZERO) <= 0) {
+        // 2️⃣ Перевіряємо суму
+        if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
 
         BigDecimal debt = calculateDebt(invoice);
-
-        if (dto.amount().compareTo(debt) > 0) {
+        if (request.amount().compareTo(debt) > 0) {
             throw new IllegalArgumentException("Payment exceeds invoice debt");
         }
 
-        // 1️⃣ клієнтський баланс
+        // 3️⃣ Створюємо CustomerTransaction
         CustomerTransaction customerTx = customerTxRepository.save(
                 CustomerTransaction.builder()
                         .customer(customer)
                         .invoice(invoice)
                         .type(CustomerTransactionType.PAYMENT)
-                        .amount(dto.amount().negate()) // мінус
+                        .amount(request.amount().negate()) // мінус
                         .createdAt(OffsetDateTime.now())
-                        .reference(dto.reference())
+                        .note(request.note())
                         .build()
         );
 
-        // 2️⃣ фінанси компанії
+        // 4️⃣ Створюємо FinanceTransaction
         financeTxRepository.save(
                 FinanceTransaction.builder()
                         .direction(FinanceDirection.IN)
                         .category(FinanceCategory.CUSTOMER_PAYMENT)
-                        .amount(dto.amount())
+                        .amount(request.amount())
                         .createdAt(OffsetDateTime.now())
                         .customerTransactionId(customerTx.getId())
                         .createdBy(user)
-                        .reference(dto.reference())
+                        .reference("INV-" + invoice.getInvoiceNo())
                         .build()
         );
 
-        // 3️⃣ перераховуємо борг після платежу
+        // 5️⃣ Оновлюємо статус інвойсу
         BigDecimal newDebt = calculateDebt(invoice);
-
         if (newDebt.compareTo(BigDecimal.ZERO) == 0) {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
         } else {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
         }
+
+        // 6️⃣ Повертаємо DTO для фронтенду
+        return CustomerTransactionDTO.builder()
+                .id(customerTx.getId())
+                .invoiceId(invoice.getId())
+                .amount(customerTx.getAmount())
+                .createdAt(customerTx.getCreatedAt())
+                .note(customerTx.getNote())
+                .reference("INV-" + invoice.getInvoiceNo())
+                .build();
     }
+
 
     public List<CustomerPaymentDTO> getPaymentsByInvoice(Long invoiceId) {
         return customerTxRepository.findPaymentsByInvoiceId(invoiceId);

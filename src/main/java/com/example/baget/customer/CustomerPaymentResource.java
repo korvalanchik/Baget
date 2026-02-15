@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.invoices.InvoicePaymentRequest;
 import com.example.baget.users.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,15 +18,16 @@ public class CustomerPaymentResource {
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
 
-    @PostMapping("/payment")
-    public ResponseEntity<Void> registerPayment(
-            @RequestBody CustomerPaymentRequest dto,
+    @PostMapping("/invoices/{id}/payments")
+    public ResponseEntity<CustomerTransactionDTO> addPayment(
+            @PathVariable Long id,
+            @RequestBody InvoicePaymentRequest request,
             @AuthenticationPrincipal User user
     ) {
+        // делегуємо всю логіку в сервіс
+        CustomerTransactionDTO dto = customerPaymentService.registerInvoicePayment(id, request, user);
 
-        customerPaymentService.registerPayment(dto, user);
-
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/{id}/balance")

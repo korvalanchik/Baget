@@ -12,6 +12,7 @@ public class CustomerTransactionDTO {
     private Long id;
     private Long customerId;
     private Long orderNo;
+    private Long invoiceId;
     private String type;
     private BigDecimal amount;
     private OffsetDateTime createdAt;

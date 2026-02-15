@@ -31,7 +31,7 @@ public class FinanceTransaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
     /** Необовʼязково: хто провів */
