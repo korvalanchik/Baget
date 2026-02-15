@@ -30,7 +30,7 @@ public class CustomerPaymentService {
     public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, User user) {
 
         // 1️⃣ Завантажуємо інвойс разом з клієнтом
-        Invoice invoice = invoiceRepository.findById(invoiceId)
+        Invoice invoice = invoiceRepository.findByIdForUpdate(invoiceId)
                 .orElseThrow(() -> new TransactionException("Інвойс не знайдено: " + invoiceId));
 
         Customer customer = invoice.getCustomer(); // вже в persistence context
