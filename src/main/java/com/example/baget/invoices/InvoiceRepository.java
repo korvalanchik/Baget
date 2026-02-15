@@ -21,7 +21,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     @SuppressWarnings("JpaQlInspection")
     @Query("""
-    select new CustomerInvoiceDTO(
+    select new com.example.baget.customer.CustomerInvoiceDTO(
              i.id,
              i.invoiceNo,
              i.totalAmount,
