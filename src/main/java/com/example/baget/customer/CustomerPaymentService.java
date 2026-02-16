@@ -1,6 +1,7 @@
 package com.example.baget.customer;
 
 import com.example.baget.branch.Branch;
+import com.example.baget.branch.BranchRepository;
 import com.example.baget.finance.FinanceCategory;
 import com.example.baget.finance.FinanceDirection;
 import com.example.baget.finance.FinanceTransaction;
@@ -28,10 +29,10 @@ public class CustomerPaymentService {
     private final CustomerTransactionRepository customerTxRepository;
     private final FinanceTransactionRepository financeTxRepository;
     private final InvoiceRepository invoiceRepository;
+    private final BranchRepository branchRepository;
 
     @Transactional
     public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, User user) {
-
         Set<Long> allowedBranchNos = user.getAllowedBranches()
                 .stream()
                 .map(Branch::getBranchNo)
@@ -44,6 +45,9 @@ public class CustomerPaymentService {
         if (!allowedBranchNos.contains(request.branchNo())) {
             throw new TransactionException("Вам заборонено працювати в філії №: " + request.branchNo());
         }
+
+        Branch branch = branchRepository.findById(request.branchNo())
+                .orElseThrow(() -> new TransactionException("Філія не знайдена: " + request.branchNo()));
 
         // 1️⃣ Завантажуємо інвойс разом з клієнтом
         Invoice invoice = invoiceRepository.findByIdForUpdate(invoiceId)
@@ -65,6 +69,7 @@ public class CustomerPaymentService {
         CustomerTransaction customerTx = customerTxRepository.save(
                 CustomerTransaction.builder()
                         .customer(customer)
+                        .branch(branch)
                         .invoice(invoice)
                         .type(CustomerTransactionType.PAYMENT)
                         .amount(request.amount().negate()) // мінус
