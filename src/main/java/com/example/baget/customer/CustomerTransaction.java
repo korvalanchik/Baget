@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.branch.Branch;
 import com.example.baget.invoices.Invoice;
 import com.example.baget.orders.Orders;
 import jakarta.persistence.*;
@@ -25,6 +26,11 @@ public class CustomerTransaction {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
+
+    /** Філія, яка відповідає за транзакцію (обовʼязково) */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
 
     /** Замовлення не завжди є (аванс, баланс клієнта) */
     @ManyToOne(fetch = FetchType.LAZY)

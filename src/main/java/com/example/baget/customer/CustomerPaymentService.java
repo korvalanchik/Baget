@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.branch.Branch;
 import com.example.baget.finance.FinanceCategory;
 import com.example.baget.finance.FinanceDirection;
 import com.example.baget.finance.FinanceTransaction;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,19 @@ public class CustomerPaymentService {
 
     @Transactional
     public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, User user) {
+
+        Set<Long> allowedBranchNos = user.getAllowedBranches()
+                .stream()
+                .map(Branch::getBranchNo)
+                .collect(Collectors.toSet());
+
+        if (request.branchNo() == null) {
+            throw new TransactionException("Філія не вказана");
+        }
+
+        if (!allowedBranchNos.contains(request.branchNo())) {
+            throw new TransactionException("Вам заборонено працювати в філії №: " + request.branchNo());
+        }
 
         // 1️⃣ Завантажуємо інвойс разом з клієнтом
         Invoice invoice = invoiceRepository.findByIdForUpdate(invoiceId)
