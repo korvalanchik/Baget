@@ -20,35 +20,44 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     List<Customer> findByMobileContaining(String prefix);
     Optional<Customer> findFirstByMobileContainingOrderByCustNoAsc(String phone);
     Optional<Customer> findTopByCompanyStartingWithOrderByCustNoDesc(String prefix);
+
     @SuppressWarnings("JpaQlInspection")
     @Query("""
-select new com.example.baget.customer.CustomerBalanceDTO(
-     c.custNo,
-     coalesce(c.company, c.contact),
-     c.mobile,
-     count(distinct o.orderNo),
-
-     coalesce(sum(ct.amount), 0),
-
-     max(ct.createdAt)
-)
-from Customer c
-join c.orders o
-left join CustomerTransaction ct
-       on ct.customer = c
-      and ct.branch.branchNo in :branchNos
-      and ct.active = true
-      and (:dateEnd is null or ct.createdAt <= :dateEnd)
-where o.branch.branchNo in :branchNos
-group by c.custNo, c.company, c.contact, c.mobile
-having count(o.orderNo) > 0
-   and (:debtOnly = false or coalesce(sum(ct.amount), 0) > 0)
-order by coalesce(sum(ct.amount), 0) desc
-""")
+    select new com.example.baget.customer.CustomerBalanceDTO(
+         c.custNo,
+         coalesce(c.company, c.contact),
+         c.mobile,
+         count(distinct ct.invoice.id),
+         coalesce(sum(ct.amount), 0),
+         max(ct.createdAt)
+    )
+    from Customer c
+    left join CustomerTransaction ct
+           on ct.customer = c
+          and ct.active = true
+          and (:dateEnd is null or ct.createdAt <= :dateEnd)
+    where (
+           exists (
+               select 1
+               from CustomerTransaction ct2
+               where ct2.customer = c
+                 and ct2.active = true
+                 and ct2.branch.branchNo in :branchNos
+           )
+           or exists (
+               select 1
+               from Orders o
+               where o.customer = c
+                 and o.branch.branchNo in :branchNos
+           )
+    )
+    group by c.custNo, c.company, c.contact, c.mobile
+    having (:debtOnly = false or coalesce(sum(ct.amount), 0) > 0)
+    order by coalesce(sum(ct.amount), 0) desc
+    """)
     List<CustomerBalanceDTO> findClientBalances(
             @Param("branchNos") Collection<Long> branchNos,
             @Param("debtOnly") boolean debtOnly,
             @Param("dateEnd") OffsetDateTime dateEnd
     );
-
 }
