@@ -1,0 +1,13 @@
+package com.example.baget.ledger;
+
+public enum LedgerCategory {
+    CUSTOMER_PAYMENT,
+    CUSTOMER_REFUND,
+    INVOICE_REVENUE,
+    MATERIAL_PURCHASE,
+    OVERHEAD_EXPENSE,
+    INTERNAL_TRANSFER_IN,
+    INTERNAL_TRANSFER_OUT,
+    ADJUSTMENT
+}
+
