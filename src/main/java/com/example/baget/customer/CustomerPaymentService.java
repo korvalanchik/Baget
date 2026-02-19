@@ -11,9 +11,11 @@ import com.example.baget.invoices.InvoiceEnums;
 import com.example.baget.invoices.InvoicePaymentRequest;
 import com.example.baget.invoices.InvoiceRepository;
 import com.example.baget.users.User;
+import com.example.baget.users.UsersRepository;
 import com.example.baget.util.TransactionException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -30,9 +32,15 @@ public class CustomerPaymentService {
     private final FinanceTransactionRepository financeTxRepository;
     private final InvoiceRepository invoiceRepository;
     private final BranchRepository branchRepository;
+    private final UsersRepository usersRepository;
 
     @Transactional
-    public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, User user) {
+    public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, Authentication authentication) {
+        String username = authentication.getName();
+
+        User user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new TransactionException("Користувач з таким ім'ям відсутній: " + username));
+
         Set<Long> allowedBranchNos = user.getAllowedBranches()
                 .stream()
                 .map(Branch::getBranchNo)
@@ -57,12 +65,12 @@ public class CustomerPaymentService {
 
         // 2️⃣ Перевіряємо суму
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Amount must be positive");
+            throw new IllegalArgumentException("Сума повинна бути позитивною");
         }
 
         BigDecimal debt = calculateDebt(invoice);
         if (request.amount().compareTo(debt) > 0) {
-            throw new IllegalArgumentException("Payment exceeds invoice debt");
+            throw new IllegalArgumentException("Оплата перевищує борг");
         }
 
         // 3️⃣ Створюємо CustomerTransaction

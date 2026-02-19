@@ -1,10 +1,9 @@
 package com.example.baget.customer;
 
 import com.example.baget.invoices.InvoicePaymentRequest;
-import com.example.baget.users.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -22,10 +21,10 @@ public class CustomerPaymentResource {
     public ResponseEntity<CustomerTransactionDTO> addPayment(
             @PathVariable Long id,
             @RequestBody InvoicePaymentRequest request,
-            @AuthenticationPrincipal User user
+            Authentication authentication
     ) {
         // делегуємо всю логіку в сервіс
-        CustomerTransactionDTO dto = customerPaymentService.registerInvoicePayment(id, request, user);
+        CustomerTransactionDTO dto = customerPaymentService.registerInvoicePayment(id, request, authentication);
 
         return ResponseEntity.ok(dto);
     }
