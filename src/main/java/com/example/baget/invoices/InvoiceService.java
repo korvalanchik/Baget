@@ -69,6 +69,9 @@ public class InvoiceService {
         }
 
         // 4️⃣ Створюємо Invoice
+        if (orders.stream().anyMatch(o -> o.getAmountDueN() == null)) {
+            throw new TransactionException("Замовлення ще не має фінальної суми");
+        }
         BigDecimal totalAmount = orders.stream()
                 .map(Orders::getAmountDueN)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -87,34 +90,19 @@ public class InvoiceService {
                 .note(request.getReference())
                 .build();
 
-        invoiceRepository.save(invoice);
-
         // 5️⃣ Створюємо InvoiceOrder для кожного замовлення
         for (Orders order : orders) {
             InvoiceOrder io = new InvoiceOrder();
             io.setInvoice(invoice);
             io.setOrder(order);
             io.setAmount(order.getAmountDueN());
-            invoiceOrderRepository.save(io);
 
             // 6️⃣ Оновлюємо order
             order.setStatusOrder(8);
             order.setShipDate(request.getShipDate() != null ? request.getShipDate() : OffsetDateTime.now());
 
-            ordersRepository.save(order);
+            invoiceRepository.save(invoice);
         }
-
-//        // 7️⃣ CustomerTransaction
-//        CustomerTransaction tx = CustomerTxFactory.invoice(
-//                invoiceCustomer,
-//                null, // або перший order, або null
-//                totalAmount,
-//                String.valueOf(invoice.getInvoiceNo())
-//        );
-//        tx.setInvoice(invoice);
-//
-//        customerTransactionRepository.save(tx);
-
 
         return invoiceMapper.toDto(invoice);
     }
