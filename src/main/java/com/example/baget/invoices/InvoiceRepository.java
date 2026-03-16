@@ -66,4 +66,24 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     """)
     Optional<InvoiceDetailsDTO> findInvoiceDetails(@Param("invoiceId") Long invoiceId);
 
-}
+    @SuppressWarnings("JpaQlInspection")
+    @Query("""
+    select new com.example.baget.customer.CustomerInvoiceDTO(
+        i.id,
+        i.invoiceNo,
+        i.totalAmount,
+        COALESCE(SUM(ct.amount * -1),0),
+        i.totalAmount - COALESCE(SUM(ct.amount * -1),0),
+        i.createdAt
+    )
+    from Invoice i
+    left join CustomerTransaction ct
+           on ct.invoice.id = i.id
+           and ct.type = 'PAYMENT'
+           and ct.active = true
+    where i.customer.custNo = :customerId
+    group by i.id, i.invoiceNo, i.totalAmount, i.createdAt
+    having (i.totalAmount - COALESCE(SUM(ct.amount * -1),0)) > 0
+    order by i.createdAt desc
+    """)
+    List<CustomerInvoiceDTO> findOpenInvoices(Long customerId);}

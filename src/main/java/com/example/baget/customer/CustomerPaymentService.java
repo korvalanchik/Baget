@@ -10,6 +10,7 @@ import com.example.baget.invoices.Invoice;
 import com.example.baget.invoices.InvoiceEnums;
 import com.example.baget.invoices.InvoicePaymentRequest;
 import com.example.baget.invoices.InvoiceRepository;
+import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.TransactionException;
@@ -29,8 +30,10 @@ import java.util.stream.Collectors;
 public class CustomerPaymentService {
 
     private final CustomerTransactionRepository customerTxRepository;
+    private final CustomerRepository customerRepository;
     private final FinanceTransactionRepository financeTxRepository;
     private final InvoiceRepository invoiceRepository;
+    private final LedgerRepository ledgerRepository;
     private final BranchRepository branchRepository;
     private final UsersRepository usersRepository;
 
@@ -133,4 +136,30 @@ public class CustomerPaymentService {
         return total.add(txSum);
     }
 
-}
+    public CustomerFinanceDTO getCustomerFinance(Long customerId) {
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow();
+
+        BigDecimal balance =
+                customerTxRepository.getCustomerBalance(customerId);
+
+        List<CustomerInvoiceDTO> invoices =
+                invoiceRepository.findOpenInvoices(customerId);
+
+        BigDecimal totalDebt = invoices.stream()
+                .map(CustomerInvoiceDTO::debt)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<CustomerLedgerDTO> ledger =
+                ledgerRepository.findCustomerLedger(customerId);
+
+        return new CustomerFinanceDTO(
+                customer.getCompany(),
+                customer.getPhone(),
+                balance,
+                totalDebt,
+                invoices,
+                ledger
+        );
+    }}

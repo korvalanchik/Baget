@@ -44,4 +44,10 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
     """)
     BigDecimal sumTransactionsByInvoice(@Param("invoice") Invoice invoice);
 
-}
+    @Query("""
+    select COALESCE(SUM(ct.amount),0)
+    from CustomerTransaction ct
+    where ct.customer.custNo = :customerId
+    and ct.active = true
+    """)
+    BigDecimal getCustomerBalance(Long customerId);}

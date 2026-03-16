@@ -40,4 +40,10 @@ public class CustomerPaymentResource {
     ) {
         return customerPaymentService.getPaymentsByInvoice(invoiceId);
     }
+
+    @GetMapping("/{customerId}/finance")
+    public CustomerFinanceDTO getFinance(@PathVariable Long customerId) {
+        return customerPaymentService.getCustomerFinance(customerId);
+    }
+
 }
