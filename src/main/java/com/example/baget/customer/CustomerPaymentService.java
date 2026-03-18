@@ -10,6 +10,9 @@ import com.example.baget.invoices.Invoice;
 import com.example.baget.invoices.InvoiceEnums;
 import com.example.baget.invoices.InvoicePaymentRequest;
 import com.example.baget.invoices.InvoiceRepository;
+import com.example.baget.ledger.LedgerCategory;
+import com.example.baget.ledger.LedgerDirection;
+import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
@@ -76,6 +79,8 @@ public class CustomerPaymentService {
             throw new IllegalArgumentException("Оплата перевищує борг");
         }
 
+        OffsetDateTime now = OffsetDateTime.now();
+
         // 3️⃣ Створюємо CustomerTransaction
         CustomerTransaction customerTx = customerTxRepository.save(
                 CustomerTransaction.builder()
@@ -84,21 +89,37 @@ public class CustomerPaymentService {
                         .invoice(invoice)
                         .type(CustomerTransactionType.PAYMENT)
                         .amount(request.amount().negate()) // мінус
-                        .createdAt(OffsetDateTime.now())
+                        .createdAt(now)
                         .note(request.note())
                         .build()
         );
 
-        // 4️⃣ Створюємо FinanceTransaction
+        // 4️⃣ Створюємо FinanceTransaction  ---------------- Застаріло
         financeTxRepository.save(
                 FinanceTransaction.builder()
                         .direction(FinanceDirection.IN)
                         .category(FinanceCategory.CUSTOMER_PAYMENT)
                         .amount(request.amount())
-                        .createdAt(OffsetDateTime.now())
+                        .createdAt(now)
                         .customerTransactionId(customerTx.getId())
                         .createdBy(user)
                         .reference("INV-" + invoice.getInvoiceNo())
+                        .build()
+        );
+
+        // 4️⃣ Створюємо LedgerEntry Transaction
+        ledgerRepository.save(
+                LedgerEntry.builder()
+                        .branch(branch)
+                        .direction(LedgerDirection.IN)
+                        .category(LedgerCategory.CUSTOMER_PAYMENT)
+                        .amount(request.amount())
+                        .createdAt(now)
+                        .createdBy(user)
+                        .customerId(customer.getCustNo())
+                        .invoiceId(invoice.getId())
+                        .reference("INV-" + invoice.getInvoiceNo())
+                        .note(request.note())
                         .build()
         );
 
