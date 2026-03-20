@@ -142,6 +142,90 @@ public class CustomerPaymentService {
                 .build();
     }
 
+    @Transactional
+    public CustomerTransactionDTO registerAdvancePayment(
+            Long customerId,
+            InvoicePaymentRequest request,
+            Authentication authentication
+    ) {
+        String username = authentication.getName();
+
+        User user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
+
+        // 1️⃣ Перевірка філії
+        if (request.branchNo() == null) {
+            throw new TransactionException("Філія не вказана");
+        }
+
+        Set<Long> allowedBranchNos = user.getAllowedBranches()
+                .stream()
+                .map(Branch::getBranchNo)
+                .collect(Collectors.toSet());
+
+        if (!allowedBranchNos.contains(request.branchNo())) {
+            throw new TransactionException("Немає доступу до філії: " + request.branchNo());
+        }
+
+        Branch branch = branchRepository.findById(request.branchNo())
+                .orElseThrow(() -> new TransactionException("Філія не знайдена"));
+
+        // 2️⃣ Завантажуємо клієнта
+        if (customerId == null) {
+            throw new TransactionException("Клієнт не вказаний");
+        }
+
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new TransactionException("Клієнт не знайдений"));
+
+        // 3️⃣ Перевірка суми
+        if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Сума повинна бути позитивною");
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+
+        // 4️⃣ CustomerTransaction (опціонально)
+        CustomerTransaction customerTx = customerTxRepository.save(
+                CustomerTransaction.builder()
+                        .customer(customer)
+                        .branch(branch)
+                        .type(CustomerTransactionType.ADVANCE) // 🔥 новий тип
+                        .amount(request.amount()) // 🔥 ПЛЮС (це баланс клієнта)
+                        .createdAt(now)
+                        .note(request.note())
+                        .build()
+        );
+
+        // 5️⃣ LedgerEntry (ГОЛОВНЕ)
+        ledgerRepository.save(
+                LedgerEntry.builder()
+                        .branch(branch)
+                        .direction(LedgerDirection.IN)
+                        .category(LedgerCategory.CUSTOMER_ADVANCE) // 🔥 окрема категорія
+                        .amount(request.amount())
+                        .createdAt(now)
+                        .createdBy(user)
+
+                        .customerId(customer.getCustNo())
+                        // ❗ НЕ ставимо invoiceId
+                        // ❗ НЕ ставимо orderId
+
+                        .reference("ADV-" + customer.getCustNo())
+                        .note(request.note())
+                        .build()
+        );
+
+        // 6️⃣ DTO
+        return CustomerTransactionDTO.builder()
+                .id(customerTx.getId())
+                .invoiceId(null) // 🔥 немає інвойсу
+                .amount(customerTx.getAmount())
+                .createdAt(customerTx.getCreatedAt())
+                .note(customerTx.getNote())
+                .reference("ADV-" + customer.getCustNo())
+                .build();
+    }
 
     public List<CustomerPaymentDTO> getPaymentsByInvoice(Long invoiceId) {
         return customerTxRepository.findPaymentsByInvoiceId(invoiceId);
@@ -177,7 +261,7 @@ public class CustomerPaymentService {
 
         return new CustomerFinanceDTO(
                 customer.getCompany(),
-                customer.getPhone(),
+                customer.getMobile(),
                 balance,
                 totalDebt,
                 invoices,

@@ -2,6 +2,7 @@ package com.example.baget.ledger;
 
 public enum LedgerCategory {
     CUSTOMER_PAYMENT,
+    CUSTOMER_ADVANCE,
     CUSTOMER_REFUND,
     INVOICE_REVENUE,
     MATERIAL_PURCHASE,

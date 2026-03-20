@@ -46,4 +46,15 @@ public class CustomerPaymentResource {
         return customerPaymentService.getCustomerFinance(customerId);
     }
 
+    @PostMapping("/{customerId}/advance")
+    public ResponseEntity<CustomerTransactionDTO> addAdvance(
+            @PathVariable Long customerId,
+            @RequestBody InvoicePaymentRequest request,
+            Authentication authentication
+    ) {
+        // делегуємо всю логіку в сервіс
+        CustomerTransactionDTO dto = customerPaymentService.registerAdvancePayment(customerId, request, authentication);
+
+        return ResponseEntity.ok(dto);
+    }
 }
