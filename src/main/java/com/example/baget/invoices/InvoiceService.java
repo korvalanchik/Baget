@@ -1,11 +1,19 @@
 package com.example.baget.invoices;
 
 import com.example.baget.customer.*;
+import com.example.baget.ledger.LedgerCategory;
+import com.example.baget.ledger.LedgerDirection;
+import com.example.baget.ledger.LedgerEntry;
+import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
+import com.example.baget.users.User;
+import com.example.baget.users.UsersRepository;
 import com.example.baget.util.TransactionException;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,11 +31,19 @@ public class InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
+    private final CustomerTransactionRepository customerTxRepository;
+    private final UsersRepository usersRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
+    private final LedgerRepository ledgerRepository;
     private final InvoiceMapper invoiceMapper;
+    private final EntityManager entityManager;
 
     @Transactional
-    public InvoiceDTO createInvoiceForOrders(CustomerIssueInvoiceRequestDTO request) {
+    public InvoiceDTO createInvoiceForOrders(CustomerIssueInvoiceRequestDTO request, Authentication authentication) {
+        String username = authentication.getName();
+
+        User user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new TransactionException("Користувач з таким ім'ям відсутній: " + username));
 
         List<Long> orderNos = request.getOrderNos();
         if (orderNos == null || orderNos.isEmpty()) {
@@ -81,6 +97,8 @@ public class InvoiceService {
             invoiceNo++;
         }
 
+        OffsetDateTime now = OffsetDateTime.now();
+
         Invoice invoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
                 .customer(invoiceCustomer)
@@ -89,6 +107,9 @@ public class InvoiceService {
                 .totalAmount(totalAmount)
                 .note(request.getReference())
                 .build();
+
+        invoiceRepository.save(invoice);
+        entityManager.flush();
 
         // 5️⃣ Створюємо InvoiceOrder для кожного замовлення
         for (Orders order : orders) {
@@ -99,15 +120,68 @@ public class InvoiceService {
 
             // 6️⃣ Оновлюємо order
             order.setStatusOrder(8);
-            order.setShipDate(request.getShipDate() != null ? request.getShipDate() : OffsetDateTime.now());
+            order.setShipDate(request.getShipDate() != null ? request.getShipDate() : now);
 
-            invoiceRepository.save(invoice);
+            invoiceOrderRepository.save(io);
+        }
+
+        // 🔹 баланс клієнта
+        BigDecimal balance = getCustomerBalance(invoiceCustomer.getCustNo());
+
+        if (balance.compareTo(BigDecimal.ZERO) > 0) {
+
+            // скільки можна списати
+            BigDecimal amountToApply = balance.min(totalAmount);
+
+            // 🔥 створюємо списання
+            ledgerRepository.save(
+                    LedgerEntry.builder()
+                            .branch(orders.get(0).getBranch()) // або з контексту
+                            .direction(LedgerDirection.OUT)
+                            .category(LedgerCategory.APPLY_ADVANCE_TO_INVOICE)
+                            .amount(amountToApply)
+                            .createdAt(now)
+                            .createdBy(user)
+
+                            .customerId(invoiceCustomer.getCustNo())
+                            .invoiceId(invoice.getId())
+
+                            .reference("APPLY_ADV-" + invoice.getInvoiceNo())
+                            .note("Списання авансу")
+                            .build()
+            );
+
+            customerTxRepository.save(
+                    CustomerTransaction.builder()
+                            .customer(invoiceCustomer)
+                            .branch(orders.get(0).getBranch())
+                            .invoice(invoice)
+                            .type(CustomerTransactionType.ADVANCE_APPLIED)
+                            .amount(amountToApply.negate()) // мінус
+                            .createdAt(now)
+                            .note("Списання авансу на інвойс №" + invoice.getInvoiceNo())
+                            .build()
+            );
+
+            // 🔥 оновлюємо статус інвойсу
+            BigDecimal remaining = totalAmount.subtract(amountToApply);
+
+            if (remaining.compareTo(BigDecimal.ZERO) == 0) {
+                invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
+            } else {
+                invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
+            }
         }
 
         return invoiceMapper.toDto(invoice);
     }
 
-    public InvoiceDetailsDTO getInvoice(Long invoiceId) {
+    public BigDecimal getCustomerBalance(Long customerId) {
+        BigDecimal result = ledgerRepository.getCustomerBalance(customerId);
+        return result != null ? result : BigDecimal.ZERO;
+    }
+
+        public InvoiceDetailsDTO getInvoice(Long invoiceId) {
         return invoiceRepository.findInvoiceDetails(invoiceId)
                 .orElseThrow(() -> new TransactionException("Invoice not found"));
     }

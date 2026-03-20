@@ -4,6 +4,7 @@ import com.example.baget.customer.CustomerLedgerDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
@@ -21,4 +22,16 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
     ORDER BY le.createdAt DESC
     """)
     List<CustomerLedgerDTO> findCustomerLedger(Long customerId);
+
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN l.direction = 'IN' THEN l.amount
+                ELSE -l.amount
+            END
+        ), 0)
+        FROM LedgerEntry l
+        WHERE l.customerId = :customerId
+    """)
+    BigDecimal getCustomerBalance(Long customerId);
 }
