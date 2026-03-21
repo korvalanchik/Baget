@@ -85,12 +85,14 @@ public class InvoiceService {
         }
 
         // 4️⃣ Створюємо Invoice
-        if (orders.stream().anyMatch(o -> o.getAmountDueN() == null)) {
-            throw new TransactionException("Замовлення ще не має фінальної суми");
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (Orders o : orders) {
+            if (o.getAmountDueN() == null) {
+                throw new TransactionException("Замовлення " + o.getOrderNo() + " ще не має фінальної суми");
+            }
+            totalAmount = totalAmount.add(o.getAmountDueN());
         }
-        BigDecimal totalAmount = orders.stream()
-                .map(Orders::getAmountDueN)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Long invoiceNo = generateTodayCode();
         while (invoiceRepository.existsByInvoiceNo(invoiceNo)) {
