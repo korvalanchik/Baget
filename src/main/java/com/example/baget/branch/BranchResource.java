@@ -1,6 +1,6 @@
 package com.example.baget.branch;
 
-import com.example.baget.customer.CustomerBalanceDTO;
+import com.example.baget.customer.CustomerBalanceProjection;
 import com.example.baget.customer.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,7 +35,7 @@ public class BranchResource {
     }
 
     @GetMapping("/clients")
-    public List<CustomerBalanceDTO> getClients(
+    public List<CustomerBalanceProjection> getClients(
             @RequestParam(required = false) Long branchNo,
             @RequestParam(required = false, defaultValue = "false") boolean debtOnly,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,

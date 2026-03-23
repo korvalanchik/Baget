@@ -124,13 +124,13 @@ public class CustomerPaymentService {
         );
 
         // 5️⃣ Оновлюємо статус інвойсу
-        BigDecimal newDebt = calculateDebt(invoice);
-        if (newDebt.compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal remaining = debt.subtract(request.amount());
+
+        if (remaining.compareTo(BigDecimal.ZERO) == 0) {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
         } else {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
         }
-
         // 6️⃣ Повертаємо DTO для фронтенду
         return CustomerTransactionDTO.builder()
                 .id(customerTx.getId())
@@ -210,7 +210,7 @@ public class CustomerPaymentService {
                         .customerId(customer.getCustNo())
                         // ❗ НЕ ставимо invoiceId
                         // ❗ НЕ ставимо orderId
-
+                        .customerTransactionId(customerTx.getId())
                         .reference("ADV-" + customer.getCustNo())
                         .note(request.note())
                         .build()

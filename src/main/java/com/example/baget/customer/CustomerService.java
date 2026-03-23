@@ -116,7 +116,7 @@ public class CustomerService {
 
     }
 
-    public List<CustomerBalanceDTO> getClientsForManager(String username, Long branchNo, boolean debtOnly, LocalDate date) {
+    public List<CustomerBalanceProjection> getClientsForManager(String username, Long branchNo, boolean debtOnly, LocalDate date) {
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
 
@@ -132,9 +132,9 @@ public class CustomerService {
         Collection<Long> branchesToUse =
                 (branchNo != null) ? List.of(branchNo) : allowedBranchNos;
 
-        OffsetDateTime dateEnd = (date != null) ? date.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC) : null;
+//        OffsetDateTime dateEnd = (date != null) ? date.atTime(LocalTime.MAX).atOffset(ZoneOffset.UTC) : null;
 
-        return customerRepository.findClientBalances(branchesToUse, debtOnly, dateEnd);
+        return customerRepository.findClientBalances(branchesToUse);
     }
 
 

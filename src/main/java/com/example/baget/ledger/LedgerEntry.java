@@ -63,6 +63,9 @@ public class LedgerEntry {
     @Column(name = "customer_id")
     private Long customerId;
 
+    @Column(name = "customer_tx_id")
+    private Long customerTransactionId;
+
     @Column(name = "order_id")
     private Long orderId;
 

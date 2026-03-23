@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.lang.NonNull;
 
-import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -21,43 +20,86 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findFirstByMobileContainingOrderByCustNoAsc(String phone);
     Optional<Customer> findTopByCompanyStartingWithOrderByCustNoDesc(String prefix);
 
-    @SuppressWarnings("JpaQlInspection")
-    @Query("""
-    select new com.example.baget.customer.CustomerBalanceDTO(
-         c.custNo,
-         coalesce(c.company, c.contact),
-         c.mobile,
-         count(distinct ct.invoice.id),
-         coalesce(sum(ct.amount), 0),
-         max(ct.createdAt)
-    )
-    from Customer c
-    left join CustomerTransaction ct
-           on ct.customer = c
-          and ct.active = true
-          and (:dateEnd is null or ct.createdAt <= :dateEnd)
-    where (
-           exists (
-               select 1
-               from CustomerTransaction ct2
-               where ct2.customer = c
-                 and ct2.active = true
-                 and ct2.branch.branchNo in :branchNos
-           )
-           or exists (
-               select 1
-               from Orders o
-               where o.customer = c
-                 and o.branch.branchNo in :branchNos
-           )
-    )
-    group by c.custNo, c.company, c.contact, c.mobile
-    having (:debtOnly = false or coalesce(sum(ct.amount), 0) > 0)
-    order by coalesce(sum(ct.amount), 0) desc
-    """)
-    List<CustomerBalanceDTO> findClientBalances(
-            @Param("branchNos") Collection<Long> branchNos,
-            @Param("debtOnly") boolean debtOnly,
-            @Param("dateEnd") OffsetDateTime dateEnd
+    @Query(value = """
+        WITH base_orders AS (
+            SELECT
+                o.OrderNo,
+                o.CustNo,
+                o.BranchNo
+            FROM orders o
+            WHERE o.BranchNo IN (:branches)
+        ),
+        
+        orders_without_invoice AS (
+            SELECT
+                bo.CustNo,
+                COUNT(*) AS pending_orders
+            FROM base_orders bo
+            LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
+            WHERE io.order_no IS NULL
+            GROUP BY bo.CustNo
+        ),
+        
+        invoice_stats AS (
+            SELECT
+                i.customer_id,
+                COUNT(*) AS invoice_count
+            FROM invoices i
+            JOIN invoice_orders io ON io.invoice_id = i.id
+            JOIN orders o ON o.OrderNo = io.order_no
+            WHERE o.BranchNo IN (:branches)
+            GROUP BY i.customer_id
+        ),
+        
+        ledger_balance AS (
+            SELECT
+                le.customer_id,
+                SUM(
+                    CASE
+                        WHEN le.direction = 'IN' THEN le.amount
+                        ELSE -le.amount
+                    END
+                ) AS balance,
+                MAX(
+                    CASE
+                        WHEN le.category = 'CUSTOMER_PAYMENT'
+                        THEN le.created_at
+                    END
+                ) AS last_payment_date
+            FROM ledger_entries le
+            WHERE le.branch_id IN (:branches)
+            GROUP BY le.customer_id
+        )
+        
+        SELECT
+            c.CustNo,
+            c.Company,
+            c.Mobile,
+        
+            COALESCE(lb.balance, 0) AS balance,
+            COALESCE(inv.invoice_count, 0) AS invoice_count,
+            lb.last_payment_date,
+            COALESCE(owi.pending_orders, 0) AS pending_orders
+        
+        FROM customer c
+        
+        -- 🔹 тільки ті клієнти, що мають замовлення в цих філіях
+        JOIN (
+            SELECT DISTINCT CustNo FROM base_orders
+        ) bo ON bo.CustNo = c.CustNo
+        
+        LEFT JOIN ledger_balance lb ON lb.customer_id = c.CustNo
+        LEFT JOIN invoice_stats inv ON inv.customer_id = c.CustNo
+        LEFT JOIN orders_without_invoice owi ON owi.CustNo = c.CustNo
+        
+        WHERE
+            -- 🔥 головна умова
+            COALESCE(owi.pending_orders, 0) > 0
+            OR COALESCE(lb.balance, 0) > 0
+    """, nativeQuery = true)
+    List<CustomerBalanceProjection> findClientBalances(
+            @Param("branches") Collection<Long> branches
     );
+
+
 }
