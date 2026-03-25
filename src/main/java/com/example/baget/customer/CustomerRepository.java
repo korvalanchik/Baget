@@ -41,17 +41,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             GROUP BY bo.CustNo
         ),
         
-        invoice_stats AS (
-            SELECT
-                i.customer_id,
-                COUNT(*) AS invoice_count
-            FROM invoices i
-            JOIN invoice_orders io ON io.invoice_id = i.id
-            JOIN orders o ON o.OrderNo = io.order_no
-            WHERE o.BranchNo IN (:branches)
-            GROUP BY i.customer_id
-        ),
-        
         ledger_balance AS (
             SELECT
                 le.customer_id,
@@ -63,7 +52,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                 ) AS balance,
                 MAX(
                     CASE
-                        WHEN le.category = 'CUSTOMER_PAYMENT'
+                        WHEN le.direction = 'IN'
                         THEN le.created_at
                     END
                 ) AS last_payment_date
@@ -71,14 +60,13 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             WHERE le.branch_id IN (:branches)
             GROUP BY le.customer_id
         )
-        
+  
         SELECT
             c.CustNo,
             c.Company,
             c.Mobile,
         
             COALESCE(lb.balance, 0) AS balance,
-            COALESCE(inv.invoice_count, 0) AS invoice_count,
             lb.last_payment_date,
             COALESCE(owi.pending_orders, 0) AS pending_orders
         
@@ -90,13 +78,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         ) bo ON bo.CustNo = c.CustNo
         
         LEFT JOIN ledger_balance lb ON lb.customer_id = c.CustNo
-        LEFT JOIN invoice_stats inv ON inv.customer_id = c.CustNo
         LEFT JOIN orders_without_invoice owi ON owi.CustNo = c.CustNo
         
         WHERE
             -- 🔥 головна умова
             COALESCE(owi.pending_orders, 0) > 0
-            OR COALESCE(lb.balance, 0) < 0
+            OR COALESCE(lb.balance, 0) <> 0
     """, nativeQuery = true)
     List<CustomerBalanceProjection> findClientBalances(
             @Param("branches") Collection<Long> branches
