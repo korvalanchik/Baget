@@ -40,23 +40,24 @@ public class InvoiceService {
 
     @Transactional
     public InvoiceDTO createInvoiceForOrders(CustomerIssueInvoiceRequestDTO request, Authentication authentication) {
+
         String username = authentication.getName();
 
         User user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new TransactionException("Користувач з таким ім'ям відсутній: " + username));
+                .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
 
         List<Long> orderNos = request.getOrderNos();
         if (orderNos == null || orderNos.isEmpty()) {
             throw new TransactionException("Список замовлень порожній");
         }
 
-        // 1️⃣ Завантажуємо всі замовлення
+        // 1️⃣ Завантажуємо замовлення
         List<Orders> orders = ordersRepository.findAllById(orderNos);
         if (orders.size() != orderNos.size()) {
             throw new TransactionException("Деякі замовлення не знайдено");
         }
 
-        // 2️⃣ Визначаємо платника рахунку
+        // 2️⃣ Визначаємо платника (invoiceCustomer)
         Customer invoiceCustomer;
 
         if (request.getInvoiceCustomerId() != null) {
@@ -66,34 +67,33 @@ public class InvoiceService {
             Set<Long> customerIds = orders.stream()
                     .map(o -> o.getCustomer().getCustNo())
                     .collect(Collectors.toSet());
+
             if (customerIds.size() > 1) {
                 throw new TransactionException(
                         "MULTIPLE_CUSTOMERS",
-                        "Для рахунку з кількома клієнтами потрібно вибрати корпоративного платника"
+                        "Для рахунку з кількома клієнтами потрібно вибрати платника"
                 );
             }
+
             invoiceCustomer = orders.get(0).getCustomer();
-            if (invoiceCustomer == null) {
-                throw new TransactionException("Замовлення не має клієнта");
-            }
         }
 
-        // 3️⃣ Перевірка, чи жодне замовлення не в іншому invoice
+        // 3️⃣ Перевірка на дублювання
         boolean alreadyInvoiced = invoiceOrderRepository.existsByOrder_OrderNoIn(orderNos);
         if (alreadyInvoiced) {
-            throw new TransactionException("Одне або декілька замовлень вже включені в рахунок");
+            throw new TransactionException("Одне або декілька замовлень вже в інвойсі");
         }
 
-        // 4️⃣ Створюємо Invoice
+        // 4️⃣ Рахуємо суму
         BigDecimal totalAmount = BigDecimal.ZERO;
-
         for (Orders o : orders) {
             if (o.getAmountDueN() == null) {
-                throw new TransactionException("Замовлення " + o.getOrderNo() + " ще не має фінальної суми");
+                throw new TransactionException("Замовлення " + o.getOrderNo() + " без фінальної суми");
             }
             totalAmount = totalAmount.add(o.getAmountDueN());
         }
 
+        // 5️⃣ Створюємо invoice
         Long invoiceNo = generateTodayCode();
         while (invoiceRepository.existsByInvoiceNo(invoiceNo)) {
             invoiceNo++;
@@ -103,8 +103,10 @@ public class InvoiceService {
 
         Invoice invoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
-                .customer(invoiceCustomer)
-                .type((orders.size() == 1) ? InvoiceEnums.InvoiceType.SIMPLE : InvoiceEnums.InvoiceType.CONSOLIDATED)
+                .customer(invoiceCustomer) // платник
+                .type((orders.size() == 1)
+                        ? InvoiceEnums.InvoiceType.SIMPLE
+                        : InvoiceEnums.InvoiceType.CONSOLIDATED)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
                 .totalAmount(totalAmount)
                 .note(request.getReference())
@@ -113,62 +115,95 @@ public class InvoiceService {
         invoiceRepository.save(invoice);
         entityManager.flush();
 
-        // 5️⃣ Створюємо InvoiceOrder для кожного замовлення
+        // 🔥 6️⃣ InvoiceOrder + створення боргу (ledger OUT)
         for (Orders order : orders) {
+
+            BigDecimal amount = order.getAmountDueN();
+
+            // InvoiceOrder
             InvoiceOrder io = new InvoiceOrder();
             io.setInvoice(invoice);
             io.setOrder(order);
-            io.setAmount(order.getAmountDueN());
+            io.setAmount(amount);
+            invoiceOrderRepository.save(io);
 
-            // 6️⃣ Оновлюємо order
+            // Оновлення order
             order.setStatusOrder(8);
             order.setShipDate(request.getShipDate() != null ? request.getShipDate() : now);
 
-            invoiceOrderRepository.save(io);
-        }
-
-        // 🔹 баланс клієнта
-        BigDecimal balance = getCustomerBalance(invoiceCustomer.getCustNo());
-
-        if (balance.compareTo(BigDecimal.ZERO) > 0) {
-
-            // скільки можна списати
-            BigDecimal amountToApply = balance.min(totalAmount);
-
-            // 🔥 створюємо списання
+            // 🔥 BORROW = OUT НА ВЛАСНИКА ЗАМОВЛЕННЯ
             ledgerRepository.save(
                     LedgerEntry.builder()
-                            .branch(orders.get(0).getBranch()) // або з контексту
+                            .branch(order.getBranch())
                             .direction(LedgerDirection.OUT)
-                            .category(LedgerCategory.APPLY_ADVANCE_TO_INVOICE)
-                            .amount(amountToApply)
+                            .category(LedgerCategory.INVOICE_ISSUED)
+                            .amount(amount)
                             .createdAt(now)
                             .createdBy(user)
 
-                            .customerId(invoiceCustomer.getCustNo())
+                            .customerId(order.getCustomer().getCustNo()) // 🔥 ВАЖЛИВО
+                            .orderId(order.getOrderNo())
                             .invoiceId(invoice.getId())
 
-                            .reference("APPLY_ADV-" + invoice.getInvoiceNo())
-                            .note("Списання авансу")
+                            .reference("INV-" + invoice.getInvoiceNo())
+                            .note("Нарахування по інвойсу")
                             .build()
             );
+        }
 
-            customerTxRepository.save(
+        // 🔥 7️⃣ Списання авансу (якщо є)
+        BigDecimal advanceBalance = getCustomerBalance(invoiceCustomer.getCustNo());
+
+        if (advanceBalance.compareTo(BigDecimal.ZERO) > 0) {
+
+            BigDecimal amountToApply = advanceBalance.min(totalAmount);
+
+            Long txId = customerTxRepository.save(
                     CustomerTransaction.builder()
                             .customer(invoiceCustomer)
                             .branch(orders.get(0).getBranch())
                             .invoice(invoice)
                             .type(CustomerTransactionType.ADVANCE_APPLIED)
-                            .amount(amountToApply.negate()) // мінус
+                            .amount(amountToApply.negate())
                             .createdAt(now)
                             .note("Списання авансу на інвойс №" + invoice.getInvoiceNo())
                             .build()
-            );
+            ).getId();
 
-            // 🔥 оновлюємо статус інвойсу
-            BigDecimal remaining = totalAmount.subtract(amountToApply);
+            BigDecimal remaining = amountToApply;
 
-            if (remaining.compareTo(BigDecimal.ZERO) == 0) {
+            // 🔥 РОЗКИДАЄМО ПО ЗАМОВЛЕННЯХ
+            for (Orders order : orders) {
+
+                if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
+
+                BigDecimal orderAmount = order.getAmountDueN();
+                BigDecimal apply = remaining.min(orderAmount);
+
+                ledgerRepository.save(
+                        LedgerEntry.builder()
+                                .branch(order.getBranch())
+                                .direction(LedgerDirection.OUT)
+                                .category(LedgerCategory.APPLY_ADVANCE_TO_INVOICE)
+                                .amount(apply)
+                                .createdAt(now)
+                                .createdBy(user)
+
+                                // 🔥 НА ВЛАСНИКА ЗАМОВЛЕННЯ
+                                .customerId(order.getCustomer().getCustNo())
+                                .orderId(order.getOrderNo())
+                                .invoiceId(invoice.getId())
+                                .customerTransactionId(txId)
+                                .reference("APPLY_ADV-" + invoice.getInvoiceNo())
+                                .note("Списання авансу")
+                                .build()
+                );
+
+                remaining = remaining.subtract(apply);
+            }
+
+            // 🔥 Оновлюємо статус
+            if (amountToApply.compareTo(totalAmount) >= 0) {
                 invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
             } else {
                 invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);

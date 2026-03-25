@@ -96,7 +96,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         WHERE
             -- 🔥 головна умова
             COALESCE(owi.pending_orders, 0) > 0
-            OR COALESCE(lb.balance, 0) > 0
+            OR COALESCE(lb.balance, 0) < 0
     """, nativeQuery = true)
     List<CustomerBalanceProjection> findClientBalances(
             @Param("branches") Collection<Long> branches

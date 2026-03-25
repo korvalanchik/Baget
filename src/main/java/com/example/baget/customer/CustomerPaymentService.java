@@ -2,18 +2,12 @@ package com.example.baget.customer;
 
 import com.example.baget.branch.Branch;
 import com.example.baget.branch.BranchRepository;
-import com.example.baget.finance.FinanceCategory;
-import com.example.baget.finance.FinanceDirection;
-import com.example.baget.finance.FinanceTransaction;
-import com.example.baget.finance.FinanceTransactionRepository;
-import com.example.baget.invoices.Invoice;
-import com.example.baget.invoices.InvoiceEnums;
-import com.example.baget.invoices.InvoicePaymentRequest;
-import com.example.baget.invoices.InvoiceRepository;
+import com.example.baget.invoices.*;
 import com.example.baget.ledger.LedgerCategory;
 import com.example.baget.ledger.LedgerDirection;
 import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
+import com.example.baget.orders.Orders;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.TransactionException;
@@ -34,103 +28,131 @@ public class CustomerPaymentService {
 
     private final CustomerTransactionRepository customerTxRepository;
     private final CustomerRepository customerRepository;
-    private final FinanceTransactionRepository financeTxRepository;
     private final InvoiceRepository invoiceRepository;
+    private final InvoiceOrderRepository invoiceOrderRepository;
     private final LedgerRepository ledgerRepository;
     private final BranchRepository branchRepository;
     private final UsersRepository usersRepository;
 
+
     @Transactional
     public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, Authentication authentication) {
+
         String username = authentication.getName();
 
         User user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new TransactionException("Користувач з таким ім'ям відсутній: " + username));
+                .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
 
-        Set<Long> allowedBranchNos = user.getAllowedBranches()
-                .stream()
-                .map(Branch::getBranchNo)
-                .collect(Collectors.toSet());
-
-        if (request.branchNo() == null) {
-            throw new TransactionException("Філія не вказана");
-        }
-
-        if (!allowedBranchNos.contains(request.branchNo())) {
-            throw new TransactionException("Вам заборонено працювати в філії №: " + request.branchNo());
-        }
-
-        Branch branch = branchRepository.findById(request.branchNo())
-                .orElseThrow(() -> new TransactionException("Філія не знайдена: " + request.branchNo()));
-
-        // 1️⃣ Завантажуємо інвойс разом з клієнтом
-        Invoice invoice = invoiceRepository.findByIdForUpdate(invoiceId)
-                .orElseThrow(() -> new TransactionException("Інвойс не знайдено: " + invoiceId));
-
-        Customer customer = invoice.getCustomer(); // вже в persistence context
-
-        // 2️⃣ Перевіряємо суму
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Сума повинна бути позитивною");
+            throw new TransactionException("Сума оплати має бути більше 0");
         }
 
-        BigDecimal debt = calculateDebt(invoice);
-        if (request.amount().compareTo(debt) > 0) {
-            throw new IllegalArgumentException("Оплата перевищує борг");
-        }
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
+
+        Customer payer = customerRepository.findById(invoice.getCustomer().getCustNo())
+                .orElseThrow(() -> new TransactionException("Платник не знайдений"));
 
         OffsetDateTime now = OffsetDateTime.now();
 
-        // 3️⃣ Створюємо CustomerTransaction
+        // 🔥 1️⃣ Отримуємо всі orders інвойсу
+        List<InvoiceOrder> invoiceOrders = invoiceOrderRepository.findByInvoice_Id(invoice.getId());
+
+        if (invoiceOrders.isEmpty()) {
+            throw new TransactionException("Інвойс не містить замовлень");
+        }
+
+        // 🔥 2️⃣ Рахуємо залишок боргу по інвойсу
+        BigDecimal totalDebt = calculateInvoiceDebt(invoice.getId());
+
+        if (totalDebt.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new TransactionException("Інвойс вже оплачено");
+        }
+
+        BigDecimal paymentAmount = request.amount().min(totalDebt);
+
+        // 🔥 3️⃣ Створюємо CUSTOMER TX
         CustomerTransaction customerTx = customerTxRepository.save(
                 CustomerTransaction.builder()
-                        .customer(customer)
-                        .branch(branch)
+                        .customer(payer)
+                        .branch(invoiceOrders.get(0).getOrder().getBranch())
                         .invoice(invoice)
                         .type(CustomerTransactionType.PAYMENT)
-                        .amount(request.amount().negate()) // мінус
+                        .amount(paymentAmount)
                         .createdAt(now)
                         .note(request.note())
                         .build()
         );
 
-        // 4️⃣ Створюємо FinanceTransaction  ---------------- Застаріло
-        financeTxRepository.save(
-                FinanceTransaction.builder()
-                        .direction(FinanceDirection.IN)
-                        .category(FinanceCategory.CUSTOMER_PAYMENT)
-                        .amount(request.amount())
-                        .createdAt(now)
-                        .customerTransactionId(customerTx.getId())
-                        .createdBy(user)
-                        .reference("INV-" + invoice.getInvoiceNo())
-                        .build()
-        );
-
-        // 4️⃣ Створюємо LedgerEntry Transaction
+        // 🔥 4️⃣ Створюємо IN (гроші прийшли)
         ledgerRepository.save(
                 LedgerEntry.builder()
-                        .branch(branch)
+                        .branch(invoiceOrders.get(0).getOrder().getBranch())
                         .direction(LedgerDirection.IN)
-                        .category(LedgerCategory.CUSTOMER_PAYMENT)
-                        .amount(request.amount())
+                        .category(LedgerCategory.PAYMENT_RECEIVED)
+                        .amount(paymentAmount)
                         .createdAt(now)
                         .createdBy(user)
-                        .customerId(customer.getCustNo())
+
+                        .customerId(payer.getCustNo()) // 🔥 платник
                         .invoiceId(invoice.getId())
-                        .reference("INV-" + invoice.getInvoiceNo())
-                        .note(request.note())
+
+                        .customerTransactionId(customerTx.getId())
+
+                        .reference("PAY-" + invoice.getInvoiceNo())
+                        .note("Оплата інвойсу")
                         .build()
         );
 
-        // 5️⃣ Оновлюємо статус інвойсу
-        BigDecimal remaining = debt.subtract(request.amount());
+        // 🔥 5️⃣ ALLOCATION (гасимо борг по orders)
+        BigDecimal remaining = paymentAmount;
 
-        if (remaining.compareTo(BigDecimal.ZERO) == 0) {
+        for (InvoiceOrder io : invoiceOrders) {
+
+            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
+
+            Orders order = io.getOrder();
+
+            // 🔥 залишок боргу по цьому order
+            BigDecimal orderDebt = calculateOrderDebt(order.getOrderNo());
+
+            if (orderDebt.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            BigDecimal apply = remaining.min(orderDebt);
+
+            ledgerRepository.save(
+                    LedgerEntry.builder()
+                            .branch(order.getBranch())
+                            .direction(LedgerDirection.OUT)
+                            .category(LedgerCategory.PAYMENT_ALLOCATION)
+                            .amount(apply)
+                            .createdAt(now)
+                            .createdBy(user)
+
+                            // 🔥 ВАЖЛИВО
+                            .customerId(order.getCustomer().getCustNo()) // боржник
+                            .orderId(order.getOrderNo())
+                            .invoiceId(invoice.getId())
+
+                            .customerTransactionId(customerTx.getId())
+
+                            .reference("ALLOC-" + invoice.getInvoiceNo())
+                            .note("Розподіл оплати")
+                            .build()
+            );
+
+            remaining = remaining.subtract(apply);
+        }
+
+        // 🔥 6️⃣ Оновлюємо статус інвойсу
+        BigDecimal remainingDebt = calculateInvoiceDebt(invoice.getId());
+
+        if (remainingDebt.compareTo(BigDecimal.ZERO) == 0) {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
         } else {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
         }
+
         // 6️⃣ Повертаємо DTO для фронтенду
         return CustomerTransactionDTO.builder()
                 .id(customerTx.getId())
@@ -231,16 +253,6 @@ public class CustomerPaymentService {
         return customerTxRepository.findPaymentsByInvoiceId(invoiceId);
     }
 
-    public BigDecimal calculateDebt(Invoice invoice) {
-
-        BigDecimal total = invoice.getTotalAmount();
-
-        BigDecimal txSum = customerTxRepository.sumTransactionsByInvoice(invoice);
-
-        // txSum буде від’ємним для оплат
-        return total.add(txSum);
-    }
-
     public CustomerFinanceDTO getCustomerFinance(Long customerId) {
 
         Customer customer = customerRepository.findById(customerId)
@@ -267,6 +279,22 @@ public class CustomerPaymentService {
                 invoices,
                 ledger
         );
+    }
+
+    public BigDecimal calculateInvoiceDebt(Long invoiceId) {
+
+        BigDecimal in = ledgerRepository.sumInByInvoice(invoiceId);
+        BigDecimal out = ledgerRepository.sumOutByInvoice(invoiceId);
+
+        return out.subtract(in); // борг
+    }
+
+    public BigDecimal calculateOrderDebt(Long orderId) {
+
+        BigDecimal in = ledgerRepository.sumInByOrder(orderId);
+        BigDecimal out = ledgerRepository.sumOutByOrder(orderId);
+
+        return out.subtract(in);
     }
 
 }

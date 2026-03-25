@@ -1,6 +1,5 @@
 package com.example.baget.customer;
 
-import com.example.baget.invoices.Invoice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,14 +34,6 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
     order by ct.createdAt asc
     """)
     List<CustomerPaymentDTO> findPaymentsByInvoiceId(@Param("invoiceId") Long invoiceId);
-
-    @Query("""
-    select coalesce(sum(ct.amount), 0)
-    from CustomerTransaction ct
-    where ct.invoice = :invoice
-      and ct.active = true
-    """)
-    BigDecimal sumTransactionsByInvoice(@Param("invoice") Invoice invoice);
 
     @Query("""
     select COALESCE(SUM(ct.amount),0)
