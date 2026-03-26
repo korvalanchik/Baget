@@ -7,7 +7,7 @@ public interface CustomerBalanceProjection {
 
     Long getCustNo();
     String getCompany();
-    String getPhone();
+    String getMobile();
 
     BigDecimal getBalance();
     Long getInvoiceCount();

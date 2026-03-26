@@ -41,6 +41,17 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             GROUP BY bo.CustNo
         ),
         
+        invoice_stats AS (
+            SELECT
+                o
+                .CustNo,
+                COUNT(DISTINCT io.invoice_id) AS invoice_count
+            FROM invoice_orders io
+            JOIN orders o ON o.OrderNo = io.order_no
+            WHERE o.BranchNo IN (:branches)
+            GROUP BY o.CustNo
+        ),
+        
         ledger_balance AS (
             SELECT
                 le.customer_id,
@@ -68,8 +79,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         
             COALESCE(lb.balance, 0) AS balance,
             lb.last_payment_date,
-            COALESCE(owi.pending_orders, 0) AS pending_orders
-        
+            COALESCE(owi.pending_orders, 0) AS pending_orders,
+            COALESCE(inv.invoice_count, 0) AS invoice_count
         FROM customer c
         
         -- 🔹 тільки ті клієнти, що мають замовлення в цих філіях
@@ -79,6 +90,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         
         LEFT JOIN ledger_balance lb ON lb.customer_id = c.CustNo
         LEFT JOIN orders_without_invoice owi ON owi.CustNo = c.CustNo
+        LEFT JOIN invoice_stats inv ON inv.CustNo = c.CustNo
         
         WHERE
             -- 🔥 головна умова
