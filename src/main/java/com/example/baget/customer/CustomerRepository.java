@@ -29,6 +29,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                 o.StatusOrder
             FROM orders o
             WHERE o.BranchNo IN (:branches)
+              AND (
+                  o.StatusOrder < 3
+                  AND o.OrderNo >= 41578
+              )
         ),
         
         orders_without_invoice AS (
@@ -37,7 +41,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                 COUNT(*) AS pending_orders
             FROM base_orders bo
             LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
-            WHERE io.order_no IS NULL AND bo.StatusOrder < 3
+            WHERE io.order_no IS NULL
             GROUP BY bo.CustNo
         ),
         
