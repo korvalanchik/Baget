@@ -1,7 +1,7 @@
 package com.example.baget.customer;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 public interface CustomerBalanceProjection {
 
@@ -11,7 +11,7 @@ public interface CustomerBalanceProjection {
 
     BigDecimal getBalance();
     Long getInvoiceCount();
-    OffsetDateTime getLastPaymentDate();
+    LocalDateTime getLastPaymentDate();
 
     Long getPendingOrders();
 }
