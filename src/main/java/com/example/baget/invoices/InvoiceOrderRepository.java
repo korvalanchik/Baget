@@ -8,4 +8,6 @@ public interface InvoiceOrderRepository extends JpaRepository<InvoiceOrder, Long
     boolean existsByOrder_OrderNoIn(List<Long> orderNos);
 
     List<InvoiceOrder> findByInvoice_Id(Long id);
+
+    boolean existsByOrder_OrderNo(Long orderNo);
 }

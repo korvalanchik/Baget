@@ -3,6 +3,7 @@ package com.example.baget.orders;
 import com.example.baget.customer.CustomerInvoiceService;
 import com.example.baget.customer.CustomerIssueInvoiceRequestDTO;
 import com.example.baget.customer.CustomerTransactionDTO;
+import com.example.baget.invoices.InvoiceDTO;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -90,11 +92,12 @@ public class OrdersResource {
     }
 
     @PostMapping("/{orderNo}/issue-invoice")
-    public ResponseEntity<CustomerTransactionDTO> issueInvoice(
+    public ResponseEntity<InvoiceDTO> issueInvoice(
             @PathVariable Long orderNo,
-            @RequestBody CustomerIssueInvoiceRequestDTO request
+            @RequestBody CustomerIssueInvoiceRequestDTO request,
+            Authentication authentication
     ) {
-        return ResponseEntity.ok(customerInvoiceService.issueInvoice(orderNo, request));
+        return ResponseEntity.ok(customerInvoiceService.issueInvoice(orderNo, request, authentication));
     }
 }
 

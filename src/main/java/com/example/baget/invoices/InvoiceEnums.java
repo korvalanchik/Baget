@@ -14,4 +14,9 @@ public class InvoiceEnums {
         CANCELLED
     }
 
+    public enum InvoiceLifecycle {
+        ACTIVE,
+        MERGED
+    }
+
 }
