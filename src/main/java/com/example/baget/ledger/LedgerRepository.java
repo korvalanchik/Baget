@@ -37,36 +37,35 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
     BigDecimal getCustomerBalance(Long customerId);
 
     @Query("""
-    SELECT COALESCE(SUM(le.amount), 0)
-    FROM LedgerEntry le
-    WHERE le.invoiceId = :invoiceId
-      AND le.direction = com.example.baget.ledger.LedgerDirection.IN
-""")
-    BigDecimal sumInByInvoice(@Param("invoiceId") Long invoiceId);
+        SELECT
+            COALESCE(SUM(
+                CASE
+                    WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT 
+                    THEN le.amount 
+                    ELSE -le.amount 
+                END
+            ), 0)
+        FROM LedgerEntry le
+        JOIN Invoice i ON i.id = le.invoiceId
+        WHERE le.invoiceId = :invoiceId
+          AND i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
+        """)
+    BigDecimal calculateInvoiceDebt(@Param("invoiceId") Long invoiceId);
 
 
     @Query("""
-    SELECT COALESCE(SUM(le.amount), 0)
-    FROM LedgerEntry le
-    WHERE le.invoiceId = :invoiceId
-      AND le.direction = com.example.baget.ledger.LedgerDirection.OUT
-""")
-    BigDecimal sumOutByInvoice(@Param("invoiceId") Long invoiceId);
-
-
-    @Query("""
-    SELECT COALESCE(SUM(le.amount), 0)
-    FROM LedgerEntry le
-    WHERE le.orderId = :orderId
-      AND le.direction = com.example.baget.ledger.LedgerDirection.IN
-""")
-    BigDecimal sumInByOrder(@Param("orderId") Long orderId);
-
-
-    @Query("""
-    SELECT COALESCE(SUM(le.amount), 0)
-    FROM LedgerEntry le
-    WHERE le.orderId = :orderId
-      AND le.direction = com.example.baget.ledger.LedgerDirection.OUT
-""")
-    BigDecimal sumOutByOrder(@Param("orderId") Long orderId);}
+        SELECT
+            COALESCE(SUM(
+                CASE
+                    WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT
+                    THEN le.amount
+                    ELSE -le.amount
+                END
+            ), 0)
+        FROM LedgerEntry le
+        LEFT JOIN Invoice i ON i.id = le.invoiceId
+        WHERE le.orderId = :orderId
+          AND (i IS NULL OR i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE)
+        """)
+    BigDecimal calculateOrderDebt(@Param("orderId") Long orderId);
+}

@@ -41,6 +41,10 @@ public class Invoice {
     @Column(nullable = false, length = 20)
     private InvoiceEnums.InvoiceStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "lifecycle", nullable = false)
+    private InvoiceEnums.InvoiceLifecycle lifecycle;
+
     /** Загальна сума рахунку */
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;

@@ -1,6 +1,10 @@
 package com.example.baget.customer;
 
 import com.example.baget.invoices.*;
+import com.example.baget.ledger.LedgerCategory;
+import com.example.baget.ledger.LedgerDirection;
+import com.example.baget.ledger.LedgerEntry;
+import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
@@ -26,7 +30,9 @@ public class CustomerInvoiceService {
     private final UsersRepository usersRepository;
     private final InvoiceRepository invoiceRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
+    private final LedgerRepository ledgerRepository;
     private final EntityManager entityManager;
+    private final InvoiceMapper invoiceMapper;
 
     @Transactional
     public InvoiceDTO issueInvoice(Long orderNo, CustomerIssueInvoiceRequestDTO request, Authentication authentication) {
@@ -74,7 +80,7 @@ public class CustomerInvoiceService {
                 .customer(customer)
                 .type(InvoiceEnums.InvoiceType.SIMPLE)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
-//                .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
+                .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
                 .totalAmount(amount)
                 .note(request.getReference())
                 .build();
@@ -83,37 +89,35 @@ public class CustomerInvoiceService {
         entityManager.flush();
 
         // 6️⃣ Створюємо InvoiceOrder
-//        InvoiceOrder io = new InvoiceOrder();
-//        io.setInvoice(invoice);
-//        io.setOrder(order);
-//        io.setAmount(amount);
-//
-//        invoiceOrderRepository.save(io);
+        InvoiceOrder io = new InvoiceOrder();
+        io.setInvoice(invoice);
+        io.setOrder(order);
+        io.setAmount(amount);
+
+        invoiceOrderRepository.save(io);
 
         // 7️⃣ Ledger → борг клієнта
-//        ledgerRepository.save(
-//                LedgerEntry.builder()
-//                        .branch(order.getBranch())
-//                        .direction(LedgerDirection.OUT) // 🔥 борг
-//                        .category(LedgerCategory.INVOICE_ISSUED)
-//                        .amount(amount)
-//                        .createdAt(now)
-//                        .createdBy(user)
-//
-//                        .customerId(customer.getCustNo())
-//                        .orderId(order.getOrderNo())
-//                        .invoiceId(invoice.getId())
-//
-//                        .reference("INV-" + invoiceNo)
-//                        .note("Виставлення інвойсу")
-//                        .build()
-//        );
+        ledgerRepository.save(
+                LedgerEntry.builder()
+                        .branch(order.getBranch())
+                        .direction(LedgerDirection.OUT) // 🔥 борг
+                        .category(LedgerCategory.INVOICE_ISSUED)
+                        .amount(amount)
+                        .createdAt(now)
+                        .createdBy(user)
+                        .customerId(customer.getCustNo())
+                        .orderId(order.getOrderNo())
+                        .invoiceId(invoice.getId())
+                        .reference("INV-" + invoiceNo)
+                        .note("Виставлення інвойсу")
+                        .build()
+        );
 
         // 8️⃣ CustomerTransaction (для UI/історії)
         CustomerTransaction tx = CustomerTransaction.builder()
                 .customer(customer)
                 .branch(order.getBranch())
-//                .invoice(invoice)
+                .invoice(invoice)
                 .type(CustomerTransactionType.INVOICE)
                 .amount(amount.negate()) // 🔥 борг = мінус
                 .createdAt(now)
@@ -130,17 +134,7 @@ public class CustomerInvoiceService {
 
         ordersRepository.save(order);
 
-        return toDto(invoice);
-    }
-
-    public static InvoiceDTO toDto(Invoice tx) {
-        return InvoiceDTO.builder()
-                .id(tx.getId())
-                .customerId(tx.getCustomer().getCustNo())
-                .type(tx.getType().name())
-                .createdAt(tx.getCreatedAt())
-                .note(tx.getNote())
-                .build();
+        return invoiceMapper.toDto(invoice);
     }
 
     private Long generateTodayCode() {

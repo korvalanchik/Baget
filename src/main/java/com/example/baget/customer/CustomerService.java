@@ -17,9 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -33,31 +30,31 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final UsersRepository usersRepository;
     private final InvoiceRepository invoiceRepository;
+    private final CustomerMapper customerMapper;
 
     public List<CustomerDTO> findAll() {
         final List<Customer> customers = customerRepository.findAll(Sort.by("custNo"));
         return customers.stream()
-                .map(customer -> mapToDTO(customer, new CustomerDTO()))
+                .map(customerMapper::mapToDTO)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Page<CustomerDTO> getCustomers(Pageable pageable) {
-        // Виклик репозиторію для отримання сторінки замовлень
         return customerRepository.findAll(pageable)
-                .map(customers -> mapToDTO(customers, new CustomerDTO())); // Перетворення у DTO, якщо потрібно
+                .map(customerMapper::mapToDTO); // Перетворення у DTO, якщо потрібно
     }
 
     public CustomerDTO get(final Long custNo) {
         return customerRepository.findById(custNo)
-                .map(customer -> mapToDTO(customer, new CustomerDTO()))
+                .map(customerMapper::mapToDTO)
                 .orElseThrow(NotFoundException::new);
     }
 
 //    @CacheEvict(value = "CustomerPhonePrefix", allEntries = true)
     public Long create(final CustomerDTO customerDTO) {
         final Customer customer = new Customer();
-        mapToEntity(customerDTO, customer);
+        customerMapper.mapToEntity(customerDTO, customer);
         return customerRepository.save(customer).getCustNo();
     }
 
@@ -65,7 +62,7 @@ public class CustomerService {
     public void update(final Long custNo, final CustomerDTO customerDTO) {
         final Customer customer = customerRepository.findById(custNo)
                 .orElseThrow(NotFoundException::new);
-        mapToEntity(customerDTO, customer);
+        customerMapper.mapToEntity(customerDTO, customer);
         customerRepository.save(customer);
     }
 
@@ -73,39 +70,6 @@ public class CustomerService {
         customerRepository.deleteById(custNo);
     }
 
-    private CustomerDTO mapToDTO(final Customer customer, final CustomerDTO customerDTO) {
-        customerDTO.setCustNo(customer.getCustNo());
-        customerDTO.setCompany(customer.getCompany());
-        customerDTO.setAddr1(customer.getAddr1());
-        customerDTO.setComment(customer.getComment());
-        customerDTO.setCity(customer.getCity());
-        customerDTO.setState(customer.getState());
-        customerDTO.setZip(customer.getZip());
-        customerDTO.setCountry(customer.getCountry());
-        customerDTO.setPhone(customer.getPhone());
-        customerDTO.setMobile(customer.getMobile());
-        customerDTO.setTaxRate(customer.getTaxRate());
-        customerDTO.setContact(customer.getContact());
-        customerDTO.setLastInvoiceDate(customer.getLastInvoiceDate());
-        customerDTO.setPriceLevel(customer.getPriceLevel());
-        return customerDTO;
-    }
-
-    private void mapToEntity(final CustomerDTO customerDTO, final Customer customer) {
-        customer.setCompany(customerDTO.getCompany());
-        customer.setAddr1(customerDTO.getAddr1());
-        customer.setComment(customerDTO.getComment());
-        customer.setCity(customerDTO.getCity());
-        customer.setState(customerDTO.getState());
-        customer.setZip(customerDTO.getZip());
-        customer.setCountry(customerDTO.getCountry());
-        customer.setPhone(customerDTO.getPhone());
-        customer.setMobile(customerDTO.getMobile());
-        customer.setTaxRate(customerDTO.getTaxRate());
-        customer.setContact(customerDTO.getContact());
-        customer.setLastInvoiceDate(customerDTO.getLastInvoiceDate());
-        customer.setPriceLevel(customerDTO.getPriceLevel());
-    }
 
     @Cacheable(value = "CustomerPhonePrefix", key = "#prefix")
     public List<CustomerDTO> findByPhonePrefix(String prefix) {

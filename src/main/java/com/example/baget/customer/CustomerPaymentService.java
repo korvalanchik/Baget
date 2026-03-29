@@ -283,18 +283,12 @@ public class CustomerPaymentService {
 
     public BigDecimal calculateInvoiceDebt(Long invoiceId) {
 
-        BigDecimal in = ledgerRepository.sumInByInvoice(invoiceId);
-        BigDecimal out = ledgerRepository.sumOutByInvoice(invoiceId);
-
-        return out.subtract(in); // борг
+        return ledgerRepository.calculateInvoiceDebt(invoiceId); // борг
     }
 
     public BigDecimal calculateOrderDebt(Long orderId) {
 
-        BigDecimal in = ledgerRepository.sumInByOrder(orderId);
-        BigDecimal out = ledgerRepository.sumOutByOrder(orderId);
-
-        return out.subtract(in);
+        return ledgerRepository.calculateOrderDebt(orderId);
     }
 
 }
