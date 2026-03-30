@@ -96,24 +96,7 @@ public class CustomerInvoiceService {
 
         invoiceOrderRepository.save(io);
 
-        // 7️⃣ Ledger → борг клієнта
-        ledgerRepository.save(
-                LedgerEntry.builder()
-                        .branch(order.getBranch())
-                        .direction(LedgerDirection.OUT) // 🔥 борг
-                        .category(LedgerCategory.INVOICE_ISSUED)
-                        .amount(amount)
-                        .createdAt(now)
-                        .createdBy(user)
-                        .customerId(customer.getCustNo())
-                        .orderId(order.getOrderNo())
-                        .invoiceId(invoice.getId())
-                        .reference("INV-" + invoiceNo)
-                        .note("Виставлення інвойсу")
-                        .build()
-        );
-
-        // 8️⃣ CustomerTransaction (для UI/історії)
+        // 7️⃣ CustomerTransaction (для UI/історії)
         CustomerTransaction tx = CustomerTransaction.builder()
                 .customer(customer)
                 .branch(order.getBranch())
@@ -125,6 +108,24 @@ public class CustomerInvoiceService {
                 .build();
 
         customerTxRepository.save(tx);
+
+        // 8️⃣ Ledger → борг клієнта
+        ledgerRepository.save(
+                LedgerEntry.builder()
+                        .branch(order.getBranch())
+                        .direction(LedgerDirection.OUT) // 🔥 борг
+                        .category(LedgerCategory.INVOICE_ISSUED)
+                        .amount(amount)
+                        .createdAt(now)
+                        .createdBy(user)
+                        .customerId(customer.getCustNo())
+                        .customerTransactionId(tx.getId())
+                        .orderId(order.getOrderNo())
+                        .invoiceId(invoice.getId())
+                        .reference("INV-" + invoiceNo)
+                        .note("Виставлення інвойсу")
+                        .build()
+        );
 
         // 9️⃣ Оновлюємо order
         order.setStatusOrder(7); // INVOICED
