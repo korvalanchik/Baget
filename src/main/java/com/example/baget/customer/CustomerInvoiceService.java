@@ -9,17 +9,16 @@ import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
+import com.example.baget.util.InvoiceServiceUtil;
 import com.example.baget.util.TransactionException;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import jakarta.persistence.EntityManager;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +32,7 @@ public class CustomerInvoiceService {
     private final LedgerRepository ledgerRepository;
     private final EntityManager entityManager;
     private final InvoiceMapper invoiceMapper;
+    private final InvoiceServiceUtil invoiceServiceUtil;
 
     @Transactional
     public InvoiceDTO issueInvoice(Long orderNo, CustomerIssueInvoiceRequestDTO request, Authentication authentication) {
@@ -68,7 +68,7 @@ public class CustomerInvoiceService {
         OffsetDateTime now = OffsetDateTime.now();
 
         // 4️⃣ Генеруємо номер інвойсу
-        Long invoiceNo = generateTodayCode();
+        Long invoiceNo = invoiceServiceUtil.generateTodayCode();
         while (invoiceRepository.existsByInvoiceNo(invoiceNo)) {
             invoiceNo++;
         }
@@ -135,13 +135,6 @@ public class CustomerInvoiceService {
         ordersRepository.save(order);
 
         return invoiceMapper.toDto(invoice);
-    }
-
-    private Long generateTodayCode() {
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-        String result = today.format(formatter) + "001";
-        return Long.parseLong(result);
     }
 
 }
