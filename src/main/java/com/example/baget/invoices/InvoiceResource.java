@@ -1,6 +1,5 @@
 package com.example.baget.invoices;
 
-import com.example.baget.customer.CustomerIssueInvoiceRequestDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,10 +14,10 @@ public class InvoiceResource {
 
     @PostMapping
     public ResponseEntity<InvoiceDTO> createInvoice(
-            @RequestBody CustomerIssueInvoiceRequestDTO request,
+            @RequestBody MergeInvoicesRequest request,
             Authentication authentication
     ) {
-        return ResponseEntity.ok(invoiceService.createInvoiceForOrders(request, authentication));
+        return ResponseEntity.ok(invoiceService.mergeInvoices(request, authentication));
     }
 
     @GetMapping("/{id}")

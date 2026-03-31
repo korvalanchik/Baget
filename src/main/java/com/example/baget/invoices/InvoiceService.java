@@ -5,10 +5,9 @@ import com.example.baget.ledger.LedgerCategory;
 import com.example.baget.ledger.LedgerDirection;
 import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
-import com.example.baget.orders.Orders;
-import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
+import com.example.baget.util.InvoiceServiceUtil;
 import com.example.baget.util.TransactionException;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -17,9 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,7 +26,6 @@ import java.util.stream.Collectors;
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
-    private final OrdersRepository ordersRepository;
     private final CustomerRepository customerRepository;
     private final CustomerTransactionRepository customerTxRepository;
     private final UsersRepository usersRepository;
@@ -37,35 +33,49 @@ public class InvoiceService {
     private final LedgerRepository ledgerRepository;
     private final InvoiceMapper invoiceMapper;
     private final EntityManager entityManager;
+    private final InvoiceServiceUtil invoiceServiceUtil;
 
     @Transactional
-    public InvoiceDTO createInvoiceForOrders(CustomerIssueInvoiceRequestDTO request, Authentication authentication) {
+    public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
 
         String username = authentication.getName();
 
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
 
-        List<Long> orderNos = request.getOrderNos();
-        if (orderNos == null || orderNos.isEmpty()) {
-            throw new TransactionException("Список замовлень порожній");
+        List<Long> invoiceIds = request.getInvoiceIds();
+        if (invoiceIds == null || invoiceIds.isEmpty()) {
+            throw new TransactionException("Список інвойсів порожній");
         }
 
-        // 1️⃣ Завантажуємо замовлення
-        List<Orders> orders = ordersRepository.findAllById(orderNos);
-        if (orders.size() != orderNos.size()) {
-            throw new TransactionException("Деякі замовлення не знайдено");
+        // 1️⃣ Завантажуємо інвойси
+        List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
+
+        if (invoices.size() != invoiceIds.size()) {
+            throw new TransactionException("Деякі інвойси не знайдено");
         }
 
-        // 2️⃣ Визначаємо платника (invoiceCustomer)
-        Customer invoiceCustomer;
+        // 2️⃣ Перевірки
+        for (Invoice inv : invoices) {
 
-        if (request.getInvoiceCustomerId() != null) {
-            invoiceCustomer = customerRepository.findById(request.getInvoiceCustomerId())
-                    .orElseThrow(() -> new TransactionException("Платника рахунку не знайдено"));
+            if (inv.getLifecycle() != InvoiceEnums.InvoiceLifecycle.ACTIVE) {
+                throw new TransactionException("Інвойс " + inv.getInvoiceNo() + " вже об'єднаний");
+            }
+
+            if (inv.getStatus() != InvoiceEnums.InvoiceStatus.ISSUED) {
+                throw new TransactionException("Можна об'єднувати тільки неоплачені інвойси");
+            }
+        }
+
+        // 3️⃣ Визначаємо платника
+        Customer payer;
+
+        if (request.getPayerId() != null) {
+            payer = customerRepository.findById(request.getPayerId())
+                    .orElseThrow(() -> new TransactionException("Платника не знайдено"));
         } else {
-            Set<Long> customerIds = orders.stream()
-                    .map(o -> o.getCustomer().getCustNo())
+            Set<Long> customerIds = invoices.stream()
+                    .map(i -> i.getCustomer().getCustNo())
                     .collect(Collectors.toSet());
 
             if (customerIds.size() > 1) {
@@ -75,126 +85,101 @@ public class InvoiceService {
                 );
             }
 
-            invoiceCustomer = orders.get(0).getCustomer();
+            payer = invoices.get(0).getCustomer();
         }
 
-        // 3️⃣ Перевірка на дублювання
-        boolean alreadyInvoiced = invoiceOrderRepository.existsByOrder_OrderNoIn(orderNos);
-        if (alreadyInvoiced) {
-            throw new TransactionException("Одне або декілька замовлень вже в інвойсі");
+        // 4️⃣ Збираємо всі orders
+        List<InvoiceOrder> allInvoiceOrders = invoiceOrderRepository.findByInvoice_IdIn(invoiceIds);
+
+        if (allInvoiceOrders.isEmpty()) {
+            throw new TransactionException("Інвойси не містять замовлень");
         }
 
-        // 4️⃣ Рахуємо суму
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (Orders o : orders) {
-            if (o.getAmountDueN() == null) {
-                throw new TransactionException("Замовлення " + o.getOrderNo() + " без фінальної суми");
-            }
-            totalAmount = totalAmount.add(o.getAmountDueN());
-        }
+        // 5️⃣ Рахуємо суму
+        BigDecimal totalAmount = allInvoiceOrders.stream()
+                .map(InvoiceOrder::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 5️⃣ Створюємо invoice
-        Long invoiceNo = generateTodayCode();
+        // 6️⃣ Генеруємо номер
+        Long invoiceNo = invoiceServiceUtil.generateTodayCode();
         while (invoiceRepository.existsByInvoiceNo(invoiceNo)) {
             invoiceNo++;
         }
 
         OffsetDateTime now = OffsetDateTime.now();
 
-        Invoice invoice = Invoice.builder()
+        // 7️⃣ Створюємо новий інвойс
+        Invoice newInvoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
-                .customer(invoiceCustomer) // платник
-                .type((orders.size() == 1)
-                        ? InvoiceEnums.InvoiceType.SIMPLE
-                        : InvoiceEnums.InvoiceType.CONSOLIDATED)
+                .customer(payer)
+                .type(InvoiceEnums.InvoiceType.CONSOLIDATED)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
+                .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
                 .totalAmount(totalAmount)
-                .note(request.getReference())
+                .note(request.getNote())
                 .build();
 
-        invoiceRepository.save(invoice);
+        invoiceRepository.save(newInvoice);
         entityManager.flush();
 
-        // 🔥 6️⃣ InvoiceOrder + створення боргу (ledger OUT)
-        for (Orders order : orders) {
+        // 8️⃣ Копіюємо InvoiceOrder
+        for (InvoiceOrder oldIo : allInvoiceOrders) {
 
-            BigDecimal amount = order.getAmountDueN();
+            InvoiceOrder newIo = new InvoiceOrder();
+            newIo.setInvoice(newInvoice);
+            newIo.setOrder(oldIo.getOrder());
+            newIo.setAmount(oldIo.getAmount());
 
-            // InvoiceOrder
-            InvoiceOrder io = new InvoiceOrder();
-            io.setInvoice(invoice);
-            io.setOrder(order);
-            io.setAmount(amount);
-            invoiceOrderRepository.save(io);
-
-            // Оновлення order
-            order.setStatusOrder(8);
-            order.setShipDate(request.getShipDate() != null ? request.getShipDate() : now);
-
-            // 🔥 BORROW = OUT НА ВЛАСНИКА ЗАМОВЛЕННЯ
-            ledgerRepository.save(
-                    LedgerEntry.builder()
-                            .branch(order.getBranch())
-                            .direction(LedgerDirection.OUT)
-                            .category(LedgerCategory.INVOICE_ISSUED)
-                            .amount(amount)
-                            .createdAt(now)
-                            .createdBy(user)
-
-                            .customerId(order.getCustomer().getCustNo()) // 🔥 ВАЖЛИВО
-                            .orderId(order.getOrderNo())
-                            .invoiceId(invoice.getId())
-
-                            .reference("INV-" + invoice.getInvoiceNo())
-                            .note("Нарахування по інвойсу")
-                            .build()
-            );
+            invoiceOrderRepository.save(newIo);
         }
 
-        // 🔥 7️⃣ Списання авансу (якщо є)
-        BigDecimal advanceBalance = getCustomerBalance(invoiceCustomer.getCustNo());
+        // 9️⃣ Старі інвойси → MERGED
+        for (Invoice old : invoices) {
+            old.setLifecycle(InvoiceEnums.InvoiceLifecycle.MERGED);
+//            old.setParentInvoiceId(newInvoice.getId()); // якщо додав
+        }
 
-        if (advanceBalance.compareTo(BigDecimal.ZERO) > 0) {
+        // 🔟 APPLY ADVANCE (опціонально)
+        BigDecimal advance = getCustomerBalance(payer.getCustNo());
 
-            BigDecimal amountToApply = advanceBalance.min(totalAmount);
+        if (advance.compareTo(BigDecimal.ZERO) > 0) {
+
+            BigDecimal toApply = advance.min(totalAmount);
 
             Long txId = customerTxRepository.save(
                     CustomerTransaction.builder()
-                            .customer(invoiceCustomer)
-                            .branch(orders.get(0).getBranch())
-                            .invoice(invoice)
+                            .customer(payer)
+                            .invoice(newInvoice)
                             .type(CustomerTransactionType.ADVANCE_APPLIED)
-                            .amount(amountToApply.negate())
+                            .amount(toApply.negate())
                             .createdAt(now)
-                            .note("Списання авансу на інвойс №" + invoice.getInvoiceNo())
+                            .note("Списання авансу на інвойс №" + newInvoice.getInvoiceNo())
                             .build()
             ).getId();
 
-            BigDecimal remaining = amountToApply;
+            BigDecimal remaining = toApply;
 
-            // 🔥 РОЗКИДАЄМО ПО ЗАМОВЛЕННЯХ
-            for (Orders order : orders) {
+            for (InvoiceOrder io : allInvoiceOrders) {
 
                 if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
 
-                BigDecimal orderAmount = order.getAmountDueN();
-                BigDecimal apply = remaining.min(orderAmount);
+                BigDecimal apply = remaining.min(io.getAmount());
 
                 ledgerRepository.save(
                         LedgerEntry.builder()
-                                .branch(order.getBranch())
+                                .branch(io.getOrder().getBranch())
                                 .direction(LedgerDirection.OUT)
                                 .category(LedgerCategory.APPLY_ADVANCE_TO_INVOICE)
                                 .amount(apply)
                                 .createdAt(now)
                                 .createdBy(user)
 
-                                // 🔥 НА ВЛАСНИКА ЗАМОВЛЕННЯ
-                                .customerId(order.getCustomer().getCustNo())
-                                .orderId(order.getOrderNo())
-                                .invoiceId(invoice.getId())
+                                .customerId(io.getOrder().getCustomer().getCustNo())
+                                .orderId(io.getOrder().getOrderNo())
+                                .invoiceId(newInvoice.getId())
                                 .customerTransactionId(txId)
-                                .reference("APPLY_ADV-" + invoice.getInvoiceNo())
+
+                                .reference("APPLY_ADV-" + newInvoice.getInvoiceNo())
                                 .note("Списання авансу")
                                 .build()
                 );
@@ -202,15 +187,14 @@ public class InvoiceService {
                 remaining = remaining.subtract(apply);
             }
 
-            // 🔥 Оновлюємо статус
-            if (amountToApply.compareTo(totalAmount) >= 0) {
-                invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
+            if (toApply.compareTo(totalAmount) >= 0) {
+                newInvoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
             } else {
-                invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
+                newInvoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
             }
         }
 
-        return invoiceMapper.toDto(invoice);
+        return invoiceMapper.toDto(newInvoice);
     }
 
     public BigDecimal getCustomerBalance(Long customerId) {
@@ -223,11 +207,4 @@ public class InvoiceService {
                 .orElseThrow(() -> new TransactionException("Invoice not found"));
     }
 
-
-    private Long generateTodayCode() {
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
-        String result = today.format(formatter) + "001";
-        return Long.parseLong(result);
-    }
 }

@@ -192,5 +192,11 @@ public class InvoiceServiceUtil {
         return LocalDate.of(year, month, day);
     }
 
+    public Long generateTodayCode() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
+        String result = today.format(formatter) + "001";
+        return Long.parseLong(result);
+    }
 
 }

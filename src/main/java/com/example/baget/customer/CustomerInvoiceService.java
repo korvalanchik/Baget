@@ -52,9 +52,8 @@ public class CustomerInvoiceService {
         }
 
         // 2️⃣ Перевірка: чи вже є інвойс
-        boolean alreadyInvoiced = invoiceOrderRepository.existsByOrder_OrderNo(orderNo);
-        if (alreadyInvoiced) {
-            throw new TransactionException("Інвойс вже створений для замовлення №" + orderNo);
+        if (invoiceOrderRepository.existsByOrder_OrderNoAndInvoice_Lifecycle(orderNo, InvoiceEnums.InvoiceLifecycle.ACTIVE)) {
+            throw new TransactionException("Замовлення вже в активному інвойсі");
         }
 
         // 3️⃣ Сума
