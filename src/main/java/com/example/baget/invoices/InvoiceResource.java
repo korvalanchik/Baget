@@ -12,7 +12,7 @@ public class InvoiceResource {
 
     private final InvoiceService invoiceService;
 
-    @PostMapping
+    @PostMapping("/merge")
     public ResponseEntity<InvoiceDTO> createInvoice(
             @RequestBody MergeInvoicesRequest request,
             Authentication authentication
