@@ -98,6 +98,7 @@ public class CustomerInvoiceService {
         // 7️⃣ CustomerTransaction (для UI/історії)
         CustomerTransaction tx = CustomerTransaction.builder()
                 .customer(customer)
+                .order(order)
                 .branch(order.getBranch())
                 .invoice(invoice)
                 .type(CustomerTransactionType.INVOICE)
