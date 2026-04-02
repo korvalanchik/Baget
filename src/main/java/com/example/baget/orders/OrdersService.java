@@ -123,7 +123,7 @@ public class OrdersService {
         if (result.userRoles.contains("ROLE_ADMIN")) {
             return ordersRepository.findAllSummaryBy(pageable);
         } else {
-            throw new AccessDeniedException("Обмежено права доступу");
+            throw new TransactionException("Обмежено права доступу");
         }
     }
 

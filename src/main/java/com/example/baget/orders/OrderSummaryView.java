@@ -15,5 +15,5 @@ public interface OrderSummaryView {
     @JsonProperty("mobile")
     String getCustomer_Mobile();
     Long getRahFacNo();
-
+    Long getInvoiceId();
 }
