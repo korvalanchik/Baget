@@ -7,6 +7,7 @@ import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
+import com.example.baget.orders.OrdersService;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.InvoiceServiceUtil;
@@ -33,9 +34,10 @@ public class CustomerInvoiceService {
     private final EntityManager entityManager;
     private final InvoiceMapper invoiceMapper;
     private final InvoiceServiceUtil invoiceServiceUtil;
+    private final OrdersService ordersService;
 
     @Transactional
-    public InvoiceDTO issueInvoice(Long orderNo, CustomerIssueInvoiceRequestDTO request, Authentication authentication) {
+    public InvoiceDTO issueInvoice(Long orderNo, IssueInvoiceFullRequest request, Authentication authentication) {
 
         String username = authentication.getName();
 
@@ -57,8 +59,8 @@ public class CustomerInvoiceService {
         }
 
         // 3️⃣ Сума
-        BigDecimal amount = request.getAmount() != null
-                ? request.getAmount()
+        BigDecimal amount = request.getInvoice().getAmount() != null
+                ? request.getInvoice().getAmount()
                 : order.getAmountDueN();
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -81,7 +83,7 @@ public class CustomerInvoiceService {
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
                 .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
                 .totalAmount(amount)
-                .note(request.getReference())
+                .note(request.getInvoice().getReference())
                 .build();
 
         invoiceRepository.save(invoice);
@@ -128,12 +130,7 @@ public class CustomerInvoiceService {
         );
 
         // 9️⃣ Оновлюємо order
-        order.setStatusOrder(7); // INVOICED
-        if (request.getShipDate() != null) {
-            order.setShipDate(request.getShipDate());
-        }
-
-        ordersRepository.save(order);
+        ordersService.update(orderNo, request.getOrder());
 
         return invoiceMapper.toDto(invoice);
     }

@@ -1,9 +1,8 @@
 package com.example.baget.orders;
 
 import com.example.baget.customer.CustomerInvoiceService;
-import com.example.baget.customer.CustomerIssueInvoiceRequestDTO;
-import com.example.baget.customer.CustomerTransactionDTO;
 import com.example.baget.invoices.InvoiceDTO;
+import com.example.baget.invoices.IssueInvoiceFullRequest;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -94,7 +93,7 @@ public class OrdersResource {
     @PostMapping("/{orderNo}/issue-invoice")
     public ResponseEntity<InvoiceDTO> issueInvoice(
             @PathVariable Long orderNo,
-            @RequestBody CustomerIssueInvoiceRequestDTO request,
+            @RequestBody IssueInvoiceFullRequest request,
             Authentication authentication
     ) {
         return ResponseEntity.ok(customerInvoiceService.issueInvoice(orderNo, request, authentication));
