@@ -5,11 +5,14 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -70,4 +73,13 @@ public class CustomerResource {
         return customerService.getCustomersForInvoice();
     }
 
+    @GetMapping("/dashboard")
+    public CustomerDashboardDTO.Response getDashboard(
+            @RequestParam(required = false) Long branchNo,
+            @RequestParam(required = false, defaultValue = "false") boolean debtOnly,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            Authentication authentication
+    ) {
+        return customerService.getDashboard(branchNo, debtOnly, date, authentication);
+    }
 }

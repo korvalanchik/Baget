@@ -5,6 +5,7 @@ import com.example.baget.invoices.InvoiceRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.NotFoundException;
+import com.example.baget.util.TransactionException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -12,11 +13,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -111,4 +115,67 @@ public class CustomerService {
                 .map(c -> new CustomerSelectDTO(c.getCustNo(), c.getCompany()))
                 .toList();
     }
-}
+
+    public CustomerDashboardDTO.Response getDashboard(Long branchNo, boolean debtOnly, LocalDate date, Authentication authentication) {
+        String username = authentication.getName();
+        User user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username));
+
+        Set<Long> allowedBranchNos = user.getAllowedBranches()
+                .stream()
+                .map(Branch::getBranchNo)
+                .collect(Collectors.toSet());
+
+        if (branchNo != null && !allowedBranchNos.contains(branchNo)) {
+            throw new TransactionException("Branch not allowed");
+        }
+
+
+        List<CustomerDashboardRow> rows = customerRepository.getDashboard(branchNo);
+
+        List<CustomerDashboardDTO.WithoutInvoice> withoutInvoice = new ArrayList<>();
+        List<CustomerDashboardDTO.Debtor> debtors = new ArrayList<>();
+        List<CustomerDashboardDTO.Payer> payers = new ArrayList<>();
+
+        for (CustomerDashboardRow r : rows) {
+
+            // 🟢 1. без інвойсів
+            if (r.getPendingOrders() != null && r.getPendingOrders() > 0) {
+                withoutInvoice.add(new CustomerDashboardDTO.WithoutInvoice(
+                        r.getCustomerId(),
+                        r.getCompany(),
+                        r.getMobile(),
+                        r.getPendingOrders()
+                ));
+            }
+
+            // 🔴 2. боржники
+            if (r.getBalance() != null && r.getBalance().compareTo(BigDecimal.ZERO) < 0) {
+                debtors.add(new CustomerDashboardDTO.Debtor(
+                        r.getCustomerId(),
+                        r.getCompany(),
+                        r.getMobile(),
+                        r.getBalance(),
+                        r.getInvoiceCount(),
+                        r.getLastPaymentDate()
+                ));
+            }
+
+            // 🔵 3. платники
+            if (r.getConsolidatedInvoices() != null && r.getConsolidatedInvoices() > 0) {
+                payers.add(new CustomerDashboardDTO.Payer(
+                        r.getCustomerId(),
+                        r.getCompany(),
+                        r.getMobile(),
+                        r.getConsolidatedInvoices(),
+                        r.getTotalTurnover()
+                ));
+            }
+        }
+
+        return new CustomerDashboardDTO.Response(
+                withoutInvoice,
+                debtors,
+                payers
+        );
+    }}
