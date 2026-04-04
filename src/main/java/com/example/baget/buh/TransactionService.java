@@ -378,6 +378,7 @@ public class TransactionService {
         return invoiceNo;
     }
 
+    // Це стара версія отримання коллективного інвойсу
     public TransactionCollectiveInvoiceDTO getCollectiveInvoice(Long invoiceNo) {
 
         // Отримуємо замовлення

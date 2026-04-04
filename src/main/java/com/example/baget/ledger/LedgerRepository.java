@@ -40,9 +40,9 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
         SELECT
             COALESCE(SUM(
                 CASE
-                    WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT 
-                    THEN le.amount 
-                    ELSE -le.amount 
+                    WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT
+                    THEN le.amount
+                    ELSE -le.amount
                 END
             ), 0)
         FROM LedgerEntry le
@@ -68,4 +68,14 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
           AND (i IS NULL OR i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE)
         """)
     BigDecimal calculateOrderDebt(@Param("orderId") Long orderId);
+
+    @Query("""
+        SELECT le.orderId,
+               COALESCE(SUM(CASE WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount ELSE 0 END), 0),
+               COALESCE(SUM(CASE WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT THEN le.amount ELSE 0 END), 0)
+        FROM LedgerEntry le
+        WHERE le.orderId IN :orderIds
+        GROUP BY le.orderId
+    """)
+    List<Object[]> sumInOutByOrders(@Param("orderIds") List<Long> orderIds);
 }

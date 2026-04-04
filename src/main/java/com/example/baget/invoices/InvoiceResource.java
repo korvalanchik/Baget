@@ -25,4 +25,10 @@ public class InvoiceResource {
         return invoiceService.getInvoice(id);
     }
 
+    @GetMapping("/collective-invoice/{invoiceNo}")
+    public ResponseEntity<CollectiveInvoiceDTO> getCollectiveInvoice(@PathVariable Long invoiceNo) {
+        return ResponseEntity.ok(invoiceService.getCollectiveInvoice(invoiceNo));
+    }
+
+
 }

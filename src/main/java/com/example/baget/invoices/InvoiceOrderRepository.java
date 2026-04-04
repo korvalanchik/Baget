@@ -20,4 +20,6 @@ public interface InvoiceOrderRepository extends JpaRepository<InvoiceOrder, Long
         FROM InvoiceOrder io
         WHERE io.invoice.id IN :invoiceIds
     """)
-    List<InvoiceOrder> findByInvoice_IdIn(@Param("invoiceIds") List<Long> invoiceIds);}
+    List<InvoiceOrder> findByInvoice_IdIn(@Param("invoiceIds") List<Long> invoiceIds);
+
+}

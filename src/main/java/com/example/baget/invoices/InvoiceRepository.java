@@ -86,4 +86,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     having (i.totalAmount - COALESCE(SUM(ct.amount * -1),0)) > 0
     order by i.createdAt desc
     """)
-    List<CustomerInvoiceDTO> findOpenInvoices(Long customerId);}
+    List<CustomerInvoiceDTO> findOpenInvoices(Long customerId);
+
+    Optional<Invoice> findByInvoiceNoAndLifecycle(Long invoiceNo, InvoiceEnums.InvoiceLifecycle lifecycle);
+
+}

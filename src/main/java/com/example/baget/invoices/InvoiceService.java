@@ -5,6 +5,7 @@ import com.example.baget.ledger.LedgerCategory;
 import com.example.baget.ledger.LedgerDirection;
 import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
+import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.InvoiceServiceUtil;
@@ -17,7 +18,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -202,9 +205,88 @@ public class InvoiceService {
         return result != null ? result : BigDecimal.ZERO;
     }
 
-        public InvoiceDetailsDTO getInvoice(Long invoiceId) {
+    public InvoiceDetailsDTO getInvoice(Long invoiceId) {
         return invoiceRepository.findInvoiceDetails(invoiceId)
                 .orElseThrow(() -> new TransactionException("Invoice not found"));
     }
+
+    public CollectiveInvoiceDTO getCollectiveInvoice(Long invoiceNo) {
+
+        // 1️⃣ Invoice
+        Invoice invoice = invoiceRepository
+                .findByInvoiceNoAndLifecycle(invoiceNo, InvoiceEnums.InvoiceLifecycle.ACTIVE)
+                .orElseThrow(() -> new TransactionException("Invoice " + invoiceNo + " not found"));
+
+        // 2️⃣ InvoiceOrders
+        List<InvoiceOrder> invoiceOrders =
+                invoiceOrderRepository.findByInvoice_Id(invoice.getId());
+
+        if (invoiceOrders.isEmpty()) {
+            throw new IllegalStateException("Invoice has no orders");
+        }
+
+        // 3️⃣ Збираємо orderIds
+        List<Long> orderIds = invoiceOrders.stream()
+                .map(io -> io.getOrder().getOrderNo())
+                .toList();
+
+        // 4️⃣ 🔥 ОДИН SQL ДО LEDGER
+        List<Object[]> ledgerData = ledgerRepository.sumInOutByOrders(orderIds);
+
+        // 5️⃣ Перетворюємо в Map для швидкого доступу
+        Map<Long, BigDecimal> inMap = new HashMap<>();
+        Map<Long, BigDecimal> outMap = new HashMap<>();
+
+        for (Object[] row : ledgerData) {
+            Long orderId = (Long) row[0];
+            BigDecimal in = (BigDecimal) row[1];
+            BigDecimal out = (BigDecimal) row[2];
+
+            inMap.put(orderId, in);
+            outMap.put(orderId, out);
+        }
+
+        // 6️⃣ Формуємо summaries
+        List<OrderPaySummaryDTO> orderSummaries = invoiceOrders.stream()
+                .map(io -> {
+
+                    Long orderId = io.getOrder().getOrderNo();
+
+                    BigDecimal billed = io.getAmount();
+
+                    BigDecimal in = inMap.getOrDefault(orderId, BigDecimal.ZERO);
+                    BigDecimal out = outMap.getOrDefault(orderId, BigDecimal.ZERO);
+
+                    BigDecimal due = out.subtract(in);
+
+                    return new OrderPaySummaryDTO(orderId, billed, in, due);
+                })
+                .toList();
+
+        // 7️⃣ totals
+        BigDecimal totalBilled = BigDecimal.ZERO;
+        BigDecimal totalPaid = BigDecimal.ZERO;
+        BigDecimal totalDue = BigDecimal.ZERO;
+
+        for (OrderPaySummaryDTO o : orderSummaries) {
+            totalBilled = totalBilled.add(o.billed());
+            totalPaid   = totalPaid.add(o.paid());
+            totalDue    = totalDue.add(o.due());
+        }
+
+        // 8️⃣ баланс платника (тільки payer!)
+        BigDecimal totalCustomerBalance =
+                ledgerRepository.getCustomerBalance(invoice.getCustomer().getCustNo());
+
+        return new CollectiveInvoiceDTO(
+                invoiceNo,
+                orderSummaries,
+                totalBilled,
+                totalPaid,
+                totalDue,
+                totalCustomerBalance
+        );
+    }
+
 
 }
