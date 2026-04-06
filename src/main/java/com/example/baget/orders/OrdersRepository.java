@@ -35,7 +35,7 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
             c.company AS company,
             c.mobile AS mobile,
             i.id AS invoiceId,
-            i.invoiceNo AS invoiceNo
+            i.invoiceNo AS rahFacNo
     
         FROM Orders o
         JOIN o.customer c
