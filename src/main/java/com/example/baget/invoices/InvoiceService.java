@@ -6,6 +6,8 @@ import com.example.baget.ledger.LedgerDirection;
 import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.OrderPaySummaryDTO;
+import com.example.baget.orders.Orders;
+import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.InvoiceServiceUtil;
@@ -37,6 +39,7 @@ public class InvoiceService {
     private final InvoiceMapper invoiceMapper;
     private final EntityManager entityManager;
     private final InvoiceServiceUtil invoiceServiceUtil;
+    private final OrdersRepository ordersRepository;
 
     @Transactional
     public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
@@ -141,6 +144,15 @@ public class InvoiceService {
             old.setLifecycle(InvoiceEnums.InvoiceLifecycle.MERGED);
 //            old.setParentInvoiceId(newInvoice.getId()); // якщо додав
         }
+
+        // 8️⃣ Змінюємо номер інвойсу у замовленнях
+        final Long invoiceNoFinal = invoiceNo;
+        List<Orders> ordersToUpdate = allInvoiceOrders.stream()
+                .map(InvoiceOrder::getOrder)
+                .peek(o -> o.setRahFacNo(invoiceNoFinal))
+                .collect(Collectors.toList());
+
+        ordersRepository.saveAll(ordersToUpdate); // один батч
 
         // 🔟 APPLY ADVANCE (опціонально)
         BigDecimal advance = getCustomerBalance(payer.getCustNo());

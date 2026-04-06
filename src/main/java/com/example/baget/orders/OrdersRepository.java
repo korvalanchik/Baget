@@ -35,13 +35,14 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
             c.company AS customer_Company,
             c.mobile AS customer_Mobile,
             i.id AS invoiceId,
-            i.invoiceNo AS rahFacNo
+            i.invoiceNo AS rahFacNo,
+            i.type AS invoiceType
     
         FROM Orders o
         JOIN o.customer c
         JOIN o.branch b
-        LEFT JOIN InvoiceOrder io\s
-            ON io.order = o\s
+        LEFT JOIN InvoiceOrder io
+            ON io.order = o
             AND io.invoice.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
         LEFT JOIN io.invoice i
     """)

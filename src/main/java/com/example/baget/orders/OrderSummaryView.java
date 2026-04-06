@@ -16,4 +16,5 @@ public interface OrderSummaryView {
     String getCustomer_Mobile();
     Long getInvoiceId();
     Long getRahFacNo();
+    String getInvoiceType();
 }
