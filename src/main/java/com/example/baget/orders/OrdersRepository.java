@@ -31,22 +31,17 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
             o.orderNo AS orderNo,
             o.statusOrder AS statusOrder,
             o.saleDate AS saleDate,
-            b.name AS branch_Name,
-            c.company AS customer_Company,
-            c.mobile AS customer_Mobile,
-            o.rahFacNo AS rahFacNo,
-        
-            (
-                SELECT i.id
-                FROM InvoiceOrder io
-                JOIN io.invoice i
-                WHERE io.order = o
-                  AND i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
-            ) AS invoiceId
-        
+            b.name AS branchName,
+            c.company AS company,
+            c.mobile AS mobile,
+            i.id AS invoiceId,
+            i.invoiceNo AS invoiceNo
+    
         FROM Orders o
         JOIN o.customer c
         JOIN o.branch b
+        LEFT JOIN InvoiceOrder io ON io.order = o
+        LEFT JOIN io.invoice i ON i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
     """)
     Page<OrderSummaryView> findAllSummaryBy(Pageable pageable);
     List<Orders> findByRahFacNo(Long rahFacNo);
