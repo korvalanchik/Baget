@@ -40,8 +40,10 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
         FROM Orders o
         JOIN o.customer c
         JOIN o.branch b
-        LEFT JOIN InvoiceOrder io ON io.order = o
-        LEFT JOIN io.invoice i ON i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
+        LEFT JOIN InvoiceOrder io\s
+            ON io.order = o\s
+            AND io.invoice.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
+        LEFT JOIN io.invoice i
     """)
     Page<OrderSummaryView> findAllSummaryBy(Pageable pageable);
     List<Orders> findByRahFacNo(Long rahFacNo);
