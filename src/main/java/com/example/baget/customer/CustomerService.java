@@ -118,20 +118,27 @@ public class CustomerService {
 
     public CustomerDashboardDTO.Response getDashboard(Long branchNo, boolean debtOnly, LocalDate date, Authentication authentication) {
         String username = authentication.getName();
+
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException(username));
 
-        Set<Long> allowedBranchNos = user.getAllowedBranches()
+        Set<Long> allowedBranches = user.getAllowedBranches()
                 .stream()
                 .map(Branch::getBranchNo)
                 .collect(Collectors.toSet());
 
-        if (branchNo != null && !allowedBranchNos.contains(branchNo)) {
+        if (branchNo != null && !allowedBranches.contains(branchNo)) {
             throw new TransactionException("Branch not allowed");
         }
+        if (allowedBranches.isEmpty()) {
+            throw new TransactionException("No branches allowed");
+        }
 
+        Set<Long> effectiveBranches = (branchNo != null)
+                ? Set.of(branchNo)
+                : allowedBranches;
 
-        List<CustomerDashboardRow> rows = customerRepository.getDashboard(branchNo);
+        List<CustomerDashboardRow> rows = customerRepository.getDashboard(effectiveBranches);
 
         List<CustomerDashboardDTO.WithoutInvoice> withoutInvoice = new ArrayList<>();
         List<CustomerDashboardDTO.Debtor> debtors = new ArrayList<>();

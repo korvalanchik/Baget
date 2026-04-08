@@ -10,6 +10,7 @@ import org.springframework.lang.NonNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
@@ -114,7 +115,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                 o.BranchNo,
                 o.StatusOrder
             FROM orders o
-            WHERE (:branchId IS NULL OR o.BranchNo = :branchId)
+            WHERE o.BranchNo IN (:allowedBranches)
         ),
         
         orders_without_invoice AS (
@@ -135,7 +136,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             FROM invoice_orders io
             JOIN orders o ON o.OrderNo = io.order_no
             JOIN invoices i ON i.id = io.invoice_id
-            WHERE (:branchId IS NULL OR o.BranchNo = :branchId)
+            WHERE o.BranchNo IN (:allowedBranches)
               AND i.lifecycle = 'ACTIVE'
             GROUP BY o.CustNo
         ),
@@ -156,7 +157,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                     END
                 ) AS last_payment_date
             FROM ledger_entries le
-            WHERE (:branchId IS NULL OR le.branch_id = :branchId)
+            WHERE le.branch_id IN (:allowedBranches)
             GROUP BY le.customer_id
         ),
         
@@ -171,7 +172,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             WHERE i.lifecycle = 'ACTIVE'
               AND i.type = 'CONSOLIDATED'
               AND i.customer_id <> o.CustNo
-              AND (:branchId IS NULL OR o.BranchNo = :branchId)
+              AND o.BranchNo IN (:allowedBranches)
             GROUP BY i.customer_id
         )
         
@@ -199,6 +200,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         LEFT JOIN ledger_balance lb ON lb.customer_id = c.CustNo
         LEFT JOIN payers p ON p.customer_id = c.CustNo
     """, nativeQuery = true)
-    List<CustomerDashboardRow> getDashboard(@Param("branch") Long branchId);
+    List<CustomerDashboardRow> getDashboard(@Param("allowedBranches") Set<Long> allowedBranches);
 
 }
