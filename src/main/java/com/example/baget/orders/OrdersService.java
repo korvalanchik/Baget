@@ -83,7 +83,7 @@ public class OrdersService {
                 .map(Branch::getName)
                 .collect(Collectors.toSet());
 
-        if (userAndRoles.userRoles().contains("ROLE_ADMIN")) {
+        if (userAndRoles.userRoles().contains("ROLE_ADMIN") || userAndRoles.userRoles().contains("ROLE_FOREMAN")) {
             return ordersRepository.findAllAdminBy(pageable);
         }
 
@@ -120,8 +120,10 @@ public class OrdersService {
         UserAndRoles result = getUserAndRoles();
 
         // ADMIN бачить усе
-        if (result.userRoles.contains("ROLE_ADMIN")) {
-            return ordersRepository.findAllSummaryBy(pageable);
+        Set<String> requiredRoles = Set.of("ROLE_ADMIN", "ROLE_FOREMAN");
+
+        if (result.userRoles.stream().anyMatch(requiredRoles::contains)) {
+                return ordersRepository.findAllSummaryBy(pageable);
         } else {
             throw new TransactionException("Обмежено права доступу");
         }
