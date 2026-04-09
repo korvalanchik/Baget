@@ -53,6 +53,7 @@ public class CustomerTransaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    @Column(name = "parent_transaction_id")
     private Long parentTransactionId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
