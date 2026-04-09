@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,9 +37,13 @@ public class CustomerPaymentService {
 
 
     @Transactional
-    public CustomerTransactionDTO registerInvoicePayment(Long invoiceId, InvoicePaymentRequest request, Authentication authentication) {
+    public List<CustomerTransactionDTO> registerInvoicePayment(
+            Long invoiceId, InvoicePaymentRequest request, Authentication authentication) {
 
         String username = authentication.getName();
+
+        Branch branch = branchRepository.findByBranchNo(request.branchNo())
+                .orElseThrow(() -> new TransactionException("Філію не вказано"));
 
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
@@ -47,120 +52,191 @@ public class CustomerPaymentService {
             throw new TransactionException("Сума оплати має бути більше 0");
         }
 
-        Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
-
-        Customer payer = customerRepository.findById(invoice.getCustomer().getCustNo())
-                .orElseThrow(() -> new TransactionException("Платник не знайдений"));
-
         OffsetDateTime now = OffsetDateTime.now();
+        BigDecimal paymentAmount = request.amount();
 
-        // 🔥 1️⃣ Отримуємо всі orders інвойсу
+        Invoice invoice = null;
+        Customer payer = null;
+
+        if (invoiceId != null) {
+            invoice = invoiceRepository.findById(invoiceId)
+                    .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
+
+            payer = customerRepository.findById(invoice.getCustomer().getCustNo())
+                    .orElseThrow(() -> new TransactionException("Платник не знайдений"));
+        } else {
+            // Payment без призначення, обов'язково вказуємо клієнта в request
+            if (request.customerId() == null) {
+                throw new TransactionException("Для авансу потрібно вказати клієнта");
+            }
+            payer = customerRepository.findById(request.customerId())
+                    .orElseThrow(() -> new TransactionException("Платник не знайдений"));
+        }
+
+        List<CustomerTransactionDTO> result = new ArrayList<>();
+
+        // ----------------------------
+        // 1️⃣ Створюємо PAYMENT / ADVANCE в Ledger
+        // ----------------------------
+        LedgerEntry ledgerEntry = LedgerEntry.builder()
+                .branch(branch)
+                .direction(LedgerDirection.IN)
+                .category(LedgerCategory.PAYMENT_RECEIVED)
+                .amount(paymentAmount)
+                .createdAt(now)
+                .createdBy(user)
+                .customerId(payer.getCustNo())
+                .invoiceId(invoiceId)
+                .reference(invoiceId != null ? "PAY-" + invoiceRepository.getReferenceById(invoiceId) : "ADV-" + now.toEpochSecond())
+                .note(request.note())
+                .build();
+
+        ledgerRepository.save(ledgerEntry);
+
+        // ----------------------------
+        // 2️⃣ Якщо немає інвойсу → це аванс
+        // ----------------------------
+        if (invoiceId == null) {
+            CustomerTransaction advanceTx = customerTxRepository.save(
+                    CustomerTransaction.builder()
+                            .branch(branch)
+                            .customer(payer)
+                            .type(CustomerTransactionType.ADVANCE)
+                            .amount(paymentAmount)
+                            .createdAt(now)
+                            .note(request.note())
+                            .build()
+            );
+
+            result.add(toDTO(advanceTx));
+            return result;
+        }
+
+        // ----------------------------
+        // 3️⃣ Якщо є інвойс → Payment по інвойсу
+        // ----------------------------
+
+        // Отримуємо всі orders інвойсу
         List<InvoiceOrder> invoiceOrders = invoiceOrderRepository.findByInvoice_Id(invoice.getId());
-
         if (invoiceOrders.isEmpty()) {
             throw new TransactionException("Інвойс не містить замовлень");
         }
 
-        // 🔥 2️⃣ Рахуємо залишок боргу по інвойсу
+        // Рахуємо залишок боргу по інвойсу
         BigDecimal totalDebt = calculateInvoiceDebt(invoice.getId());
 
         if (totalDebt.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TransactionException("Інвойс вже оплачено");
+            // Інвойс вже оплачено → весь платіж йде на аванс
+            CustomerTransaction advanceTx = customerTxRepository.save(
+                    CustomerTransaction.builder()
+                            .branch(branch)
+                            .customer(payer)
+                            .type(CustomerTransactionType.ADVANCE)
+                            .amount(paymentAmount)
+                            .createdAt(now)
+                            .note(request.note())
+                            .build()
+            );
+            result.add(toDTO(advanceTx));
+            return result;
         }
 
-        BigDecimal paymentAmount = request.amount().min(totalDebt);
+        BigDecimal remaining = paymentAmount;
 
-        // 🔥 3️⃣ Створюємо CUSTOMER TX
-        CustomerTransaction customerTx = customerTxRepository.save(
+        // ----------------------------
+        // 3a️⃣ Якщо платіж перевищує борг → частина → Allocation, частина → Advance
+        // ----------------------------
+        BigDecimal allocationAmount = remaining.min(totalDebt);
+        BigDecimal overpay = remaining.subtract(allocationAmount);
+
+        // ----------------------------
+        // 4️⃣ Створюємо PAYMENT (з allocated частиною) у CustomerTransactions
+        // ----------------------------
+        CustomerTransaction paymentTx = customerTxRepository.save(
                 CustomerTransaction.builder()
+                        .branch(branch)
                         .customer(payer)
-                        .branch(invoiceOrders.get(0).getOrder().getBranch())
                         .invoice(invoice)
                         .type(CustomerTransactionType.PAYMENT)
-                        .amount(paymentAmount)
+                        .amount(allocationAmount)
                         .createdAt(now)
                         .note(request.note())
                         .build()
         );
+        result.add(toDTO(paymentTx));
 
-        // 🔥 4️⃣ Створюємо IN (гроші прийшли)
-        ledgerRepository.save(
-                LedgerEntry.builder()
-                        .branch(invoiceOrders.get(0).getOrder().getBranch())
-                        .direction(LedgerDirection.IN)
-                        .category(LedgerCategory.PAYMENT_RECEIVED)
-                        .amount(paymentAmount)
-                        .createdAt(now)
-                        .createdBy(user)
-
-                        .customerId(payer.getCustNo()) // 🔥 платник
-                        .invoiceId(invoice.getId())
-
-                        .customerTransactionId(customerTx.getId())
-
-                        .reference("PAY-" + invoice.getInvoiceNo())
-                        .note("Оплата інвойсу")
-                        .build()
-        );
-
-        // 🔥 5️⃣ ALLOCATION (гасимо борг по orders)
-        BigDecimal remaining = paymentAmount;
-
+        // ----------------------------
+        // 5️⃣ ALLOCATION по замовленнях
+        // ----------------------------
+        BigDecimal allocationRemaining = allocationAmount;
         for (InvoiceOrder io : invoiceOrders) {
-
-            if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
+            if (allocationRemaining.compareTo(BigDecimal.ZERO) <= 0) break;
 
             Orders order = io.getOrder();
-
-            // 🔥 залишок боргу по цьому order
             BigDecimal orderDebt = calculateOrderDebt(order.getOrderNo());
-
             if (orderDebt.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-            BigDecimal apply = remaining.min(orderDebt);
+            BigDecimal apply = allocationRemaining.min(orderDebt);
 
-            ledgerRepository.save(
-                    LedgerEntry.builder()
-                            .branch(order.getBranch())
-                            .direction(LedgerDirection.OUT)
-                            .category(LedgerCategory.PAYMENT_ALLOCATION)
+            CustomerTransaction allocationTx = customerTxRepository.save(
+                    CustomerTransaction.builder()
+                            .branch(branch)
+                            .customer(payer)
+                            .invoice(invoice)
+                            .order(order)
+                            .type(CustomerTransactionType.ALLOCATION)
                             .amount(apply)
+                            .parentTransactionId(paymentTx.getId())
                             .createdAt(now)
-                            .createdBy(user)
-
-                            // 🔥 ВАЖЛИВО
-                            .customerId(order.getCustomer().getCustNo()) // боржник
-                            .orderId(order.getOrderNo())
-                            .invoiceId(invoice.getId())
-
-                            .customerTransactionId(customerTx.getId())
-
-                            .reference("ALLOC-" + invoice.getInvoiceNo())
                             .note("Розподіл оплати")
                             .build()
             );
 
-            remaining = remaining.subtract(apply);
+            allocationRemaining = allocationRemaining.subtract(apply);
+            result.add(toDTO(allocationTx));
         }
 
-        // 🔥 6️⃣ Оновлюємо статус інвойсу
-        BigDecimal remainingDebt = calculateInvoiceDebt(invoice.getId());
+        // ----------------------------
+        // 6️⃣ Якщо є переплата → створюємо Advance
+        // ----------------------------
+        if (overpay.compareTo(BigDecimal.ZERO) > 0) {
+            CustomerTransaction advanceTx = customerTxRepository.save(
+                    CustomerTransaction.builder()
+                            .branch(branch)
+                            .customer(payer)
+                            .type(CustomerTransactionType.ADVANCE)
+                            .amount(overpay)
+                            .createdAt(now)
+                            .note("Переплата інвойсу " + invoice.getInvoiceNo())
+                            .build()
+            );
+            result.add(toDTO(advanceTx));
+        }
 
+        // ----------------------------
+        // 7️⃣ Оновлюємо статус інвойсу
+        // ----------------------------
+        BigDecimal remainingDebt = calculateInvoiceDebt(invoice.getId());
         if (remainingDebt.compareTo(BigDecimal.ZERO) == 0) {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
         } else {
             invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
         }
 
-        // 6️⃣ Повертаємо DTO для фронтенду
+        return result;
+    }
+
+    private CustomerTransactionDTO toDTO(CustomerTransaction tx) {
         return CustomerTransactionDTO.builder()
-                .id(customerTx.getId())
-                .invoiceId(invoice.getId())
-                .amount(customerTx.getAmount())
-                .createdAt(customerTx.getCreatedAt())
-                .note(customerTx.getNote())
-                .reference("INV-" + invoice.getInvoiceNo())
+                .id(tx.getId())
+                .customerId(tx.getCustomer().getCustNo())
+                .invoiceId(tx.getInvoice() != null ? tx.getInvoice().getId() : null)
+                .orderNo(tx.getOrder() != null ? tx.getOrder().getOrderNo() : null)
+                .amount(tx.getAmount())
+                .type(tx.getType())
+                .parentTransactionId(tx.getParentTransactionId()) // <-- додаємо тут
+                .note(tx.getNote())
+                .createdAt(tx.getCreatedAt())
                 .build();
     }
 

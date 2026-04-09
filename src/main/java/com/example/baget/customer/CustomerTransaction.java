@@ -53,6 +53,8 @@ public class CustomerTransaction {
     @Column(nullable = false)
     private BigDecimal amount;
 
+    private Long parentTransactionId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 

@@ -13,8 +13,9 @@ public class CustomerTransactionDTO {
     private Long customerId;
     private Long orderNo;
     private Long invoiceId;
-    private String type;
+    private CustomerTransactionType type;
     private BigDecimal amount;
+    private Long parentTransactionId;
     private OffsetDateTime createdAt;
     private String reference;
     private String note;
