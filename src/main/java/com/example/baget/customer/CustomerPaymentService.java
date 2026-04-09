@@ -125,7 +125,7 @@ public class CustomerPaymentService {
 
         // Рахуємо залишок боргу по інвойсу
         BigDecimal totalDebt = calculateInvoiceDebt(invoice.getId());
-
+        System.out.println("Check debt: " + totalDebt);
         if (totalDebt.compareTo(BigDecimal.ZERO) <= 0) {
             // Інвойс вже оплачено → весь платіж йде на аванс
             CustomerTransaction advanceTx = customerTxRepository.save(
