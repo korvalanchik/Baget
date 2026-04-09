@@ -105,7 +105,7 @@ public class CustomerPaymentService {
                             .type(CustomerTransactionType.ADVANCE)
                             .amount(paymentAmount)
                             .createdAt(now)
-                            .note(request.note())
+                            .note("Авансовий платіж")
                             .build()
             );
 
@@ -135,7 +135,7 @@ public class CustomerPaymentService {
                             .type(CustomerTransactionType.ADVANCE)
                             .amount(paymentAmount)
                             .createdAt(now)
-                            .note(request.note())
+                            .note("Інвойс вже оплачено → весь платіж йде на аванс")
                             .build()
             );
             result.add(toDTO(advanceTx));
