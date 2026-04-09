@@ -17,14 +17,13 @@ public class CustomerPaymentResource {
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
 
-    @PostMapping("/invoices/{id}/payments")
+    @PostMapping("/invoices/payments")
     public ResponseEntity<List<CustomerTransactionDTO>> addPayment(
-            @PathVariable Long id,
             @RequestBody InvoicePaymentRequest request,
             Authentication authentication
     ) {
         // делегуємо всю логіку в сервіс
-        List<CustomerTransactionDTO> dto = customerPaymentService.registerInvoicePayment(id, request, authentication);
+        List<CustomerTransactionDTO> dto = customerPaymentService.registerInvoicePayment(request, authentication);
 
         return ResponseEntity.ok(dto);
     }

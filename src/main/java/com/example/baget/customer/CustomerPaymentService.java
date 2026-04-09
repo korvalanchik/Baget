@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,7 @@ public class CustomerPaymentService {
 
     @Transactional
     public List<CustomerTransactionDTO> registerInvoicePayment(
-            Long invoiceId, InvoicePaymentRequest request, Authentication authentication) {
+            InvoicePaymentRequest request, Authentication authentication) {
 
         String username = authentication.getName();
 
@@ -58,8 +59,8 @@ public class CustomerPaymentService {
         Invoice invoice = null;
         Customer payer = null;
 
-        if (invoiceId != null) {
-            invoice = invoiceRepository.findById(invoiceId)
+        if (request.invoiceId() != null) {
+            invoice = invoiceRepository.findById(request.invoiceId())
                     .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
 
             payer = customerRepository.findById(invoice.getCustomer().getCustNo())
@@ -86,8 +87,8 @@ public class CustomerPaymentService {
                 .createdAt(now)
                 .createdBy(user)
                 .customerId(payer.getCustNo())
-                .invoiceId(invoiceId)
-                .reference(invoiceId != null ? "PAY-" + invoiceRepository.getReferenceById(invoiceId) : "ADV-" + now.toEpochSecond())
+                .invoiceId(request.invoiceId())
+                .reference(request.invoiceId() != null ? "PAY-" + Objects.requireNonNull(invoice).getInvoiceNo() : "ADV-" + now.toEpochSecond())
                 .note(request.note())
                 .build();
 
@@ -96,7 +97,7 @@ public class CustomerPaymentService {
         // ----------------------------
         // 2️⃣ Якщо немає інвойсу → це аванс
         // ----------------------------
-        if (invoiceId == null) {
+        if (request.invoiceId() == null) {
             CustomerTransaction advanceTx = customerTxRepository.save(
                     CustomerTransaction.builder()
                             .branch(branch)
@@ -335,7 +336,7 @@ public class CustomerPaymentService {
                 .orElseThrow();
 
         BigDecimal balance =
-                customerTxRepository.getCustomerBalance(customerId);
+                ledgerRepository.getCustomerBalance(customerId);
 
         List<CustomerInvoiceDTO> invoices =
                 invoiceRepository.findOpenInvoices(customerId);

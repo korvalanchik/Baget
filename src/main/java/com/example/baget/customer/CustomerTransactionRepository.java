@@ -35,10 +35,4 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
     """)
     List<CustomerPaymentDTO> findPaymentsByInvoiceId(@Param("invoiceId") Long invoiceId);
 
-    @Query("""
-    select COALESCE(SUM(ct.amount),0)
-    from CustomerTransaction ct
-    where ct.customer.custNo = :customerId
-    and ct.active = true
-    """)
-    BigDecimal getCustomerBalance(Long customerId);}
+}
