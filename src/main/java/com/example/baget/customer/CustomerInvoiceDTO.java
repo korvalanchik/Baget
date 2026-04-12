@@ -1,11 +1,9 @@
 package com.example.baget.customer;
 
-import lombok.Builder;
-
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Builder
+//@Builder
 public record CustomerInvoiceDTO(
         Long id,
         Long invoiceNo,

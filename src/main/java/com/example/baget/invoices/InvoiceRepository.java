@@ -72,18 +72,31 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         i.id,
         i.invoiceNo,
         i.totalAmount,
-        COALESCE(SUM(ct.amount * -1),0),
-        i.totalAmount - COALESCE(SUM(ct.amount * -1),0),
+        COALESCE(SUM(
+            CASE
+                WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount
+                ELSE 0.0
+            END
+        ), 0.0),
+        i.totalAmount - COALESCE(SUM(
+            CASE
+                WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount
+                ELSE 0.0
+            END
+        ), 0.0),
         i.createdAt
     )
     from Invoice i
-    left join CustomerTransaction ct
-           on ct.invoice.id = i.id
-           and ct.type = 'PAYMENT'
-           and ct.active = true
+    left join LedgerEntry le
+           on le.invoiceId = i.id
     where i.customer.custNo = :customerId
     group by i.id, i.invoiceNo, i.totalAmount, i.createdAt
-    having (i.totalAmount - COALESCE(SUM(ct.amount * -1),0)) > 0
+    having (i.totalAmount - COALESCE(SUM(
+            CASE
+                WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount
+                ELSE 0
+            END
+        ), 0)) > 0
     order by i.createdAt desc
     """)
     List<CustomerInvoiceDTO> findOpenInvoices(Long customerId);

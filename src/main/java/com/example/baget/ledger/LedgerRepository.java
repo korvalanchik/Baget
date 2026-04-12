@@ -25,14 +25,16 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
     List<CustomerLedgerDTO> findCustomerLedger(Long customerId);
 
     @Query("""
-        SELECT COALESCE(SUM(
-            CASE
-                WHEN l.direction = 'IN' THEN l.amount
-                ELSE -l.amount
-            END
-        ), 0)
-        FROM LedgerEntry l
-        WHERE l.customerId = :customerId
+        SELECT
+            COALESCE(SUM(
+                CASE
+                    WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT
+                    THEN le.amount
+                    ELSE -le.amount
+                END
+            ), 0)
+        FROM LedgerEntry le
+        WHERE le.customerId = :customerId
     """)
     BigDecimal getCustomerBalance(Long customerId);
 
