@@ -273,7 +273,7 @@ public class CustomerPaymentService {
 
         // 2️⃣ Завантажуємо клієнта
         if (customerId == null) {
-            throw new TransactionException("Клієнт не вказаний");
+            throw new TransactionException("Клієнта не вказано");
         }
 
         Customer customer = customerRepository.findById(customerId)
