@@ -1,7 +1,7 @@
 package com.example.baget.customer;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 public interface CustomerDashboardRow {
 
@@ -13,7 +13,7 @@ public interface CustomerDashboardRow {
     Integer getInvoiceCount();
 
     BigDecimal getBalance();
-    OffsetDateTime getLastPaymentDate();
+    LocalDateTime getLastPaymentDate();
 
     Integer getConsolidatedInvoices();
     BigDecimal getTotalTurnover();
