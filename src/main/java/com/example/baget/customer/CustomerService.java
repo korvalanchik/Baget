@@ -128,10 +128,10 @@ public class CustomerService {
                 .collect(Collectors.toSet());
 
         if (branchNo != null && !allowedBranches.contains(branchNo)) {
-            throw new TransactionException("Branch not allowed");
+            throw new TransactionException("Цю філію не дозволено");
         }
         if (allowedBranches.isEmpty()) {
-            throw new TransactionException("No branches allowed");
+            throw new TransactionException("Немає дозволених філій");
         }
 
         Set<Long> effectiveBranches = (branchNo != null)
