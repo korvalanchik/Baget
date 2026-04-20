@@ -1,7 +1,7 @@
 package com.example.baget.customer;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class CustomerDashboardDTO {
@@ -25,7 +25,7 @@ public class CustomerDashboardDTO {
             String mobile,
             BigDecimal balance,
             Integer invoiceCount,
-            OffsetDateTime lastPaymentDate
+            LocalDateTime lastPaymentDate
     ) {}
 
     public record Payer(
