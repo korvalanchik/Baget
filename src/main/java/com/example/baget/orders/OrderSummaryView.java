@@ -17,4 +17,5 @@ public interface OrderSummaryView {
     Long getInvoiceId();
     Long getRahFacNo();
     String getInvoiceType();
+    String getInvoiceStatus();
 }
