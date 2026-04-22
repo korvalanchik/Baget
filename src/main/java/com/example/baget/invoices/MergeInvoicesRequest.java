@@ -1,21 +1,17 @@
 package com.example.baget.invoices;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MergeInvoicesRequest {
+public record MergeInvoicesRequest (
 
-    private List<Long> invoiceIds;   // 🔥 що об'єднуємо
+    Long branchNo,           // 🔥 номер філії, в якій створюється консолідований рахунок
 
-    private Long payerId;            // 🔥 хто платить (optional)
+    List<Long> invoiceIds,   // 🔥 що об'єднуємо
 
-    private String note;             // 🔥 коментар (optional)
+    Long payerId,            // 🔥 хто платить (optional)
 
-    private boolean applyAdvance;    // 🔥 чи списувати аванс
-}
+    String note,             // 🔥 коментар (optional)
+
+    boolean applyAdvance    // 🔥 чи списувати аванс
+
+){}

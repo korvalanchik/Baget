@@ -1,5 +1,7 @@
 package com.example.baget.invoices;
 
+import com.example.baget.branch.Branch;
+import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.*;
 import com.example.baget.ledger.LedgerCategory;
 import com.example.baget.ledger.LedgerDirection;
@@ -40,16 +42,20 @@ public class InvoiceService {
     private final EntityManager entityManager;
     private final InvoiceServiceUtil invoiceServiceUtil;
     private final OrdersRepository ordersRepository;
+    private final BranchRepository branchRepository;
 
     @Transactional
     public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
 
         String username = authentication.getName();
 
+        Branch branch = branchRepository.findByBranchNo(request.branchNo())
+                .orElseThrow(() -> new TransactionException("Філію не вказано"));
+
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
 
-        List<Long> invoiceIds = request.getInvoiceIds();
+        List<Long> invoiceIds = request.invoiceIds();
         if (invoiceIds == null || invoiceIds.isEmpty()) {
             throw new TransactionException("Список інвойсів порожній");
         }
@@ -76,8 +82,8 @@ public class InvoiceService {
         // 3️⃣ Визначаємо платника
         Customer payer;
 
-        if (request.getPayerId() != null) {
-            payer = customerRepository.findById(request.getPayerId())
+        if (request.payerId() != null) {
+            payer = customerRepository.findById(request.payerId())
                     .orElseThrow(() -> new TransactionException("Платника не знайдено"));
         } else {
             Set<Long> customerIds = invoices.stream()
@@ -122,7 +128,7 @@ public class InvoiceService {
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
                 .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
                 .totalAmount(totalAmount)
-                .note(request.getNote())
+                .note(request.note())
                 .build();
 
         invoiceRepository.save(newInvoice);
@@ -163,6 +169,7 @@ public class InvoiceService {
 
             Long txId = customerTxRepository.save(
                     CustomerTransaction.builder()
+                            .branch(branch)
                             .customer(payer)
                             .invoice(newInvoice)
                             .type(CustomerTransactionType.ADVANCE_APPLIED)
