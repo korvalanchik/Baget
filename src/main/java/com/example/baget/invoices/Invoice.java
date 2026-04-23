@@ -31,6 +31,11 @@ public class Invoice {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
+    /** Платник */
+    @ManyToOne
+    @JoinColumn(name = "payer_id")
+    private Customer payer;
+
     /** Тип рахунку */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -65,11 +70,18 @@ public class Invoice {
     @Version
     private Long version;
 
+    public Customer getEffectivePayer() {
+        return payer != null ? payer : customer;
+    }
+
     @PrePersist
     public void prePersist() {
         createdAt = OffsetDateTime.now();
         if (status == null) {
             status = InvoiceEnums.InvoiceStatus.ISSUED;
+        }
+        if (lifecycle == null) {
+            lifecycle = InvoiceEnums.InvoiceLifecycle.ACTIVE;
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.baget.ledger;
 
 import com.example.baget.branch.Branch;
+import com.example.baget.customer.Customer;
 import com.example.baget.users.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -62,6 +63,12 @@ public class LedgerEntry {
     // 🔹 Опціональні зв’язки
     @Column(name = "customer_id")
     private Long customerId;
+
+    // 🔹 Платник
+    @ManyToOne
+    @JoinColumn(name = "payer_id")
+    private Customer payer;
+
 
     @Column(name = "customer_tx_id")
     private Long customerTransactionId;

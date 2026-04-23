@@ -1,23 +1,16 @@
 package com.example.baget.invoices;
 
-import com.example.baget.branch.Branch;
-import com.example.baget.branch.BranchRepository;
-import com.example.baget.customer.*;
-import com.example.baget.ledger.LedgerCategory;
-import com.example.baget.ledger.LedgerDirection;
-import com.example.baget.ledger.LedgerEntry;
+import com.example.baget.customer.Customer;
+import com.example.baget.customer.CustomerRepository;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
-import com.example.baget.users.User;
-import com.example.baget.users.UsersRepository;
 import com.example.baget.util.InvoiceServiceUtil;
 import com.example.baget.util.TransactionException;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,26 +27,15 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
-    private final CustomerTransactionRepository customerTxRepository;
-    private final UsersRepository usersRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
     private final LedgerRepository ledgerRepository;
     private final InvoiceMapper invoiceMapper;
     private final EntityManager entityManager;
     private final InvoiceServiceUtil invoiceServiceUtil;
     private final OrdersRepository ordersRepository;
-    private final BranchRepository branchRepository;
 
     @Transactional
-    public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
-
-        String username = authentication.getName();
-
-        Branch branch = branchRepository.findByBranchNo(request.branchNo())
-                .orElseThrow(() -> new TransactionException("Філію не вказано"));
-
-        User user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
+    public InvoiceDTO mergeInvoices(MergeInvoicesRequest request) {
 
         List<Long> invoiceIds = request.invoiceIds();
         if (invoiceIds == null || invoiceIds.isEmpty()) {
@@ -79,7 +61,7 @@ public class InvoiceService {
             }
         }
 
-        // 3️⃣ Визначаємо платника
+        // 3️⃣ Визначаємо payer
         Customer payer;
 
         if (request.payerId() != null) {
@@ -101,7 +83,8 @@ public class InvoiceService {
         }
 
         // 4️⃣ Збираємо всі orders
-        List<InvoiceOrder> allInvoiceOrders = invoiceOrderRepository.findByInvoice_IdIn(invoiceIds);
+        List<InvoiceOrder> allInvoiceOrders =
+                invoiceOrderRepository.findByInvoice_IdIn(invoiceIds);
 
         if (allInvoiceOrders.isEmpty()) {
             throw new TransactionException("Інвойси не містять замовлень");
@@ -120,15 +103,17 @@ public class InvoiceService {
 
         OffsetDateTime now = OffsetDateTime.now();
 
-        // 7️⃣ Створюємо новий інвойс
+        // 7️⃣ Створюємо новий (консолідований) інвойс
         Invoice newInvoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
-                .customer(payer)
+                .customer(invoices.get(0).getCustomer()) // ⚠️ базовий клієнт (для відображення)
+                .payer(payer) // 🔥 КЛЮЧОВЕ
                 .type(InvoiceEnums.InvoiceType.CONSOLIDATED)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
                 .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
                 .totalAmount(totalAmount)
                 .note(request.note())
+                .createdAt(now)
                 .build();
 
         invoiceRepository.save(newInvoice);
@@ -145,90 +130,22 @@ public class InvoiceService {
             invoiceOrderRepository.save(newIo);
         }
 
-        // 9️⃣ Старі інвойси → MERGED
+        // 9️⃣ Старі інвойси → MERGED + встановлюємо payer
         for (Invoice old : invoices) {
             old.setLifecycle(InvoiceEnums.InvoiceLifecycle.MERGED);
-//            old.setParentInvoiceId(newInvoice.getId()); // якщо додав
+            old.setPayer(payer); // 🔥 ОСНОВНА ЛОГІКА
         }
 
-        // 8️⃣ Змінюємо номер інвойсу у замовленнях
+        // 🔟 Оновлюємо номер рахунку у замовленнях (для UI)
         final Long invoiceNoFinal = invoiceNo;
         List<Orders> ordersToUpdate = allInvoiceOrders.stream()
                 .map(InvoiceOrder::getOrder)
                 .peek(o -> o.setRahFacNo(invoiceNoFinal))
                 .collect(Collectors.toList());
 
-        ordersRepository.saveAll(ordersToUpdate); // один батч
-
-        // 🔟 APPLY ADVANCE (опціонально)
-
-        BigDecimal balance = getCustomerBalance(payer.getCustNo());
-
-        BigDecimal advance = balance.compareTo(BigDecimal.ZERO) < 0
-                ? balance.abs()
-                : BigDecimal.ZERO;
-
-//        BigDecimal advance = getCustomerBalance(payer.getCustNo());
-
-        if (advance.compareTo(BigDecimal.ZERO) > 0) {
-
-            BigDecimal toApply = advance.min(totalAmount);
-
-            Long txId = customerTxRepository.save(
-                    CustomerTransaction.builder()
-                            .branch(branch)
-                            .customer(payer)
-                            .invoice(newInvoice)
-                            .type(CustomerTransactionType.ADVANCE_APPLIED)
-                            .amount(toApply.negate())
-                            .createdAt(now)
-                            .note("Списання авансу на інвойс №" + newInvoice.getInvoiceNo())
-                            .build()
-            ).getId();
-
-            BigDecimal remaining = toApply;
-
-            for (InvoiceOrder io : allInvoiceOrders) {
-
-                if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
-
-                BigDecimal apply = remaining.min(io.getAmount());
-
-                ledgerRepository.save(
-                        LedgerEntry.builder()
-                                .branch(io.getOrder().getBranch())
-                                .direction(LedgerDirection.OUT)
-                                .category(LedgerCategory.APPLY_ADVANCE_TO_INVOICE)
-                                .amount(apply)
-                                .createdAt(now)
-                                .createdBy(user)
-
-                                .customerId(io.getOrder().getCustomer().getCustNo())
-                                .orderId(io.getOrder().getOrderNo())
-                                .invoiceId(newInvoice.getId())
-                                .customerTransactionId(txId)
-
-                                .reference("APPLY_ADV-" + newInvoice.getInvoiceNo())
-                                .note("Списання авансу")
-                                .build()
-                );
-
-                remaining = remaining.subtract(apply);
-            }
-
-            if (toApply.compareTo(totalAmount) >= 0) {
-                newInvoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
-            } else {
-                newInvoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
-            }
-        }
+        ordersRepository.saveAll(ordersToUpdate);
 
         return invoiceMapper.toDto(newInvoice);
-    }
-
-    public BigDecimal getCustomerBalance(Long customerId) {
-        BigDecimal result = ledgerRepository.getCustomerBalance(customerId);
-        return result != null ? result : BigDecimal.ZERO;
     }
 
     public InvoiceDetailsDTO getInvoice(Long invoiceId) {

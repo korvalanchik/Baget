@@ -38,7 +38,8 @@ public class CustomerPaymentService {
 
     @Transactional
     public List<CustomerTransactionDTO> registerInvoicePayment(
-            InvoicePaymentRequest request, Authentication authentication) {
+            InvoicePaymentRequest request,
+            Authentication authentication) {
 
         String username = authentication.getName();
 
@@ -56,36 +57,43 @@ public class CustomerPaymentService {
         BigDecimal paymentAmount = request.amount();
 
         Invoice invoice = null;
+        Customer debtor;
         Customer payer;
 
         // ----------------------------
-        // 1️⃣ Визначаємо payer
+        // 1️⃣ Визначаємо debtor і payer
         // ----------------------------
         if (request.invoiceId() != null) {
+
             invoice = invoiceRepository.findById(request.invoiceId())
                     .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
 
-            payer = invoice.getCustomer();
+            debtor = invoice.getCustomer();
+            payer = invoice.getEffectivePayer();
+
         } else {
+
             if (request.customerId() == null) {
                 throw new TransactionException("Для авансу потрібно вказати клієнта");
             }
 
-            payer = customerRepository.findById(request.customerId())
-                    .orElseThrow(() -> new TransactionException("Платник не знайдений"));
+            debtor = customerRepository.findById(request.customerId())
+                    .orElseThrow(() -> new TransactionException("Клієнт не знайдений"));
+
+            payer = debtor; // для авансу платник = клієнт
         }
 
         List<CustomerTransactionDTO> result = new ArrayList<>();
 
         // ----------------------------
-        // 2️⃣ ЛОГІКА БЕЗ ІНВОЙСУ (ADVANCE)
+        // 2️⃣ ADVANCE (без інвойсу)
         // ----------------------------
         if (invoice == null) {
 
             CustomerTransaction advanceTx = customerTxRepository.save(
                     CustomerTransaction.builder()
                             .branch(branch)
-                            .customer(payer)
+                            .customer(debtor)
                             .type(CustomerTransactionType.ADVANCE)
                             .amount(paymentAmount)
                             .createdAt(now)
@@ -98,9 +106,8 @@ public class CustomerPaymentService {
         } else {
 
             // ----------------------------
-            // 3️⃣ ЛОГІКА З ІНВОЙСОМ
+            // 3️⃣ РАХУЄМО БОРГ
             // ----------------------------
-
             BigDecimal totalDebt = calculateInvoiceDebt(invoice.getId());
 
             List<InvoiceOrder> invoiceOrders =
@@ -110,13 +117,15 @@ public class CustomerPaymentService {
                 throw new TransactionException("Інвойс не містить замовлень");
             }
 
+            // ----------------------------
+            // 4️⃣ ЯКЩО БОРГУ НЕМАЄ → ADVANCE
+            // ----------------------------
             if (totalDebt.compareTo(BigDecimal.ZERO) <= 0) {
 
-                // все в аванс
                 CustomerTransaction advanceTx = customerTxRepository.save(
                         CustomerTransaction.builder()
                                 .branch(branch)
-                                .customer(payer)
+                                .customer(debtor)
                                 .type(CustomerTransactionType.ADVANCE)
                                 .amount(paymentAmount)
                                 .createdAt(now)
@@ -131,11 +140,13 @@ public class CustomerPaymentService {
                 BigDecimal allocationAmount = paymentAmount.min(totalDebt);
                 BigDecimal overpay = paymentAmount.subtract(allocationAmount);
 
-                // PAYMENT
+                // ----------------------------
+                // 5️⃣ PAYMENT
+                // ----------------------------
                 CustomerTransaction paymentTx = customerTxRepository.save(
                         CustomerTransaction.builder()
                                 .branch(branch)
-                                .customer(payer)
+                                .customer(debtor)
                                 .invoice(invoice)
                                 .type(CustomerTransactionType.PAYMENT)
                                 .amount(allocationAmount)
@@ -146,15 +157,18 @@ public class CustomerPaymentService {
 
                 result.add(toDTO(paymentTx));
 
-                // ALLOCATION
+                // ----------------------------
+                // 6️⃣ ALLOCATION
+                // ----------------------------
                 BigDecimal remaining = allocationAmount;
 
                 for (InvoiceOrder io : invoiceOrders) {
+
                     if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
 
                     Orders order = io.getOrder();
-                    BigDecimal orderDebt = calculateOrderDebt(order.getOrderNo());
 
+                    BigDecimal orderDebt = calculateOrderDebt(order.getOrderNo());
                     if (orderDebt.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                     BigDecimal apply = remaining.min(orderDebt);
@@ -162,7 +176,7 @@ public class CustomerPaymentService {
                     CustomerTransaction allocationTx = customerTxRepository.save(
                             CustomerTransaction.builder()
                                     .branch(branch)
-                                    .customer(payer)
+                                    .customer(debtor)
                                     .invoice(invoice)
                                     .order(order)
                                     .type(CustomerTransactionType.ALLOCATION)
@@ -177,12 +191,15 @@ public class CustomerPaymentService {
                     remaining = remaining.subtract(apply);
                 }
 
-                // ADVANCE (переплата)
+                // ----------------------------
+                // 7️⃣ ADVANCE (переплата)
+                // ----------------------------
                 if (overpay.compareTo(BigDecimal.ZERO) > 0) {
+
                     CustomerTransaction advanceTx = customerTxRepository.save(
                             CustomerTransaction.builder()
                                     .branch(branch)
-                                    .customer(payer)
+                                    .customer(debtor)
                                     .type(CustomerTransactionType.ADVANCE)
                                     .amount(overpay)
                                     .createdAt(now)
@@ -193,7 +210,9 @@ public class CustomerPaymentService {
                     result.add(toDTO(advanceTx));
                 }
 
-                // статус інвойсу (без повторного calculate)
+                // ----------------------------
+                // 8️⃣ СТАТУС ІНВОЙСУ
+                // ----------------------------
                 BigDecimal remainingDebt = totalDebt.subtract(paymentAmount);
 
                 if (remainingDebt.compareTo(BigDecimal.ZERO) <= 0) {
@@ -205,12 +224,8 @@ public class CustomerPaymentService {
         }
 
         // ----------------------------
-        // 4️⃣ LEDGER (ЗАВЖДИ)
+        // 9️⃣ LEDGER (ОДИН ЗАПИС)
         // ----------------------------
-        String reference = (invoice != null)
-                ? "PAY-" + invoice.getInvoiceNo()
-                : "ADV-" + now.toEpochSecond();
-
         ledgerRepository.save(
                 LedgerEntry.builder()
                         .branch(branch)
@@ -219,13 +234,15 @@ public class CustomerPaymentService {
                         .amount(paymentAmount)
                         .createdAt(now)
                         .createdBy(user)
-                        .customerId(payer.getCustNo())
+                        .customerId(debtor.getCustNo())   // боржник
+                        .payer(payer)                     // 🔥 платник
                         .invoiceId(invoice != null ? invoice.getId() : null)
-                        .reference(reference)
+                        .reference(invoice != null
+                                ? "PAY-" + invoice.getInvoiceNo()
+                                : "ADV-" + now.toEpochSecond())
                         .note(request.note())
                         .build()
         );
-
         return result;
     }
 
