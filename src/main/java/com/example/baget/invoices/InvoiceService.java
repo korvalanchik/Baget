@@ -161,7 +161,14 @@ public class InvoiceService {
         ordersRepository.saveAll(ordersToUpdate); // один батч
 
         // 🔟 APPLY ADVANCE (опціонально)
-        BigDecimal advance = getCustomerBalance(payer.getCustNo());
+
+        BigDecimal balance = getCustomerBalance(payer.getCustNo());
+
+        BigDecimal advance = balance.compareTo(BigDecimal.ZERO) < 0
+                ? balance.abs()
+                : BigDecimal.ZERO;
+
+//        BigDecimal advance = getCustomerBalance(payer.getCustNo());
 
         if (advance.compareTo(BigDecimal.ZERO) > 0) {
 
