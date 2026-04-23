@@ -1,9 +1,7 @@
 package com.example.baget.invoices;
 
 import com.example.baget.customer.CustomerInvoiceDTO;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,9 +12,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     boolean existsByInvoiceNo(Long invoiceNo);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select i from Invoice i where i.id = :id")
-    Optional<Invoice> findByIdForUpdate(@Param("id") Long id);
+//    @Lock(LockModeType.PESSIMISTIC_WRITE)
+//    @Query("select i from Invoice i where i.id = :id")
+//    Optional<Invoice> findByIdForUpdate(@Param("id") Long id);
 
 
     @SuppressWarnings("JpaQlInspection")
@@ -90,6 +88,7 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     left join LedgerEntry le
            on le.invoiceId = i.id
     where i.customer.custNo = :customerId
+        and i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
     group by i.id, i.invoiceNo, i.totalAmount, i.createdAt
     having (i.totalAmount - COALESCE(SUM(
             CASE
