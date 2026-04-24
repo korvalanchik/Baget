@@ -213,7 +213,7 @@ public class CustomerPaymentService {
                 // ----------------------------
                 // 8️⃣ СТАТУС ІНВОЙСУ
                 // ----------------------------
-                BigDecimal remainingDebt = totalDebt.subtract(paymentAmount);
+                BigDecimal remainingDebt = totalDebt.subtract(allocationAmount);
 
                 if (remainingDebt.compareTo(BigDecimal.ZERO) <= 0) {
                     invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
