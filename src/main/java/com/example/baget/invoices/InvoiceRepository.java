@@ -5,17 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     boolean existsByInvoiceNo(Long invoiceNo);
-
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
-//    @Query("select i from Invoice i where i.id = :id")
-//    Optional<Invoice> findByIdForUpdate(@Param("id") Long id);
-
 
     @SuppressWarnings("JpaQlInspection")
     @Query("""
@@ -101,5 +97,18 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     List<CustomerInvoiceDTO> findOpenInvoices(Long customerId);
 
     Optional<Invoice> findByInvoiceNoAndLifecycle(Long invoiceNo, InvoiceEnums.InvoiceLifecycle lifecycle);
+
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN le.direction = com.example.baget.ledger.LedgerDirection.OUT
+                THEN le.amount
+                ELSE -le.amount
+            END
+        ), 0)
+        FROM LedgerEntry le
+        WHERE le.invoiceId = :invoiceId
+    """)
+    BigDecimal calculateInvoiceDebt(@Param("invoiceId") Long invoiceId);
 
 }

@@ -1,7 +1,12 @@
 package com.example.baget.invoices;
 
+import com.example.baget.branch.Branch;
+import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.Customer;
 import com.example.baget.customer.CustomerRepository;
+import com.example.baget.ledger.LedgerCategory;
+import com.example.baget.ledger.LedgerDirection;
+import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
@@ -33,6 +38,7 @@ public class InvoiceService {
     private final EntityManager entityManager;
     private final InvoiceServiceUtil invoiceServiceUtil;
     private final OrdersRepository ordersRepository;
+    private final BranchRepository branchRepository;
 
     @Transactional
     public InvoiceDTO mergeInvoices(MergeInvoicesRequest request) {
@@ -42,26 +48,26 @@ public class InvoiceService {
             throw new TransactionException("Список інвойсів порожній");
         }
 
-        // 1️⃣ Завантажуємо інвойси
+// 1️⃣ Завантажуємо інвойси
         List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
 
         if (invoices.size() != invoiceIds.size()) {
             throw new TransactionException("Деякі інвойси не знайдено");
         }
 
-        // 2️⃣ Перевірки
+// 2️⃣ Перевірки
         for (Invoice inv : invoices) {
 
             if (inv.getLifecycle() != InvoiceEnums.InvoiceLifecycle.ACTIVE) {
-                throw new TransactionException("Інвойс " + inv.getInvoiceNo() + " вже об'єднаний");
+                throw new TransactionException("Інвойс " + inv.getInvoiceNo() + " вже не активний");
             }
 
             if (inv.getStatus() != InvoiceEnums.InvoiceStatus.ISSUED) {
-                throw new TransactionException("Можна об'єднувати тільки неоплачені інвойси");
+                throw new TransactionException("Можна об'єднувати тільки неоплачені або частково оплачені інвойси");
             }
         }
 
-        // 3️⃣ Визначаємо payer
+// 3️⃣ Визначаємо payer
         Customer payer;
 
         if (request.payerId() != null) {
@@ -82,36 +88,43 @@ public class InvoiceService {
             payer = invoices.get(0).getCustomer();
         }
 
-        // 4️⃣ Збираємо всі orders
-        List<InvoiceOrder> allInvoiceOrders =
-                invoiceOrderRepository.findByInvoice_IdIn(invoiceIds);
+        OffsetDateTime now = OffsetDateTime.now();
 
-        if (allInvoiceOrders.isEmpty()) {
-            throw new TransactionException("Інвойси не містять замовлень");
+// 4️⃣ Рахуємо борг, який переносимо
+        BigDecimal totalDebtToTransfer = BigDecimal.ZERO;
+
+        Map<Long, BigDecimal> invoiceDebts = new HashMap<>();
+
+        for (Invoice inv : invoices) {
+            BigDecimal debt = invoiceRepository.calculateInvoiceDebt(inv.getId());
+
+            if (debt.compareTo(BigDecimal.ZERO) < 0) {
+                throw new TransactionException("Інвойс " + inv.getInvoiceNo() + " має переплату");
+            }
+
+            invoiceDebts.put(inv.getId(), debt);
+            totalDebtToTransfer = totalDebtToTransfer.add(debt);
         }
 
-        // 5️⃣ Рахуємо суму
-        BigDecimal totalAmount = allInvoiceOrders.stream()
-                .map(InvoiceOrder::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (totalDebtToTransfer.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new TransactionException("Немає боргу для об'єднання");
+        }
 
-        // 6️⃣ Генеруємо номер
+// 5️⃣ Генеруємо номер
         Long invoiceNo = invoiceServiceUtil.generateTodayCode();
         while (invoiceRepository.existsByInvoiceNo(invoiceNo)) {
             invoiceNo++;
         }
 
-        OffsetDateTime now = OffsetDateTime.now();
-
-        // 7️⃣ Створюємо новий (консолідований) інвойс
+// 6️⃣ Створюємо новий інвойс
         Invoice newInvoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
-                .customer(invoices.get(0).getCustomer()) // ⚠️ базовий клієнт (для відображення)
-                .payer(payer) // 🔥 КЛЮЧОВЕ
+                .customer(invoices.get(0).getCustomer())
+                .payer(payer)
                 .type(InvoiceEnums.InvoiceType.CONSOLIDATED)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
                 .lifecycle(InvoiceEnums.InvoiceLifecycle.ACTIVE)
-                .totalAmount(totalAmount)
+                .totalAmount(totalDebtToTransfer) // 🔥 ВАЖЛИВО: debt, а не original amount
                 .note(request.note())
                 .createdAt(now)
                 .build();
@@ -119,7 +132,14 @@ public class InvoiceService {
         invoiceRepository.save(newInvoice);
         entityManager.flush();
 
-        // 8️⃣ Копіюємо InvoiceOrder
+// 7️⃣ Копіюємо InvoiceOrder
+        List<InvoiceOrder> allInvoiceOrders =
+                invoiceOrderRepository.findByInvoice_IdIn(invoiceIds);
+
+        if (allInvoiceOrders.isEmpty()) {
+            throw new TransactionException("Інвойси не містять замовлень");
+        }
+
         for (InvoiceOrder oldIo : allInvoiceOrders) {
 
             InvoiceOrder newIo = new InvoiceOrder();
@@ -130,14 +150,75 @@ public class InvoiceService {
             invoiceOrderRepository.save(newIo);
         }
 
-        // 9️⃣ Старі інвойси → MERGED + встановлюємо payer
+// 8️⃣ Ledger: закриваємо старі інвойси (IN)
+
+        Map<Long, Branch> invoiceBranchMap = allInvoiceOrders.stream()
+                .collect(Collectors.toMap(
+                        io -> io.getInvoice().getId(),
+                        io -> io.getOrder().getBranch(),
+                        (existing, replacement) -> {
+                            if (!existing.equals(replacement)) {
+                                throw new TransactionException("Інвойс має кілька філій");
+                            }
+                            return existing;
+                        }
+                ));
+
+        for (Invoice old : invoices) {
+
+            BigDecimal debt = invoiceDebts.get(old.getId());
+
+            if (debt.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            Branch oldBranch = invoiceBranchMap.get(old.getId());
+
+            if (oldBranch == null) {
+                throw new TransactionException("Не знайдено branch для інвойсу " + old.getInvoiceNo());
+            }
+
+            ledgerRepository.save(
+                    LedgerEntry.builder()
+                            .branch(oldBranch)
+                            .direction(LedgerDirection.IN)
+                            .category(LedgerCategory.INVOICE_MERGE_IN)
+                            .amount(debt)
+                            .createdAt(now)
+                            .customerId(old.getCustomer().getCustNo())
+                            .payer(payer)
+                            .invoiceId(old.getId())
+                            .reference("MERGE->" + invoiceNo)
+                            .note("Перенос боргу в інвойс " + invoiceNo)
+                            .build()
+            );
+        }
+        Branch branch = branchRepository.findByBranchNo(request.branchNo())
+                .orElseThrow(() -> new TransactionException("Філію не вказано"));
+
+// 9️⃣ Ledger: відкриваємо борг на новому інвойсі (OUT)
+        ledgerRepository.save(
+                LedgerEntry.builder()
+                        .branch(branch)
+                        .direction(LedgerDirection.OUT)
+                        .category(LedgerCategory.INVOICE_MERGE_OUT)
+                        .amount(totalDebtToTransfer)
+                        .createdAt(now)
+                        .customerId(newInvoice.getCustomer().getCustNo())
+                        .payer(payer)
+                        .invoiceId(newInvoice.getId())
+                        .reference("MERGE-FROM-" + invoiceIds)
+                        .note("Об'єднання інвойсів")
+                        .build()
+        );
+
+// 🔟 Старі інвойси → MERGED
         for (Invoice old : invoices) {
             old.setLifecycle(InvoiceEnums.InvoiceLifecycle.MERGED);
-            old.setPayer(payer); // 🔥 ОСНОВНА ЛОГІКА
+            old.setPayer(payer);
         }
 
-        // 🔟 Оновлюємо номер рахунку у замовленнях (для UI)
+// 1️⃣1️⃣ Оновлюємо orders (UI)
         final Long invoiceNoFinal = invoiceNo;
+
         List<Orders> ordersToUpdate = allInvoiceOrders.stream()
                 .map(InvoiceOrder::getOrder)
                 .peek(o -> o.setRahFacNo(invoiceNoFinal))
@@ -146,8 +227,8 @@ public class InvoiceService {
         ordersRepository.saveAll(ordersToUpdate);
 
         return invoiceMapper.toDto(newInvoice);
-    }
 
+    }
     public InvoiceDetailsDTO getInvoice(Long invoiceId) {
         return invoiceRepository.findInvoiceDetails(invoiceId)
                 .orElseThrow(() -> new TransactionException("Invoice not found"));
