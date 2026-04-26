@@ -20,10 +20,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +43,11 @@ public class InvoiceService {
         List<Long> invoiceIds = request.invoiceIds();
         if (invoiceIds == null || invoiceIds.isEmpty()) {
             throw new TransactionException("Список інвойсів порожній");
+        }
+
+        Set<Long> uniqueIds = new HashSet<>(invoiceIds);
+        if (uniqueIds.size() != invoiceIds.size()) {
+            throw new TransactionException("Список інвойсів містить дублікати");
         }
 
 // 1️⃣ Завантажуємо інвойси
@@ -119,7 +121,7 @@ public class InvoiceService {
 // 6️⃣ Створюємо новий інвойс
         Invoice newInvoice = Invoice.builder()
                 .invoiceNo(invoiceNo)
-                .customer(invoices.get(0).getCustomer())
+                .customer(payer)
                 .payer(payer)
                 .type(InvoiceEnums.InvoiceType.CONSOLIDATED)
                 .status(InvoiceEnums.InvoiceStatus.ISSUED)
