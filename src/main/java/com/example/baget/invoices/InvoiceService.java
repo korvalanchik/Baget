@@ -63,7 +63,7 @@ public class InvoiceService {
             }
 
             if (inv.getStatus() != InvoiceEnums.InvoiceStatus.ISSUED) {
-                throw new TransactionException("Можна об'єднувати тільки неоплачені або частково оплачені інвойси");
+                throw new TransactionException("Можна об'єднувати тільки неоплачені");
             }
         }
 
