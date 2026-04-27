@@ -2,8 +2,7 @@ package com.example.baget.invoices;
 
 import com.example.baget.branch.Branch;
 import com.example.baget.branch.BranchRepository;
-import com.example.baget.customer.Customer;
-import com.example.baget.customer.CustomerRepository;
+import com.example.baget.customer.*;
 import com.example.baget.ledger.LedgerCategory;
 import com.example.baget.ledger.LedgerDirection;
 import com.example.baget.ledger.LedgerEntry;
@@ -36,6 +35,7 @@ public class InvoiceService {
     private final InvoiceServiceUtil invoiceServiceUtil;
     private final OrdersRepository ordersRepository;
     private final BranchRepository branchRepository;
+    private final CustomerTransactionRepository customerTransactionRepository;
 
     @Transactional
     public InvoiceDTO mergeInvoices(MergeInvoicesRequest request) {
@@ -192,7 +192,21 @@ public class InvoiceService {
                             .note("Перенос боргу в інвойс " + invoiceNo)
                             .build()
             );
+
+// CustomerTransactions: закриваємо борг по старому інвойсу
+            customerTransactionRepository.save(
+                    CustomerTransaction.builder()
+                            .branch(oldBranch)
+                            .customer(old.getCustomer())
+                            .invoice(old)
+                            .type(CustomerTransactionType.ADJUSTMENT)
+                            .amount(debt)
+                            .createdAt(now)
+                            .note("Перенос боргу в інвойс " + invoiceNo)
+                            .build()
+            );
         }
+
         Branch branch = branchRepository.findByBranchNo(request.branchNo())
                 .orElseThrow(() -> new TransactionException("Філію не вказано"));
 
@@ -209,6 +223,19 @@ public class InvoiceService {
                         .invoiceId(newInvoice.getId())
                         .reference("MERGE-FROM-" + invoiceIds)
                         .note("Об'єднання інвойсів")
+                        .build()
+        );
+
+// CustomerTransactions: відкриваємо борг на новому інвойсі
+        customerTransactionRepository.save(
+                CustomerTransaction.builder()
+                        .branch(branch)
+                        .customer(newInvoice.getCustomer())
+                        .invoice(newInvoice)
+                        .type(CustomerTransactionType.INVOICE)
+                        .amount(totalDebtToTransfer.negate())
+                        .createdAt(now)
+                        .note("Об'єднання інвойсів: " + invoiceIds)
                         .build()
         );
 
