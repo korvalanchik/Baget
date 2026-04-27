@@ -166,6 +166,13 @@ public class InvoiceService {
                         }
                 ));
 
+        Map<Long, Orders> invoiceOrderMap = allInvoiceOrders.stream()
+                .collect(Collectors.toMap(
+                        io -> io.getInvoice().getId(),
+                        InvoiceOrder::getOrder,
+                        (existing, replacement) -> existing
+                ));
+
         for (Invoice old : invoices) {
 
             BigDecimal debt = invoiceDebts.get(old.getId());
@@ -199,6 +206,7 @@ public class InvoiceService {
                             .branch(oldBranch)
                             .customer(old.getCustomer())
                             .invoice(old)
+                            .order(invoiceOrderMap.get(old.getId()))
                             .type(CustomerTransactionType.ADJUSTMENT)
                             .amount(debt)
                             .createdAt(now)

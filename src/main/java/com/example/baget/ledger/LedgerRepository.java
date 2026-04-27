@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
     @SuppressWarnings("JpaQlInspection")
@@ -80,4 +81,6 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
         GROUP BY le.orderId
     """)
     List<Object[]> sumInOutByOrders(@Param("orderIds") List<Long> orderIds);
+
+    Optional<LedgerEntry> findTopByInvoiceIdAndDirectionAndCategoryInOrderByCreatedAtDescIdDesc(Long invoiceId, LedgerDirection ledgerDirection, List<LedgerCategory> invoiceOwnershipCategories);
 }

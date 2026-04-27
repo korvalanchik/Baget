@@ -35,6 +35,10 @@ public class CustomerPaymentService {
     private final BranchRepository branchRepository;
     private final UsersRepository usersRepository;
 
+    private static final List<LedgerCategory> INVOICE_OWNERSHIP_CATEGORIES = List.of(
+            LedgerCategory.INVOICE_ISSUED,
+            LedgerCategory.INVOICE_MERGE_OUT
+    );
 
     @Transactional
     public List<CustomerTransactionDTO> registerInvoicePayment(
@@ -42,9 +46,6 @@ public class CustomerPaymentService {
             Authentication authentication) {
 
         String username = authentication.getName();
-
-        Branch branch = branchRepository.findByBranchNo(request.branchNo())
-                .orElseThrow(() -> new TransactionException("Філію не вказано"));
 
         User user = usersRepository.findByUsername(username)
                 .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
@@ -57,6 +58,7 @@ public class CustomerPaymentService {
         BigDecimal paymentAmount = request.amount();
 
         Invoice invoice = null;
+        Branch branch;
         Customer debtor;
         Customer payer;
 
@@ -64,14 +66,17 @@ public class CustomerPaymentService {
         // 1️⃣ Визначаємо debtor і payer
         // ----------------------------
         if (request.invoiceId() != null) {
-
             invoice = invoiceRepository.findById(request.invoiceId())
                     .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
+
+            branch = resolveInvoiceBranch(invoice.getId());
 
             debtor = invoice.getCustomer();
             payer = invoice.getEffectivePayer();
 
         } else {
+            branch = branchRepository.findByBranchNo(request.branchNo())
+                    .orElseThrow(() -> new TransactionException("Філію не вказано"));
 
             if (request.customerId() == null) {
                 throw new TransactionException("Для авансу потрібно вказати клієнта");
@@ -343,6 +348,19 @@ public class CustomerPaymentService {
                 .note(customerTx.getNote())
                 .reference("ADV-" + customer.getCustNo())
                 .build();
+    }
+
+    private Branch resolveInvoiceBranch(Long invoiceId) {
+        return ledgerRepository
+                .findTopByInvoiceIdAndDirectionAndCategoryInOrderByCreatedAtDescIdDesc(
+                        invoiceId,
+                        LedgerDirection.OUT,
+                        INVOICE_OWNERSHIP_CATEGORIES
+                )
+                .map(LedgerEntry::getBranch)
+                .orElseThrow(() -> new TransactionException(
+                        "Не знайдено ownership OUT для інвойсу " + invoiceId
+                ));
     }
 
     public List<CustomerPaymentDTO> getPaymentsByInvoice(Long invoiceId) {
