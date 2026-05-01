@@ -10,11 +10,14 @@ import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
+import com.example.baget.users.User;
+import com.example.baget.users.UsersRepository;
 import com.example.baget.util.InvoiceServiceUtil;
 import com.example.baget.util.TransactionException;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,6 +29,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InvoiceService {
 
+    private final UsersRepository usersRepository;
     private final InvoiceRepository invoiceRepository;
     private final CustomerRepository customerRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
@@ -38,7 +42,12 @@ public class InvoiceService {
     private final CustomerTransactionRepository customerTransactionRepository;
 
     @Transactional
-    public InvoiceDTO mergeInvoices(MergeInvoicesRequest request) {
+    public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
+
+        String username = authentication.getName();
+
+        User user = usersRepository.findByUsername(username)
+                .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
 
         List<Long> invoiceIds = request.invoiceIds();
         if (invoiceIds == null || invoiceIds.isEmpty()) {
@@ -192,8 +201,10 @@ public class InvoiceService {
                             .category(LedgerCategory.INVOICE_MERGE_IN)
                             .amount(debt)
                             .createdAt(now)
+                            .createdBy(user)
                             .customerId(old.getCustomer().getCustNo())
                             .payer(payer)
+                            .orderId(invoiceOrderMap.get(old.getId()).getOrderNo())
                             .invoiceId(old.getId())
                             .reference("MERGE->" + invoiceNo)
                             .note("Перенос боргу в інвойс " + invoiceNo)
@@ -229,7 +240,7 @@ public class InvoiceService {
                         .customerId(newInvoice.getCustomer().getCustNo())
                         .payer(payer)
                         .invoiceId(newInvoice.getId())
-                        .reference("MERGE-FROM-" + invoiceIds)
+                        .reference("MERGE-FROM-INVOICES") // + invoiceIds)
                         .note("Об'єднання інвойсів")
                         .build()
         );
