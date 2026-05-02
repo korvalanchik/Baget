@@ -35,13 +35,11 @@ public class CloudRunScaleService {
 
         String token = credentials.getAccessToken().getTokenValue();
 
-        String url =
-                "https://run.googleapis.com/v2/projects/"
-                        + projectId
-                        + "/locations/"
-                        + region
-                        + "/services/"
-                        + serviceName;
+
+        String url = "https://run.googleapis.com/v2/projects/" + projectId +
+                "/locations/" + region +
+                "/services/" + serviceName +
+                "?updateMask=template.scaling.minInstanceCount";
 
         String body = """
         {
