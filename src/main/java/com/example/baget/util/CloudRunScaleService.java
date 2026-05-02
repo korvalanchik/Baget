@@ -60,7 +60,11 @@ public class CloudRunScaleService {
                 .header("Content-Type", "application/json")
                 .build();
 
-        HttpClient.newHttpClient()
+        var response = HttpClient.newHttpClient()
                 .send(request, HttpResponse.BodyHandlers.ofString());
+
+        System.out.println("Status: " + response.statusCode());
+        System.out.println("Body: " + response.body());
+
     }
 }
