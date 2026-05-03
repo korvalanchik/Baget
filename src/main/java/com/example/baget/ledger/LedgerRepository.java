@@ -49,12 +49,9 @@ public interface LedgerRepository extends JpaRepository<LedgerEntry, Long> {
                 END
             ), 0)
         FROM LedgerEntry le
-        JOIN Invoice i ON i.id = le.invoiceId
         WHERE le.invoiceId = :invoiceId
-          AND i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
-        """)
+    """)
     BigDecimal calculateInvoiceDebt(@Param("invoiceId") Long invoiceId);
-
 
     @Query("""
         SELECT
