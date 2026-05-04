@@ -267,11 +267,23 @@ public class InvoiceService {
 // 1️⃣1️⃣ Оновлюємо orders (UI)
         final Long invoiceNoFinal = invoiceNo;
 
-        List<Orders> ordersToUpdate = allInvoiceOrders.stream()
-                .map(InvoiceOrder::getOrder)
-                .peek(o -> o.setRahFacNo(invoiceNoFinal))
-                .collect(Collectors.toList());
+        List<Orders> ordersToUpdate = new ArrayList<>();
 
+        for (Invoice old : invoices) {
+
+            Orders order = invoiceOrderMap.get(old.getId());
+            BigDecimal debt = invoiceDebts.get(old.getId());
+
+            if (order == null) continue;
+
+            // 🔥 1. Вважаємо що борг повністю перенесено → order закритий
+            order.setAmountPaid(order.getAmountPaid().add(debt));
+            order.setAmountDueN(order.getAmountDueN().subtract(debt));
+            order.setIncome(order.getIncome().add(debt));
+            order.setRahFacNo(invoiceNoFinal);
+
+            ordersToUpdate.add(order);
+        }
         ordersRepository.saveAll(ordersToUpdate);
 
         return invoiceMapper.toDto(newInvoice);

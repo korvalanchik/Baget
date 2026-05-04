@@ -8,6 +8,7 @@ import com.example.baget.ledger.LedgerDirection;
 import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.Orders;
+import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.TransactionException;
@@ -34,6 +35,7 @@ public class CustomerPaymentService {
     private final LedgerRepository ledgerRepository;
     private final BranchRepository branchRepository;
     private final UsersRepository usersRepository;
+    private final OrdersRepository ordersRepository;
 
     private static final List<LedgerCategory> INVOICE_OWNERSHIP_CATEGORIES = List.of(
             LedgerCategory.INVOICE_ISSUED,
@@ -142,8 +144,8 @@ public class CustomerPaymentService {
 
             } else {
 
-                BigDecimal allocationAmount = paymentAmount.min(totalDebt);
-                BigDecimal overpay = paymentAmount.subtract(allocationAmount);
+                BigDecimal paid = paymentAmount.min(totalDebt);
+                BigDecimal overpay = paymentAmount.subtract(paid);
 
                 // ----------------------------
                 // 5️⃣ PAYMENT
@@ -154,7 +156,7 @@ public class CustomerPaymentService {
                                 .customer(debtor)
                                 .invoice(invoice)
                                 .type(CustomerTransactionType.PAYMENT)
-                                .amount(allocationAmount)
+                                .amount(paid)
                                 .createdAt(now)
                                 .note(request.note())
                                 .build()
@@ -162,39 +164,21 @@ public class CustomerPaymentService {
 
                 result.add(toDTO(paymentTx));
 
-                // ----------------------------
-                // 6️⃣ ALLOCATION
-                // ----------------------------
-                BigDecimal remaining = allocationAmount;
 
-                for (InvoiceOrder io : invoiceOrders) {
+                if (invoice.getType() == InvoiceEnums.InvoiceType.SIMPLE) {
 
-                    if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
+                    Orders order = invoiceOrders.get(0).getOrder();
 
-                    Orders order = io.getOrder();
+                    if (order != null) {
 
-                    BigDecimal orderDebt = calculateOrderDebt(order.getOrderNo());
-                    if (orderDebt.compareTo(BigDecimal.ZERO) <= 0) continue;
+                        order.setAmountPaid(order.getAmountPaid().add(paid));
+                        order.setAmountDueN(order.getAmountDueN().subtract(paid));
+                        order.setIncome(order.getIncome().add(paid));
 
-                    BigDecimal apply = remaining.min(orderDebt);
-
-                    CustomerTransaction allocationTx = customerTxRepository.save(
-                            CustomerTransaction.builder()
-                                    .branch(branch)
-                                    .customer(debtor)
-                                    .invoice(invoice)
-                                    .order(order)
-                                    .type(CustomerTransactionType.ALLOCATION)
-                                    .amount(apply)
-                                    .parentTransactionId(paymentTx.getId())
-                                    .createdAt(now)
-                                    .note("Розподіл оплати")
-                                    .build()
-                    );
-
-                    result.add(toDTO(allocationTx));
-                    remaining = remaining.subtract(apply);
+                        ordersRepository.save(order);
+                    }
                 }
+
 
                 // ----------------------------
                 // 7️⃣ ADVANCE (переплата)
@@ -218,7 +202,7 @@ public class CustomerPaymentService {
                 // ----------------------------
                 // 8️⃣ СТАТУС ІНВОЙСУ
                 // ----------------------------
-                BigDecimal remainingDebt = totalDebt.subtract(allocationAmount);
+                BigDecimal remainingDebt = totalDebt.subtract(paid);
 
                 if (remainingDebt.compareTo(BigDecimal.ZERO) <= 0) {
                     invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
@@ -398,11 +382,6 @@ public class CustomerPaymentService {
     public BigDecimal calculateInvoiceDebt(Long invoiceId) {
 
         return ledgerRepository.calculateInvoiceDebt(invoiceId); // борг
-    }
-
-    public BigDecimal calculateOrderDebt(Long orderId) {
-
-        return ledgerRepository.calculateOrderDebt(orderId);
     }
 
 }
