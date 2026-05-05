@@ -281,6 +281,7 @@ public class InvoiceService {
             order.setAmountDueN(order.getAmountDueN().subtract(debt));
             order.setIncome(order.getIncome().add(debt));
             order.setRahFacNo(invoiceNoFinal);
+            order.setStatusOrder(4);
 
             ordersToUpdate.add(order);
         }

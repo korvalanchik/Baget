@@ -170,10 +170,16 @@ public class CustomerPaymentService {
                     Orders order = invoiceOrders.get(0).getOrder();
 
                     if (order != null) {
-
-                        order.setAmountPaid(order.getAmountPaid().add(paid));
-                        order.setAmountDueN(order.getAmountDueN().subtract(paid));
+                        BigDecimal newAmountPaid = order.getAmountPaid().add(paid);
+                        BigDecimal newAmountDueN = order.getAmountDueN().subtract(paid);
+                        order.setAmountPaid(newAmountPaid);
+                        order.setAmountDueN(newAmountDueN);
                         order.setIncome(order.getIncome().add(paid));
+                        if (newAmountDueN.compareTo(BigDecimal.ZERO) <= 0) {
+                            order.setStatusOrder(4);
+                        } else {
+                            order.setStatusOrder(9);
+                        }
 
                         ordersRepository.save(order);
                     }
