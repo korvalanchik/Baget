@@ -13,15 +13,28 @@ public class TelegramResource {
         this.telegramService = telegramService;
     }
 
+//    @PostMapping("/send")
+//    public ResponseEntity<String> sendMessage(@RequestBody String message) {
+//        try {
+//            telegramService.sendMessage(message);
+//            return ResponseEntity.ok("Повідомлення відправлено у майстерню!");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body("Помилка відправки замовлення: " + e.getMessage());
+//        }
+//    }
+
+
     @PostMapping("/send")
-    public ResponseEntity<String> sendMessage(@RequestBody String message) {
+    public ResponseEntity<String> sendMessage(@RequestBody TelegramMessageRequest request) {
         try {
-            telegramService.sendMessage(message);
+            telegramService.sendMessage(request);
             return ResponseEntity.ok("Повідомлення відправлено у майстерню!");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Помилка відправки замовлення: " + e.getMessage());
         }
     }
+
 
 }
