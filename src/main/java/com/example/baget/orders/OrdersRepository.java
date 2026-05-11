@@ -46,6 +46,7 @@ public interface OrdersRepository extends JpaRepository<Orders, Long> {
             ON io.order = o
             AND io.invoice.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
         LEFT JOIN io.invoice i
+        WHERE o.statusOrder != 4
     """)
     Page<OrderSummaryView> findAllSummaryBy(Pageable pageable);
     List<Orders> findByRahFacNo(Long rahFacNo);
