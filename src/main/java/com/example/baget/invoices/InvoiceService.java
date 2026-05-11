@@ -237,6 +237,7 @@ public class InvoiceService {
                         .category(LedgerCategory.INVOICE_MERGE_OUT)
                         .amount(totalDebtToTransfer)
                         .createdAt(now)
+                        .createdBy(user)
                         .customerId(newInvoice.getCustomer().getCustNo())
                         .payer(payer)
                         .invoiceId(newInvoice.getId())
