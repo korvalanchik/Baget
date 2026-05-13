@@ -1,10 +1,7 @@
 package com.example.baget.customer;
 
 import com.example.baget.invoices.*;
-import com.example.baget.ledger.LedgerCategory;
-import com.example.baget.ledger.LedgerDirection;
-import com.example.baget.ledger.LedgerEntry;
-import com.example.baget.ledger.LedgerRepository;
+import com.example.baget.ledger.*;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.orders.OrdersService;
@@ -30,11 +27,11 @@ public class CustomerInvoiceService {
     private final UsersRepository usersRepository;
     private final InvoiceRepository invoiceRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
-    private final LedgerRepository ledgerRepository;
     private final EntityManager entityManager;
     private final InvoiceMapper invoiceMapper;
     private final InvoiceServiceUtil invoiceServiceUtil;
     private final OrdersService ordersService;
+    private final LedgerService ledgerService;
 
     @Transactional
     public InvoiceDTO issueInvoice(Long orderNo, IssueInvoiceFullRequest request, Authentication authentication) {
@@ -97,13 +94,15 @@ public class CustomerInvoiceService {
 
         invoiceOrderRepository.save(io);
 
+        CustomerTransactionType type = CustomerTransactionType.INVOICE;
+
         // 7️⃣ CustomerTransaction (для UI/історії)
         CustomerTransaction tx = CustomerTransaction.builder()
                 .customer(customer)
                 .order(order)
                 .branch(order.getBranch())
                 .invoice(invoice)
-                .type(CustomerTransactionType.INVOICE)
+                .type(type)
                 .amount(amount.negate()) // 🔥 борг = мінус
                 .createdAt(now)
                 .note("Інвойс №" + invoiceNo)
@@ -112,22 +111,40 @@ public class CustomerInvoiceService {
         customerTxRepository.save(tx);
 
         // 8️⃣ Ledger → борг клієнта
-        ledgerRepository.save(
-                LedgerEntry.builder()
-                        .branch(order.getBranch())
-                        .direction(LedgerDirection.OUT) // 🔥 борг
-                        .category(LedgerCategory.INVOICE_ISSUED)
-                        .amount(amount)
-                        .createdAt(now)
-                        .createdBy(user)
-                        .customerId(customer.getCustNo())
-                        .customerTransactionId(tx.getId())
-                        .orderId(order.getOrderNo())
-                        .invoiceId(invoice.getId())
-                        .reference("INV-" + invoiceNo)
-                        .note("Виставлення інвойсу")
-                        .build()
+        ledgerService.createEntry(
+                new LedgerRequest(
+                        order.getBranch(),
+                        type.getDirection(),          // 🔥 з enum
+                        type.getLedgerCategory(),     // 🔥 з enum
+                        amount,
+                        now,
+                        user,
+
+                        customer.getCustNo(),
+                        tx.getId(),
+                        null,
+                        invoice.getId(),
+
+                        "INV-" + invoiceNo,
+                        "Виставлення інвойсу"
+                )
         );
+//        ledgerRepository.save(
+//                LedgerEntry.builder()
+//                        .branch(order.getBranch())
+//                        .direction(LedgerDirection.OUT) // 🔥 борг
+//                        .category(LedgerCategory.INVOICE_ISSUED)
+//                        .amount(amount)
+//                        .createdAt(now)
+//                        .createdBy(user)
+//                        .customerId(customer.getCustNo())
+//                        .customerTransactionId(tx.getId())
+//                        .orderId(order.getOrderNo())
+//                        .invoiceId(invoice.getId())
+//                        .reference("INV-" + invoiceNo)
+//                        .note("Виставлення інвойсу")
+//                        .build()
+//        );
 
         // 9️⃣ Оновлюємо order
         ordersService.update(orderNo, request.getOrder());
