@@ -1,18 +1,16 @@
 package com.example.baget.ledger;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class LedgerService {
     private final LedgerRepository ledgerRepository;
 
-    public LedgerService(LedgerRepository ledgerRepository) {
-        this.ledgerRepository = ledgerRepository;
-    }
+    public void createEntry(LedgerRequest request) {
 
-    public LedgerEntry createEntry(LedgerRequest request) {
-
-        return ledgerRepository.save(
+        ledgerRepository.save(
                 LedgerEntry.builder()
                         .branch(request.branch())
                         .direction(request.direction())

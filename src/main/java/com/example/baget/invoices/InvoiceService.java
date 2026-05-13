@@ -3,10 +3,7 @@ package com.example.baget.invoices;
 import com.example.baget.branch.Branch;
 import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.*;
-import com.example.baget.ledger.LedgerCategory;
-import com.example.baget.ledger.LedgerDirection;
-import com.example.baget.ledger.LedgerEntry;
-import com.example.baget.ledger.LedgerRepository;
+import com.example.baget.ledger.*;
 import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
@@ -40,6 +37,7 @@ public class InvoiceService {
     private final OrdersRepository ordersRepository;
     private final BranchRepository branchRepository;
     private final CustomerTransactionRepository customerTransactionRepository;
+    private final LedgerService ledgerService;
 
     @Transactional
     public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
@@ -182,6 +180,8 @@ public class InvoiceService {
                         (existing, replacement) -> existing
                 ));
 
+        List<CustomerTransaction> txs = new ArrayList<>();
+
         for (Invoice old : invoices) {
 
             BigDecimal debt = invoiceDebts.get(old.getId());
@@ -194,25 +194,8 @@ public class InvoiceService {
                 throw new TransactionException("Не знайдено branch для інвойсу " + old.getInvoiceNo());
             }
 
-            ledgerRepository.save(
-                    LedgerEntry.builder()
-                            .branch(oldBranch)
-                            .direction(LedgerDirection.IN)
-                            .category(LedgerCategory.INVOICE_MERGE_IN)
-                            .amount(debt)
-                            .createdAt(now)
-                            .createdBy(user)
-                            .customerId(old.getCustomer().getCustNo())
-                            .payer(payer)
-                            .orderId(invoiceOrderMap.get(old.getId()).getOrderNo())
-                            .invoiceId(old.getId())
-                            .reference("MERGE->" + invoiceNo)
-                            .note("Перенос боргу в інвойс " + invoiceNo)
-                            .build()
-            );
-
 // CustomerTransactions: закриваємо борг по старому інвойсу
-            customerTransactionRepository.save(
+            CustomerTransaction tx = customerTransactionRepository.save(
                     CustomerTransaction.builder()
                             .branch(oldBranch)
                             .customer(old.getCustomer())
@@ -224,30 +207,15 @@ public class InvoiceService {
                             .note("Перенос боргу в інвойс " + invoiceNo)
                             .build()
             );
+            txs.add(tx);
+
         }
 
         Branch branch = branchRepository.findByBranchNo(request.branchNo())
                 .orElseThrow(() -> new TransactionException("Філію не вказано"));
 
-// 9️⃣ Ledger: відкриваємо борг на новому інвойсі (OUT)
-        ledgerRepository.save(
-                LedgerEntry.builder()
-                        .branch(branch)
-                        .direction(LedgerDirection.OUT)
-                        .category(LedgerCategory.INVOICE_MERGE_OUT)
-                        .amount(totalDebtToTransfer)
-                        .createdAt(now)
-                        .createdBy(user)
-                        .customerId(newInvoice.getCustomer().getCustNo())
-                        .payer(payer)
-                        .invoiceId(newInvoice.getId())
-                        .reference("MERGE-FROM-INVOICES") // + invoiceIds)
-                        .note("Об'єднання інвойсів")
-                        .build()
-        );
-
 // CustomerTransactions: відкриваємо борг на новому інвойсі
-        customerTransactionRepository.save(
+        CustomerTransaction mergeOutTx = customerTransactionRepository.save(
                 CustomerTransaction.builder()
                         .branch(branch)
                         .customer(newInvoice.getCustomer())
@@ -258,6 +226,30 @@ public class InvoiceService {
                         .note("Об'єднання інвойсів: " + invoiceIds)
                         .build()
         );
+        txs.add(mergeOutTx);
+
+        for (CustomerTransaction tx : txs) {
+
+            ledgerService.createEntry(
+                    new LedgerRequest(
+                            tx.getBranch(),
+                            tx.getType().getDirection(),          // 🔥 з enum
+                            tx.getType().getLedgerCategory(),     // 🔥 з enum
+                            tx.getAmount().abs(),                 // 🔥 нормалізація
+                            now,
+                            user,
+
+                            tx.getCustomer().getCustNo(),
+                            tx.getId(),                           // 🔥 зв’язок
+                            payer,
+                            tx.getInvoice() != null ? tx.getInvoice().getId() : null,
+
+                            buildMergeReference(tx, invoiceNo),
+                            tx.getNote()
+                    )
+            );
+        }
+
 
 // 🔟 Старі інвойси → MERGED
         for (Invoice old : invoices) {
@@ -291,6 +283,17 @@ public class InvoiceService {
         return invoiceMapper.toDto(newInvoice);
 
     }
+
+    private String buildMergeReference(CustomerTransaction tx, Long newInvoiceNo) {
+
+        if (tx.getType() == CustomerTransactionType.INVOICE_MERGE_IN) {
+            return "MERGE->INV-" + newInvoiceNo;
+        }
+
+        return "MERGE-OUT->INV-" + newInvoiceNo;
+    }
+
+
     public InvoiceDetailsDTO getInvoice(Long invoiceId) {
         return invoiceRepository.findInvoiceDetails(invoiceId)
                 .orElseThrow(() -> new TransactionException("Invoice not found"));

@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.finance.PaymentOrchestrator;
 import com.example.baget.invoices.InvoicePaymentRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ public class CustomerPaymentResource {
 
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
+    private final PaymentOrchestrator paymentOrchestrator;
 
     @PostMapping("/invoices/payments")
     public ResponseEntity<List<CustomerTransactionDTO>> addPayment(
@@ -23,7 +25,7 @@ public class CustomerPaymentResource {
             Authentication authentication
     ) {
         // делегуємо всю логіку в сервіс
-        List<CustomerTransactionDTO> dto = customerPaymentService.registerInvoicePayment(request, authentication);
+        List<CustomerTransactionDTO> dto = paymentOrchestrator.processPayment(request, authentication);
 
         return ResponseEntity.ok(dto);
     }
