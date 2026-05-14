@@ -117,30 +117,40 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             FROM orders o
             WHERE o.BranchNo IN (:allowedBranches)
         ),
-        
+    
         orders_without_invoice AS (
             SELECT
                 bo.CustNo,
-                COUNT(*) AS pending_orders
+                COUNT(DISTINCT bo.OrderNo) AS pending_orders
             FROM base_orders bo
-            LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
-            WHERE io.order_no IS NULL
+    
+            LEFT JOIN invoice_orders io
+                ON io.order_no = bo.OrderNo
+    
+            LEFT JOIN invoices i
+                ON i.id = io.invoice_id
+               AND i.lifecycle = 'ACTIVE'
+    
+            WHERE i.id IS NULL
               AND bo.StatusOrder < 4
+    
             GROUP BY bo.CustNo
         ),
-        
+    
         invoice_stats AS (
             SELECT
                 o.CustNo,
                 COUNT(DISTINCT io.invoice_id) AS invoice_count
             FROM invoice_orders io
-            JOIN orders o ON o.OrderNo = io.order_no
-            JOIN invoices i ON i.id = io.invoice_id
+            JOIN orders o
+                ON o.OrderNo = io.order_no
+            JOIN invoices i
+                ON i.id = io.invoice_id
             WHERE o.BranchNo IN (:allowedBranches)
               AND i.lifecycle = 'ACTIVE'
             GROUP BY o.CustNo
         ),
-        
+    
         ledger_balance AS (
             SELECT
                 le.customer_id,
@@ -150,62 +160,74 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                         ELSE -le.amount
                     END
                 ) AS balance,
+    
                 MAX(
                     CASE
                         WHEN le.direction = 'IN'
                         THEN le.created_at
                     END
                 ) AS last_payment_date
+    
             FROM ledger_entries le
             WHERE le.branch_id IN (:allowedBranches)
             GROUP BY le.customer_id
         ),
-        
+    
         payers AS (
             SELECT
-                le.customer_id,
+                le.payer_id AS customer_id,
+    
                 COUNT(DISTINCT le.invoice_id) AS consolidated_invoices,
-                SUM(
-                        CASE
-                            WHEN le.direction = 'IN' THEN le.amount
-                            ELSE -le.amount
-                            END
-                    ) AS total_turnover
+    
+                SUM(le.amount) AS total_turnover
+    
             FROM ledger_entries le
-            WHERE le.customer_id IN (
-                SELECT DISTINCT payer_id
-                FROM ledger_entries
-                WHERE payer_id IS NOT NULL
-                  AND payer_id <> customer_id
-                  AND le.branch_id IN (:allowedBranches)
-            )
-            GROUP BY le.customer_id
+            WHERE le.category = 'INVOICE_MERGE_IN'
+              AND le.payer_id IS NOT NULL
+              AND le.payer_id <> le.customer_id
+              AND le.branch_id IN (:allowedBranches)
+    
+            GROUP BY le.payer_id
         )
-        
+    
         SELECT
             c.CustNo AS customer_id,
             c.Company,
             c.Mobile,
-        
+    
             COALESCE(owi.pending_orders, 0) AS pending_orders,
+    
             COALESCE(inv.invoice_count, 0) AS invoice_count,
+    
             COALESCE(lb.balance, 0) AS balance,
+    
             lb.last_payment_date,
-        
+    
             COALESCE(p.consolidated_invoices, 0) AS consolidated_invoices,
+    
             COALESCE(p.total_turnover, 0) AS total_turnover
-        
+    
         FROM customer c
-        
+    
         JOIN (
-            SELECT DISTINCT CustNo FROM base_orders
-        ) bo ON bo.CustNo = c.CustNo
-        
-        LEFT JOIN orders_without_invoice owi ON owi.CustNo = c.CustNo
-        LEFT JOIN invoice_stats inv ON inv.CustNo = c.CustNo
-        LEFT JOIN ledger_balance lb ON lb.customer_id = c.CustNo
-        LEFT JOIN payers p ON p.customer_id = c.CustNo
+            SELECT DISTINCT CustNo
+            FROM base_orders
+        ) bo
+            ON bo.CustNo = c.CustNo
+    
+        LEFT JOIN orders_without_invoice owi
+            ON owi.CustNo = c.CustNo
+    
+        LEFT JOIN invoice_stats inv
+            ON inv.CustNo = c.CustNo
+    
+        LEFT JOIN ledger_balance lb
+            ON lb.customer_id = c.CustNo
+    
+        LEFT JOIN payers p
+            ON p.customer_id = c.CustNo
+    
+        ORDER BY c.Company
     """, nativeQuery = true)
     List<CustomerDashboardRow> getDashboard(@Param("allowedBranches") Set<Long> allowedBranches);
-
 }
