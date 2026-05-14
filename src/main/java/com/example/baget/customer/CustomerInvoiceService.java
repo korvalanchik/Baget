@@ -109,6 +109,7 @@ public class CustomerInvoiceService {
                 .build();
 
         customerTxRepository.save(tx);
+        entityManager.flush();
 
         // 8️⃣ Ledger → борг клієнта
         ledgerService.createEntry(
