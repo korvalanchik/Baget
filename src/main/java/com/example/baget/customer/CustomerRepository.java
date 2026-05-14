@@ -125,7 +125,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             FROM base_orders bo
             LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
             WHERE io.order_no IS NULL
-              AND bo.StatusOrder < 3
+              AND bo.StatusOrder < 4
             GROUP BY bo.CustNo
         ),
         
@@ -160,22 +160,27 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             WHERE le.branch_id IN (:allowedBranches)
             GROUP BY le.customer_id
         ),
-        
         payers AS (
             SELECT
-                i.customer_id,
+                i.
+                customer_id,
                 COUNT(DISTINCT i.id) AS consolidated_invoices,
                 SUM(i.total_amount) AS total_turnover
-            FROM invoices i
-            JOIN invoice_orders io ON io.invoice_id = i.id
-            JOIN orders o ON o.OrderNo = io.order_no
+            FROM
+                invoices i
             WHERE i.lifecycle = 'ACTIVE'
-              AND i.type = 'CONSOLIDATED'
-              AND i.customer_id <> o.CustNo
-              AND o.BranchNo IN (:allowedBranches)
+                AND i.type = 'CONSOLIDATED'
+                AND EXISTS (
+                    SELECT 1
+                    FROM invoice_orders io
+                    JOIN orders o ON o.OrderNo = io.order_no
+                    WHERE io.invoice_id = i.id
+                    AND o.BranchNo IN (:allowedBranches)
+                    AND i.customer_id <> o.CustNo
+                )
             GROUP BY i.customer_id
         )
-        
+    
         SELECT
             c.CustNo AS customer_id,
             c.Company,
