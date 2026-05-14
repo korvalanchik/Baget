@@ -20,6 +20,7 @@ public class LedgerService {
                         .createdBy(request.createdBy())
 
                         .customerId(request.customerId())
+                        .customerTransactionId(request.customerTransactionId())
                         .payer(request.payer())
                         .invoiceId(request.invoiceId())
                         .reference(request.reference())
