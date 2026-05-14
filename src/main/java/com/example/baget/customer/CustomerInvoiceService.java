@@ -97,7 +97,8 @@ public class CustomerInvoiceService {
         CustomerTransactionType type = CustomerTransactionType.INVOICE;
 
         // 7️⃣ CustomerTransaction (для UI/історії)
-        CustomerTransaction tx = CustomerTransaction.builder()
+        CustomerTransaction tx = saveAndFlush(
+             CustomerTransaction.builder()
                 .customer(customer)
                 .order(order)
                 .branch(order.getBranch())
@@ -106,10 +107,8 @@ public class CustomerInvoiceService {
                 .amount(amount.negate()) // 🔥 борг = мінус
                 .createdAt(now)
                 .note("Інвойс №" + invoiceNo)
-                .build();
-
-        customerTxRepository.save(tx);
-        entityManager.flush();
+                .build()
+        );
 
         // 8️⃣ Ledger → борг клієнта
         ledgerService.createEntry(
@@ -151,6 +150,12 @@ public class CustomerInvoiceService {
         ordersService.update(orderNo, request.getOrder());
 
         return invoiceMapper.toDto(invoice);
+    }
+
+    private CustomerTransaction saveAndFlush(CustomerTransaction tx) {
+        customerTxRepository.save(tx);
+        entityManager.flush();
+        return tx;
     }
 
 }
