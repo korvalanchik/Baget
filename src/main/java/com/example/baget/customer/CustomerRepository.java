@@ -160,27 +160,28 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             WHERE le.branch_id IN (:allowedBranches)
             GROUP BY le.customer_id
         ),
+        
         payers AS (
             SELECT
-                i.
-                customer_id,
-                COUNT(DISTINCT i.id) AS consolidated_invoices,
-                SUM(i.total_amount) AS total_turnover
-            FROM
-                invoices i
-            WHERE i.lifecycle = 'ACTIVE'
-                AND i.type = 'CONSOLIDATED'
-                AND EXISTS (
-                    SELECT 1
-                    FROM invoice_orders io
-                    JOIN orders o ON o.OrderNo = io.order_no
-                    WHERE io.invoice_id = i.id
-                    AND o.BranchNo IN (:allowedBranches)
-                    AND i.customer_id <> o.CustNo
-                )
-            GROUP BY i.customer_id
+                le.customer_id,
+                COUNT(DISTINCT le.invoice_id) AS consolidated_invoices,
+                SUM(
+                        CASE
+                            WHEN le.direction = 'IN' THEN le.amount
+                            ELSE -le.amount
+                            END
+                    ) AS total_turnover
+            FROM ledger_entries le
+            WHERE le.customer_id IN (
+                SELECT DISTINCT payer_id
+                FROM ledger_entries
+                WHERE payer_id IS NOT NULL
+                  AND payer_id <> customer_id
+                  AND le.branch_id IN (:allowedBranches)
+            )
+            GROUP BY le.customer_id
         )
-    
+        
         SELECT
             c.CustNo AS customer_id,
             c.Company,
