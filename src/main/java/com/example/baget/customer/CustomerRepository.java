@@ -126,6 +126,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
             WHERE io.order_no IS NULL
               AND bo.StatusOrder < 4
+              AND bo.OrderNo > 41665
             GROUP BY bo.CustNo
         ),
     
