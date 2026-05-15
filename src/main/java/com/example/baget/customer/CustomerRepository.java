@@ -201,12 +201,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     
         FROM customer c
     
-        JOIN (
-            SELECT DISTINCT CustNo
-            FROM base_orders
-        ) bo
-            ON bo.CustNo = c.CustNo
-    
         LEFT JOIN orders_without_invoice owi
             ON owi.CustNo = c.CustNo
     
@@ -218,6 +212,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     
         LEFT JOIN payers p
             ON p.customer_id = c.CustNo
+
+        WHERE EXISTS (
+            SELECT 1
+            FROM base_orders bo
+            WHERE bo.CustNo = c.CustNo
+        )
     
         ORDER BY c.Company
     """, nativeQuery = true)
