@@ -39,7 +39,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
         orders_without_invoice AS (
             SELECT
                 bo.CustNo,
-                COUNT(*) AS pending_orders
+                COUNT(DISTINCT bo.OrderNo) AS pending_orders
             FROM base_orders bo
             LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
             WHERE io.order_no IS NULL
@@ -117,23 +117,15 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             FROM orders o
             WHERE o.BranchNo IN (:allowedBranches)
         ),
-    
+
         orders_without_invoice AS (
             SELECT
                 bo.CustNo,
                 COUNT(DISTINCT bo.OrderNo) AS pending_orders
             FROM base_orders bo
-    
-            LEFT JOIN invoice_orders io
-                ON io.order_no = bo.OrderNo
-    
-            LEFT JOIN invoices i
-                ON i.id = io.invoice_id
-               AND i.lifecycle = 'ACTIVE'
-    
-            WHERE i.id IS NULL
+            LEFT JOIN invoice_orders io ON io.order_no = bo.OrderNo
+            WHERE io.order_no IS NULL
               AND bo.StatusOrder < 4
-    
             GROUP BY bo.CustNo
         ),
     
