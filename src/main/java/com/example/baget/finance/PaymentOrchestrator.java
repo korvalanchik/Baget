@@ -52,7 +52,7 @@ public class PaymentOrchestrator {
 
         OffsetDateTime now = OffsetDateTime.now();
 
-        PaymentContext ctx = resolveContext(request, user);
+        InvoicePaymentContext ctx = resolveContext(request, user);
 
         List<PaymentProcessor> matchedProcessors  = processors.stream()
                 .filter(p -> p.supports(request))
@@ -90,7 +90,7 @@ public class PaymentOrchestrator {
 
 
     private LedgerRequest buildLedgerRequest(
-            PaymentContext ctx,
+            InvoicePaymentContext ctx,
             CustomerTransaction tx,
             User user,
             OffsetDateTime now,
@@ -118,7 +118,7 @@ public class PaymentOrchestrator {
     }
 
 
-    private String buildReference(PaymentContext ctx, CustomerTransaction tx) {
+    private String buildReference(InvoicePaymentContext ctx, CustomerTransaction tx) {
 
         if (tx.getType() == CustomerTransactionType.ADVANCE) {
             return "ADV-" + ctx.debtor().getCustNo();
@@ -127,7 +127,7 @@ public class PaymentOrchestrator {
         return "PAY-" + ctx.invoice().getInvoiceNo();
     }
 
-    private PaymentContext resolveContext(InvoicePaymentRequest request, User user) {
+    private InvoicePaymentContext resolveContext(InvoicePaymentRequest request, User user) {
 
         if (request.invoiceId() != null) {
 
@@ -138,7 +138,8 @@ public class PaymentOrchestrator {
 
             validateBranchAccess(user, branch.getBranchNo());
 
-            return new PaymentContext(
+            return new InvoicePaymentContext(
+                    user,
                     branch,
                     invoice.getCustomer(),
                     invoice.getEffectivePayer(),
@@ -158,7 +159,7 @@ public class PaymentOrchestrator {
         Customer customer = customerRepository.findById(request.customerId())
                 .orElseThrow(() -> new TransactionException("Клієнт не знайдений"));
 
-        return new PaymentContext(branch, customer, customer, null);
+        return new InvoicePaymentContext(user, branch, customer, customer, null);
     }
 
     private void validateBranchAccess(User user, Long branchNo) {
