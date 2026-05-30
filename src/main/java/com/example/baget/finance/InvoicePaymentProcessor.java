@@ -6,12 +6,9 @@ import com.example.baget.customer.CustomerTransaction;
 import com.example.baget.customer.CustomerTransactionRepository;
 import com.example.baget.customer.CustomerTransactionType;
 import com.example.baget.invoices.*;
-import com.example.baget.ledger.LedgerCategory;
-import com.example.baget.ledger.LedgerDirection;
-import com.example.baget.ledger.LedgerEntry;
 import com.example.baget.ledger.LedgerRepository;
-import com.example.baget.orders.OrdersRepository;
 import com.example.baget.orders.Orders;
+import com.example.baget.orders.OrdersRepository;
 import com.example.baget.users.User;
 import com.example.baget.util.TransactionException;
 import jakarta.transaction.Transactional;
@@ -168,21 +165,21 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
         // ----------------------------
         // LEDGER
         // ----------------------------
-        ledgerRepository.save(
-                LedgerEntry.builder()
-                        .branch(branch)
-                        .direction(LedgerDirection.IN)
-                        .category(LedgerCategory.PAYMENT_RECEIVED)
-                        .amount(paymentAmount)
-                        .createdAt(now)
-                        .createdBy(user)
-                        .customerId(debtor.getCustNo())
-                        .payer(payer)
-                        .invoiceId(invoice.getId())
-                        .reference("PAY-" + invoice.getInvoiceNo())
-                        .note(request.note())
-                        .build()
-        );
+//        ledgerRepository.save(
+//                LedgerEntry.builder()
+//                        .branch(branch)
+//                        .direction(LedgerDirection.IN)
+//                        .category(LedgerCategory.PAYMENT_RECEIVED)
+//                        .amount(paymentAmount)
+//                        .createdAt(now)
+//                        .createdBy(user)
+//                        .customerId(debtor.getCustNo())
+//                        .payer(payer)
+//                        .invoiceId(invoice.getId())
+//                        .reference("PAY-" + invoice.getInvoiceNo())
+//                        .note(request.note())
+//                        .build()
+//        );
 
         return result;
     }
