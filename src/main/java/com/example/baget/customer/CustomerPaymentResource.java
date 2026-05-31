@@ -47,14 +47,13 @@ public class CustomerPaymentResource {
         return customerPaymentService.getCustomerFinance(customerId);
     }
 
-    @PostMapping("/{customerId}/advance")
-    public ResponseEntity<CustomerTransactionDTO> addAdvance(
-            @PathVariable Long customerId,
+    @PostMapping("/advance")
+    public ResponseEntity<List<CustomerTransactionDTO>> addAdvance(
             @RequestBody InvoicePaymentRequest request,
             Authentication authentication
     ) {
         // делегуємо всю логіку в сервіс
-        CustomerTransactionDTO dto = customerPaymentService.registerAdvancePayment(customerId, request, authentication);
+        List<CustomerTransactionDTO> dto = paymentOrchestrator.processPayment(request, authentication);
 
         return ResponseEntity.ok(dto);
     }
