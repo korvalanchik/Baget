@@ -9,7 +9,6 @@ import com.example.baget.invoices.*;
 import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
-import com.example.baget.users.User;
 import com.example.baget.util.TransactionException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -51,8 +50,6 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
         Invoice invoice = ctx.invoice();
         Branch branch = ctx.branch();
         Customer debtor = ctx.debtor();
-        Customer payer = ctx.payer();
-        User user = ctx.user();
 
         BigDecimal totalDebt = calculateInvoiceDebt(invoice.getId());
 
@@ -161,25 +158,6 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
                 invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
             }
         }
-
-        // ----------------------------
-        // LEDGER
-        // ----------------------------
-//        ledgerRepository.save(
-//                LedgerEntry.builder()
-//                        .branch(branch)
-//                        .direction(LedgerDirection.IN)
-//                        .category(LedgerCategory.PAYMENT_RECEIVED)
-//                        .amount(paymentAmount)
-//                        .createdAt(now)
-//                        .createdBy(user)
-//                        .customerId(debtor.getCustNo())
-//                        .payer(payer)
-//                        .invoiceId(invoice.getId())
-//                        .reference("PAY-" + invoice.getInvoiceNo())
-//                        .note(request.note())
-//                        .build()
-//        );
 
         return result;
     }
