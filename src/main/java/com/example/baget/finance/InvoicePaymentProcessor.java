@@ -6,7 +6,6 @@ import com.example.baget.customer.CustomerTransaction;
 import com.example.baget.customer.CustomerTransactionRepository;
 import com.example.baget.customer.CustomerTransactionType;
 import com.example.baget.invoices.*;
-import com.example.baget.ledger.LedgerRepository;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
 import com.example.baget.util.TransactionException;
@@ -26,7 +25,6 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
     private final CustomerTransactionRepository customerTxRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
     private final OrdersRepository ordersRepository;
-    private final LedgerRepository ledgerRepository;
 
     @Override
     public boolean supports(InvoicePaymentRequest request) {
@@ -51,7 +49,7 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
         Branch branch = ctx.branch();
         Customer debtor = ctx.debtor();
 
-        BigDecimal totalDebt = calculateInvoiceDebt(invoice.getId());
+        BigDecimal totalDebt = calculateInvoiceDebt(invoice);
 
         List<InvoiceOrder> invoiceOrders =
                 invoiceOrderRepository.findByInvoice_Id(invoice.getId());
@@ -162,9 +160,17 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
         return result;
     }
 
-    public BigDecimal calculateInvoiceDebt(Long invoiceId) {
+    public BigDecimal calculateInvoiceDebt(Invoice invoice) {
+        Long invoiceId = invoice.getId();
 
-        return ledgerRepository.calculateInvoiceDebt(invoiceId); // борг
+        BigDecimal paid = customerTxRepository.totalPayments(invoiceId);
+
+        BigDecimal allocated = customerTxRepository.totalAdvanceAllocated(invoiceId);
+
+        return invoice.getTotalAmount()
+                .subtract(paid)
+                .subtract(allocated)
+                .max(BigDecimal.ZERO);
     }
 
 }

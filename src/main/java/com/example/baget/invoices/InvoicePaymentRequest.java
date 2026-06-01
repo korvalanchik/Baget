@@ -7,5 +7,6 @@ public record InvoicePaymentRequest(
         Long invoiceId,
         Long customerId,
         BigDecimal amount,
+        BigDecimal allocationAmount,  // списання авансу
         String note
 ) {}

@@ -47,4 +47,21 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
     """)
     BigDecimal calculateAvailableAdvance(@Param("customerId") Long customerId);
 
+    @Query("""
+    select coalesce(sum(ct.amount),0)
+    from CustomerTransaction ct
+    where ct.invoice.id = :invoiceId
+      and ct.type = com.example.baget.customer.CustomerTransactionType.PAYMENT
+      and ct.active = true
+    """)
+    BigDecimal totalPayments(@Param("invoiceId") Long invoiceId);
+
+    @Query("""
+    select abs(coalesce(sum(ct.amount),0))
+    from CustomerTransaction ct
+    where ct.invoice.id = :invoiceId
+      and ct.type = com.example.baget.customer.CustomerTransactionType.ADVANCE_ALLOCATION
+      and ct.active = true
+    """)
+    BigDecimal totalAdvanceAllocated(@Param("invoiceId") Long invoiceId);
 }
