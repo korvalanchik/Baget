@@ -8,6 +8,7 @@ public record CustomerFinanceDTO(
         String customerPhone,
 
         BigDecimal balance,
+        BigDecimal availableAdvance,
         BigDecimal totalDebt,
 
         List<CustomerInvoiceDTO> invoices,

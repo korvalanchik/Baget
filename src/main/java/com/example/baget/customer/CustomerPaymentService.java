@@ -364,6 +364,8 @@ public class CustomerPaymentService {
 
         BigDecimal balance =
                 ledgerRepository.getCustomerBalance(customerId);
+        BigDecimal availableAdvance =
+                customerTxRepository.calculateAvailableAdvance(customerId);
 
         List<CustomerInvoiceDTO> invoices =
                 invoiceRepository.findOpenInvoices(customerId);
@@ -379,6 +381,7 @@ public class CustomerPaymentService {
                 customer.getCompany(),
                 customer.getMobile(),
                 balance,
+                availableAdvance,
                 totalDebt,
                 invoices,
                 ledger

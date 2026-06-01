@@ -10,7 +10,8 @@ public enum CustomerTransactionType {
     REFUND(LedgerCategory.CUSTOMER_REFUND, LedgerDirection.OUT),
     INVOICE(LedgerCategory.INVOICE_ISSUED, LedgerDirection.OUT),
     INVOICE_MERGE_IN(LedgerCategory.INVOICE_MERGE_IN, LedgerDirection.IN),
-    INVOICE_MERGE_OUT(LedgerCategory.INVOICE_MERGE_OUT, LedgerDirection.OUT);
+    INVOICE_MERGE_OUT(LedgerCategory.INVOICE_MERGE_OUT, LedgerDirection.OUT),
+    ADVANCE_ALLOCATION(LedgerCategory.CUSTOMER_ADVANCE,LedgerDirection.OUT);
     private final LedgerCategory ledgerCategory;
     private final LedgerDirection direction;
 

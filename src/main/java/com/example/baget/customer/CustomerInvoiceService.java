@@ -129,22 +129,6 @@ public class CustomerInvoiceService {
                         "Виставлення інвойсу"
                 )
         );
-//        ledgerRepository.save(
-//                LedgerEntry.builder()
-//                        .branch(order.getBranch())
-//                        .direction(LedgerDirection.OUT) // 🔥 борг
-//                        .category(LedgerCategory.INVOICE_ISSUED)
-//                        .amount(amount)
-//                        .createdAt(now)
-//                        .createdBy(user)
-//                        .customerId(customer.getCustNo())
-//                        .customerTransactionId(tx.getId())
-//                        .orderId(order.getOrderNo())
-//                        .invoiceId(invoice.getId())
-//                        .reference("INV-" + invoiceNo)
-//                        .note("Виставлення інвойсу")
-//                        .build()
-//        );
 
         // 9️⃣ Оновлюємо order
         ordersService.update(orderNo, request.getOrder());
