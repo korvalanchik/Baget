@@ -24,7 +24,6 @@ public class CustomerPaymentResource {
             @RequestBody InvoicePaymentRequest request,
             Authentication authentication
     ) {
-        // делегуємо всю логіку в сервіс
         List<CustomerTransactionDTO> dto = paymentOrchestrator.processPayment(request, authentication);
 
         return ResponseEntity.ok(dto);

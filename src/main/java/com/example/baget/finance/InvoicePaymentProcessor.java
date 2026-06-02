@@ -25,6 +25,7 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
     private final CustomerTransactionRepository customerTxRepository;
     private final InvoiceOrderRepository invoiceOrderRepository;
     private final OrdersRepository ordersRepository;
+    private final InvoiceFinanceService invoiceFinanceService;
 
     @Override
     public boolean supports(InvoicePaymentRequest request) {
@@ -49,7 +50,7 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
         Branch branch = ctx.branch();
         Customer debtor = ctx.debtor();
 
-        BigDecimal totalDebt = calculateInvoiceDebt(invoice);
+        BigDecimal totalDebt = invoiceFinanceService.calculateInvoiceDebt(invoice);
 
         List<InvoiceOrder> invoiceOrders =
                 invoiceOrderRepository.findByInvoice_Id(invoice.getId());
@@ -148,29 +149,9 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
             // ----------------------------
             // Invoice status
             // ----------------------------
-            BigDecimal remainingDebt = totalDebt.subtract(paid);
-
-            if (remainingDebt.compareTo(BigDecimal.ZERO) <= 0) {
-                invoice.setStatus(InvoiceEnums.InvoiceStatus.PAID);
-            } else {
-                invoice.setStatus(InvoiceEnums.InvoiceStatus.PARTIALLY_PAID);
-            }
-        }
+            invoiceFinanceService.refreshInvoiceStatus(invoice);        }
 
         return result;
-    }
-
-    public BigDecimal calculateInvoiceDebt(Invoice invoice) {
-        Long invoiceId = invoice.getId();
-
-        BigDecimal paid = customerTxRepository.totalPayments(invoiceId);
-
-        BigDecimal allocated = customerTxRepository.totalAdvanceAllocated(invoiceId);
-
-        return invoice.getTotalAmount()
-                .subtract(paid)
-                .subtract(allocated)
-                .max(BigDecimal.ZERO);
     }
 
 }
