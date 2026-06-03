@@ -36,6 +36,7 @@ public class CustomerPaymentService {
     private final BranchRepository branchRepository;
     private final UsersRepository usersRepository;
     private final OrdersRepository ordersRepository;
+    private final CustomerTransactionMapper customerTransactionMapper;
 
     private static final List<LedgerCategory> INVOICE_OWNERSHIP_CATEGORIES = List.of(
             LedgerCategory.INVOICE_ISSUED,
@@ -108,7 +109,7 @@ public class CustomerPaymentService {
                             .build()
             );
 
-            result.add(toDTO(advanceTx));
+            result.add(customerTransactionMapper.toDTO(advanceTx));
 
         } else {
 
@@ -140,7 +141,7 @@ public class CustomerPaymentService {
                                 .build()
                 );
 
-                result.add(toDTO(advanceTx));
+                result.add(customerTransactionMapper.toDTO(advanceTx));
 
             } else {
 
@@ -162,7 +163,7 @@ public class CustomerPaymentService {
                                 .build()
                 );
 
-                result.add(toDTO(paymentTx));
+                result.add(customerTransactionMapper.toDTO(paymentTx));
 
 
                 if (invoice.getType() == InvoiceEnums.InvoiceType.SIMPLE) {
@@ -202,7 +203,7 @@ public class CustomerPaymentService {
                                     .build()
                     );
 
-                    result.add(toDTO(advanceTx));
+                    result.add(customerTransactionMapper.toDTO(advanceTx));
                 }
 
                 // ----------------------------
@@ -239,20 +240,6 @@ public class CustomerPaymentService {
                         .build()
         );
         return result;
-    }
-
-    private CustomerTransactionDTO toDTO(CustomerTransaction tx) {
-        return CustomerTransactionDTO.builder()
-                .id(tx.getId())
-                .customerId(tx.getCustomer().getCustNo())
-                .invoiceId(tx.getInvoice() != null ? tx.getInvoice().getId() : null)
-                .orderNo(tx.getOrder() != null ? tx.getOrder().getOrderNo() : null)
-                .amount(tx.getAmount())
-                .type(tx.getType())
-                .parentTransactionId(tx.getParentTransactionId()) // <-- додаємо тут
-                .note(tx.getNote())
-                .createdAt(tx.getCreatedAt())
-                .build();
     }
 
     @Transactional

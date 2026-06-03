@@ -23,7 +23,7 @@ public class AdvancePaymentProcessor implements PaymentProcessor {
 
     @Override
     public List<CustomerTransaction> process(
-            InvoicePaymentContext ctx,
+            InvoiceOperationContext ctx,
             InvoicePaymentRequest request,
             OffsetDateTime now
     ) {

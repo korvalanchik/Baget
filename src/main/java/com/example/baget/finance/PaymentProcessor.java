@@ -11,7 +11,7 @@ public interface PaymentProcessor {
     boolean supports(InvoicePaymentRequest request);
 
     List<CustomerTransaction> process(
-            InvoicePaymentContext ctx,
+            InvoiceOperationContext ctx,
             InvoicePaymentRequest request,
             OffsetDateTime now
     );

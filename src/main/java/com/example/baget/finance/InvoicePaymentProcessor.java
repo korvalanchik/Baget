@@ -35,7 +35,7 @@ public class InvoicePaymentProcessor implements PaymentProcessor {
     @Override
     @Transactional
     public List<CustomerTransaction> process(
-            InvoicePaymentContext ctx,
+            InvoiceOperationContext ctx,
             InvoicePaymentRequest request,
             OffsetDateTime now
     ) {

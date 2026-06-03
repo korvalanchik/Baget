@@ -1,18 +1,18 @@
 package com.example.baget.finance;
 
-import com.example.baget.branch.Branch;
-import com.example.baget.branch.BranchRepository;
-import com.example.baget.customer.*;
-import com.example.baget.invoices.Invoice;
+import com.example.baget.customer.CustomerTransaction;
+import com.example.baget.customer.CustomerTransactionDTO;
+import com.example.baget.customer.CustomerTransactionMapper;
+import com.example.baget.customer.CustomerTransactionType;
 import com.example.baget.invoices.InvoicePaymentRequest;
-import com.example.baget.invoices.InvoiceRepository;
-import com.example.baget.ledger.*;
+import com.example.baget.ledger.LedgerCategory;
+import com.example.baget.ledger.LedgerDirection;
+import com.example.baget.ledger.LedgerRequest;
+import com.example.baget.ledger.LedgerService;
 import com.example.baget.users.User;
-import com.example.baget.users.UsersRepository;
 import com.example.baget.util.TransactionException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,34 +25,19 @@ public class PaymentOrchestrator {
 
     private final List<PaymentProcessor> processors;
     private final LedgerService ledgerService;
-    private final UsersRepository usersRepository;
-    private final BranchRepository branchRepository;
-    private final CustomerRepository customerRepository;
-    private final InvoiceRepository invoiceRepository;
-    private final LedgerRepository ledgerRepository;
-
-    private static final List<LedgerCategory> INVOICE_OWNERSHIP_CATEGORIES = List.of(
-            LedgerCategory.INVOICE_ISSUED,
-            LedgerCategory.INVOICE_MERGE_OUT
-    );
+    private final CustomerTransactionMapper customerTransactionMapper;
 
     @Transactional
     public List<CustomerTransactionDTO> processPayment(
+            InvoiceOperationContext ctx,
             InvoicePaymentRequest request,
-            Authentication authentication) {
-
-        String username = authentication.getName();
-
-        User user = usersRepository.findByUsername(username)
-                .orElseThrow(() -> new TransactionException("Користувач не знайдений: " + username));
+            User user) {
 
         if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new TransactionException("Сума оплати має бути більше 0");
         }
 
         OffsetDateTime now = OffsetDateTime.now();
-
-        InvoicePaymentContext ctx = resolveContext(request, user);
 
         List<PaymentProcessor> matchedProcessors  = processors.stream()
                 .filter(p -> p.supports(request))
@@ -71,26 +56,11 @@ public class PaymentOrchestrator {
             ledgerService.createEntry(buildLedgerRequest(ctx, tx, user, now, request.note()));
         }
 
-        return txs.stream().map(this::toDTO).toList();
+        return txs.stream().map(customerTransactionMapper::toDTO).toList();
     }
-
-    private CustomerTransactionDTO toDTO(CustomerTransaction tx) {
-        return CustomerTransactionDTO.builder()
-                .id(tx.getId())
-                .customerId(tx.getCustomer().getCustNo())
-                .invoiceId(tx.getInvoice() != null ? tx.getInvoice().getId() : null)
-                .orderNo(tx.getOrder() != null ? tx.getOrder().getOrderNo() : null)
-                .amount(tx.getAmount())
-                .type(tx.getType())
-                .parentTransactionId(tx.getParentTransactionId()) // <-- додаємо тут
-                .note(tx.getNote())
-                .createdAt(tx.getCreatedAt())
-                .build();
-    }
-
 
     private LedgerRequest buildLedgerRequest(
-            InvoicePaymentContext ctx,
+            InvoiceOperationContext ctx,
             CustomerTransaction tx,
             User user,
             OffsetDateTime now,
@@ -118,72 +88,13 @@ public class PaymentOrchestrator {
     }
 
 
-    private String buildReference(InvoicePaymentContext ctx, CustomerTransaction tx) {
+    private String buildReference(InvoiceOperationContext ctx, CustomerTransaction tx) {
 
         if (tx.getType() == CustomerTransactionType.ADVANCE) {
             return "ADV-" + ctx.debtor().getCustNo();
         }
 
         return "PAY-" + ctx.invoice().getInvoiceNo();
-    }
-
-    private InvoicePaymentContext resolveContext(InvoicePaymentRequest request, User user) {
-
-        if (request.invoiceId() != null) {
-
-            Invoice invoice = invoiceRepository.findById(request.invoiceId())
-                    .orElseThrow(() -> new TransactionException("Інвойс не знайдено"));
-
-            Branch branch = resolveInvoiceBranch(invoice.getId());
-
-            validateBranchAccess(user, branch.getBranchNo());
-
-            return new InvoicePaymentContext(
-                    user,
-                    branch,
-                    invoice.getCustomer(),
-                    invoice.getEffectivePayer(),
-                    invoice
-            );
-        }
-
-        if (request.branchNo() == null || request.customerId() == null) {
-            throw new TransactionException("Для авансу потрібні branch + customer");
-        }
-
-        validateBranchAccess(user, request.branchNo());
-
-        Branch branch = branchRepository.findById(request.branchNo())
-                .orElseThrow(() -> new TransactionException("Філія не знайдена"));
-
-        Customer customer = customerRepository.findById(request.customerId())
-                .orElseThrow(() -> new TransactionException("Клієнт не знайдений"));
-
-        return new InvoicePaymentContext(user, branch, customer, customer, null);
-    }
-
-    private void validateBranchAccess(User user, Long branchNo) {
-
-        boolean allowed = user.getAllowedBranches()
-                .stream()
-                .anyMatch(b -> b.getBranchNo().equals(branchNo));
-
-        if (!allowed) {
-            throw new TransactionException("Немає доступу до філії: " + branchNo);
-        }
-    }
-
-    private Branch resolveInvoiceBranch(Long invoiceId) {
-        return ledgerRepository
-                .findTopByInvoiceIdAndDirectionAndCategoryInOrderByCreatedAtDescIdDesc(
-                        invoiceId,
-                        LedgerDirection.OUT,
-                        INVOICE_OWNERSHIP_CATEGORIES
-                )
-                .map(LedgerEntry::getBranch)
-                .orElseThrow(() -> new TransactionException(
-                        "Не знайдено ownership OUT для інвойсу " + invoiceId
-                ));
     }
 
 }

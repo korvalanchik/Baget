@@ -1,5 +1,6 @@
 package com.example.baget.customer;
 
+import com.example.baget.finance.InvoiceSettlementService;
 import com.example.baget.finance.PaymentOrchestrator;
 import com.example.baget.invoices.InvoicePaymentRequest;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +19,14 @@ public class CustomerPaymentResource {
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
     private final PaymentOrchestrator paymentOrchestrator;
+    private final InvoiceSettlementService invoiceSettlementService;
 
     @PostMapping("/invoices/payments")
     public ResponseEntity<List<CustomerTransactionDTO>> addPayment(
             @RequestBody InvoicePaymentRequest request,
             Authentication authentication
     ) {
-        List<CustomerTransactionDTO> dto = paymentOrchestrator.processPayment(request, authentication);
+        List<CustomerTransactionDTO> dto = invoiceSettlementService.settleInvoice(request, authentication);
 
         return ResponseEntity.ok(dto);
     }
@@ -52,7 +54,7 @@ public class CustomerPaymentResource {
             Authentication authentication
     ) {
         // делегуємо всю логіку в сервіс
-        List<CustomerTransactionDTO> dto = paymentOrchestrator.processPayment(request, authentication);
+        List<CustomerTransactionDTO> dto = invoiceSettlementService.settleAdvance(request, authentication);
 
         return ResponseEntity.ok(dto);
     }
