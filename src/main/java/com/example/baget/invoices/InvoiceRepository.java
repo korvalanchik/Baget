@@ -60,42 +60,6 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
     """)
     Optional<InvoiceDetailsDTO> findInvoiceDetails(@Param("invoiceId") Long invoiceId);
 
-    @SuppressWarnings("JpaQlInspection")
-    @Query("""
-    select new com.example.baget.customer.CustomerInvoiceDTO(
-        i.id,
-        i.invoiceNo,
-        i.totalAmount,
-        COALESCE(SUM(
-            CASE
-                WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount
-                ELSE 0.0
-            END
-        ), 0.0),
-        i.totalAmount - COALESCE(SUM(
-            CASE
-                WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount
-                ELSE 0.0
-            END
-        ), 0.0),
-        i.createdAt
-    )
-    from Invoice i
-    left join LedgerEntry le
-           on le.invoiceId = i.id
-    where i.customer.custNo = :customerId
-        and i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
-    group by i.id, i.invoiceNo, i.totalAmount, i.createdAt
-    having (i.totalAmount - COALESCE(SUM(
-            CASE
-                WHEN le.direction = com.example.baget.ledger.LedgerDirection.IN THEN le.amount
-                ELSE 0
-            END
-        ), 0)) > 0
-    order by i.createdAt desc
-    """)
-    List<CustomerInvoiceDTO> findOpenInvoices(Long customerId);
-
     Optional<Invoice> findByInvoiceNoAndLifecycle(Long invoiceNo, InvoiceEnums.InvoiceLifecycle lifecycle);
 
     @Query("""
@@ -110,5 +74,14 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         WHERE le.invoiceId = :invoiceId
     """)
     BigDecimal calculateInvoiceDebt(@Param("invoiceId") Long invoiceId);
+
+    @Query("""
+        select i
+        from Invoice i
+        where i.customer.custNo = :customerId
+          and i.lifecycle = com.example.baget.invoices.InvoiceEnums.InvoiceLifecycle.ACTIVE
+        order by i.createdAt desc
+    """)
+    List<Invoice> findActiveInvoices(@Param("customerId") Long customerId);
 
 }

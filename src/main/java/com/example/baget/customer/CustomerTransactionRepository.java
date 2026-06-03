@@ -16,8 +16,6 @@ public interface CustomerTransactionRepository extends JpaRepository<CustomerTra
     @Query("SELECT ct FROM CustomerTransaction ct WHERE ct.customer.custNo = :customerId AND ct.active = true ORDER BY ct.createdAt DESC")
     List<CustomerTransaction> findByCustomerIdAndActiveTrueOrderByCreatedAtDesc(@Param("customerId") Long customerId);
 
-    boolean existsByOrder_OrderNoAndTypeAndActiveTrue(Long orderNo, CustomerTransactionType customerTransactionType);
-
     @SuppressWarnings("JpaQlInspection")
     @Query("""
     select new com.example.baget.customer.CustomerPaymentDTO(

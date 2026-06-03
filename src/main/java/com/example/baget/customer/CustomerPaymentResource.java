@@ -1,7 +1,6 @@
 package com.example.baget.customer;
 
 import com.example.baget.finance.InvoiceSettlementService;
-import com.example.baget.finance.PaymentOrchestrator;
 import com.example.baget.invoices.InvoicePaymentRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ public class CustomerPaymentResource {
 
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
-    private final PaymentOrchestrator paymentOrchestrator;
     private final InvoiceSettlementService invoiceSettlementService;
 
     @PostMapping("/invoices/payments")
