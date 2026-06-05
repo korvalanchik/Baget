@@ -20,7 +20,7 @@ public class InvoiceResource {
     }
 
     @GetMapping("/{id}")
-    public InvoiceDetailsDTO getInvoice(@PathVariable Long id) {
+    public InvoiceViewDTO getInvoice(@PathVariable Long id) {
         return invoiceService.getInvoice(id);
     }
 

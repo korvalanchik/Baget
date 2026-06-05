@@ -3,10 +3,14 @@ package com.example.baget.invoices;
 import com.example.baget.branch.Branch;
 import com.example.baget.branch.BranchRepository;
 import com.example.baget.customer.*;
+import com.example.baget.items.ItemViewDTO;
+import com.example.baget.items.Items;
 import com.example.baget.ledger.*;
 import com.example.baget.orders.OrderPaySummaryDTO;
 import com.example.baget.orders.Orders;
 import com.example.baget.orders.OrdersRepository;
+import com.example.baget.parts.Parts;
+import com.example.baget.parts.PartsRepository;
 import com.example.baget.users.User;
 import com.example.baget.users.UsersRepository;
 import com.example.baget.util.InvoiceServiceUtil;
@@ -18,6 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,6 +43,7 @@ public class InvoiceService {
     private final BranchRepository branchRepository;
     private final CustomerTransactionRepository customerTransactionRepository;
     private final LedgerService ledgerService;
+    private final PartsRepository partsRepository;
 
     @Transactional
     public InvoiceDTO mergeInvoices(MergeInvoicesRequest request, Authentication authentication) {
@@ -294,9 +300,136 @@ public class InvoiceService {
     }
 
 
-    public InvoiceDetailsDTO getInvoice(Long invoiceId) {
-        return invoiceRepository.findInvoiceDetails(invoiceId)
-                .orElseThrow(() -> new TransactionException("Invoice not found"));
+    @Transactional
+    public InvoiceViewDTO getInvoice(Long invoiceId) {
+
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() ->
+                        new TransactionException("Інвойс не знайдено"));
+
+        Set<Long> partNos = invoice.getInvoiceOrders()
+                .stream()
+                .flatMap(io -> io.getOrder().getItems().stream())
+                .map(Items::getPartNo)
+                .collect(Collectors.toSet());
+
+        Map<Long, String> descriptions =
+                partsRepository.findAllById(partNos)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Parts::getPartNo,
+                                Parts::getDescription
+                        ));
+
+
+        InvoiceViewDTO dto = new InvoiceViewDTO();
+
+        dto.setInvoiceId(invoice.getId());
+        dto.setInvoiceNo(invoice.getInvoiceNo());
+
+        dto.setCustomerName(
+                invoice.getCustomer().getCompany());
+
+        dto.setType(invoice.getType());
+        dto.setStatus(invoice.getStatus());
+
+        dto.setTotalAmount(invoice.getTotalAmount());
+        dto.setCreatedAt(invoice.getCreatedAt());
+
+        List<InvoiceOrderViewDTO> orders =
+                invoice.getInvoiceOrders()
+                        .stream()
+                        .map(io -> mapOrder(io, descriptions))
+                        .toList();
+
+        dto.setOrders(orders);
+
+        return dto;
+    }
+
+    private InvoiceOrderViewDTO mapOrder(
+            InvoiceOrder invoiceOrder,
+            Map<Long, String> descriptions) {
+
+        Orders order = invoiceOrder.getOrder();
+
+        InvoiceOrderViewDTO dto =
+                new InvoiceOrderViewDTO();
+
+        dto.setOrderNo(order.getOrderNo());
+        dto.setAmount(invoiceOrder.getAmount());
+
+        dto.setBranchName(
+                order.getBranch().getName());
+
+        dto.setSaleDate(order.getSaleDate());
+        dto.setShipDate(order.getShipDate());
+
+        dto.setItems(
+                order.getItems()
+                        .stream()
+                        .map(item -> mapItem(item, descriptions))
+                        .toList()
+        );
+
+        return dto;
+    }
+
+    private ItemViewDTO mapItem(Items item, Map<Long, String> descriptions) {
+
+        ItemViewDTO dto = new ItemViewDTO();
+
+        dto.setPartNo(item.getPartNo());
+
+        dto.setDescription(
+                descriptions.getOrDefault(
+                        item.getPartNo(),
+                        ""
+                )
+        );
+
+        dto.setWidth(item.getWidth());
+        dto.setHeight(item.getHeight());
+
+        dto.setQuantity(item.getQuantity());
+        dto.setQty(item.getQty());
+
+        dto.setSellPrice(
+                BigDecimal.valueOf(
+                        Optional.ofNullable(item.getSellPrice())
+                                .orElse(0d)));
+
+        dto.setDiscount(
+                BigDecimal.valueOf(
+                        Optional.ofNullable(item.getDiscount())
+                                .orElse(0d)));
+
+        BigDecimal qty =
+                BigDecimal.valueOf(
+                        Optional.ofNullable(item.getQty())
+                                .orElse(0d));
+
+        BigDecimal price =
+                dto.getSellPrice();
+
+        BigDecimal discountPercent =
+                dto.getDiscount();
+
+        BigDecimal rowTotal = qty
+                .multiply(price)
+                .multiply(
+                        BigDecimal.valueOf(100)
+                                .subtract(discountPercent)
+                                .divide(
+                                        BigDecimal.valueOf(100),
+                                        4,
+                                        RoundingMode.HALF_UP
+                                )
+                )
+                .setScale(2, RoundingMode.HALF_UP);
+        dto.setTotal(rowTotal);
+
+        return dto;
     }
 
     public CollectiveInvoiceDTO getCollectiveInvoice(Long invoiceNo) {
