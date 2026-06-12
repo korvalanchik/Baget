@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/customers")
@@ -18,6 +21,9 @@ public class CustomerPaymentResource {
     private final CustomerPaymentService customerPaymentService;
     private final CustomerTransactionService customerTransactionService;
     private final InvoiceSettlementService invoiceSettlementService;
+
+    private static final Logger log =
+            LoggerFactory.getLogger(CustomerPaymentResource.class);
 
     @PostMapping("/invoices/payments")
     public ResponseEntity<List<CustomerTransactionDTO>> addPayment(
@@ -51,6 +57,7 @@ public class CustomerPaymentResource {
             @RequestBody InvoicePaymentRequest request,
             Authentication authentication
     ) {
+        log.info("Payment request: {}", request);
         // делегуємо всю логіку в сервіс
         List<CustomerTransactionDTO> dto = invoiceSettlementService.settleAdvance(request, authentication);
 
