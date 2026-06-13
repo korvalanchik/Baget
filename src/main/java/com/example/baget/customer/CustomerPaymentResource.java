@@ -57,8 +57,8 @@ public class CustomerPaymentResource {
             @RequestBody InvoicePaymentRequest request,
             Authentication authentication
     ) {
-        log.info("Payment request:  {}", request);
-        // делегуємо всю логіку в сервіс   (ТЕСТ ВИДАЛИ ЦІ ДУЖКИ )
+        log.info("Payment request: {}", request);
+        // делегуємо всю логіку в сервіс   (ТЕСТ ВИДАЛИ ЦІ ДУЖКИ)
         List<CustomerTransactionDTO> dto = invoiceSettlementService.settleAdvance(request, authentication);
 
         return ResponseEntity.ok(dto);
