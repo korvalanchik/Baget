@@ -152,7 +152,8 @@ public class CustomerService {
                         r.getCustomerId(),
                         r.getCompany(),
                         r.getMobile(),
-                        r.getPendingOrders()
+                        r.getPendingOrders(),
+                        r.getBalance()
                 ));
             }
 

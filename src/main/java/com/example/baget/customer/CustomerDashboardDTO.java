@@ -16,7 +16,8 @@ public class CustomerDashboardDTO {
             Long customerId,
             String company,
             String mobile,
-            Integer pendingOrders
+            Integer pendingOrders,
+            BigDecimal balance
     ) {}
 
     public record Debtor(
