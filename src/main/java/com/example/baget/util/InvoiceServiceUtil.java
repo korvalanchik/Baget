@@ -33,7 +33,7 @@ public class InvoiceServiceUtil {
     public byte[] generateInvoicePdf(Long invoiceNo) throws IOException {
         List<Orders> orders = ordersRepository.findByRahFacNo(invoiceNo);
         if (orders.isEmpty()) {
-            throw new IllegalArgumentException("Invoice " + invoiceNo + " not found");
+            throw new TransactionException("Рахунок-фактура не знайдений. Можливо він не створювався");
         }
 
         CompanyDetails details = companyDetailsService.get(); // ← МАГІЯ
