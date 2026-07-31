@@ -5,14 +5,14 @@ import com.example.baget.orders.OrdersRepository;
 import com.example.baget.parts.PartLookupService;
 import com.example.baget.parts.PartsDTO;
 import com.example.baget.util.NotFoundException;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -38,6 +38,10 @@ public class ItemsService {
 
     public List<ItemsDTO> findByOrderNo(Long orderNo) {
         final List<Items> items = itemsRepository.findByOrderOrderNo(orderNo);
+
+//        partLookupService.findAll().stream()
+//                .filter(p -> p.getPartNo() == null || p.getDescription() == null)
+//                .forEach(p -> System.out.println("Invalid part: " + p));
 
         // Отримуємо всі Parts з кешу разом
         Map<Long, String> partDescriptionMap = partLookupService.findAll().stream()
