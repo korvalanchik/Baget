@@ -4,6 +4,11 @@ import com.example.baget.vendors.Vendors;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.math.BigDecimal;
+import java.util.Map;
 
 
 @Entity
@@ -53,6 +58,22 @@ public class Parts {
 
     @Column
     private Double listPrice_3;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_type", length = 20)
+    private UnitType unitType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "calculation_method", length = 40)
+    private CalculationMethod calculationMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "part_kind", length = 16)
+    private PartKind partKind;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "calculation_params", columnDefinition = "json")
+    private Map<String, BigDecimal> calculationParams;
 
     @Version
     private Long version;
