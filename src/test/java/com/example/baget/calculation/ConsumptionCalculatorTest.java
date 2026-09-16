@@ -2,10 +2,12 @@ package com.example.baget.calculation;
 
 import com.example.baget.parts.CalculationMethod;
 import com.example.baget.parts.UnitType;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import java.math.BigDecimal;
 import java.util.Map;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ConsumptionCalculatorTest {
     private final ConsumptionCalculator calc = new ConsumptionCalculator();
@@ -17,7 +19,8 @@ class ConsumptionCalculatorTest {
         assertEquals(0, n(expected).compareTo(actual), "expected " + expected + ", got " + actual);
     }
 
-    @Test void mirrorAreaAndProductMultiplier() {
+    @Test
+    void mirrorAreaAndProductMultiplier() {
         var r = calc.calculate(CalculationMethod.AREA, UnitType.SQUARE_METER,
                 null, Map.of(), context("600", "800", 3));
         equal("0.48", r.consumptionPerProduct());

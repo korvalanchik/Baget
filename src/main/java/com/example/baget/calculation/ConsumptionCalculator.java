@@ -72,7 +72,12 @@ public final class ConsumptionCalculator {
         if (unit != strategy.unit()) {
             throw new IllegalArgumentException("Unit " + unit + " is incompatible with " + method);
         }
-        if (!params.keySet().equals(strategy.keys())) {
+        boolean underframeParams = method == CalculationMethod.PERIMETER
+                && params.keySet().equals(Set.of("railWidthMm"));
+        if (underframeParams) {
+            positive(params.get("railWidthMm"), "railWidthMm");
+        }
+        if (!underframeParams && !params.keySet().equals(strategy.keys())) {
             throw new IllegalArgumentException("Expected parameters for " + method + ": " + strategy.keys());
         }
         BigDecimal perProduct = strategy.formula().calculate(context, profileWidthMeters, params);

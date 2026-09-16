@@ -147,7 +147,7 @@ class MaterialPreviewTest {
     }
     @Test void malformedJsonReturns400() throws Exception {
         mvc.perform(post("/api/calculations/material-preview")
-                .principal(auth("ROLE_LEVEL2")).contentType("application/json").content("{}"))
+                .principal(auth("ROLE_LEVEL2")).contentType("application/json").content("{"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("code").value("INVALID_JSON"));
     }
     @Test void fractionalProductQuantityIsNotTruncated() throws Exception {
