@@ -54,7 +54,8 @@ class ProductPreviewTest {
         glue = material(28540, CalculationMethod.PERIMETER, UnitType.METER, 20, 10);
         var prices = new PartPriceResolver();
         var materials = new MaterialPreviewService(repository, new MaterialConsumptionService(), prices, factory.getValidator());
-        service = new ProductPreviewService(rule, repository, materials, prices, factory.getValidator());
+        service = new ProductPreviewService(rule, repository, materials, prices, factory.getValidator(),
+                mock(UnderframePreviewComposer.class), mock(MirrorAccessoriesComposer.class));
     }
     @AfterEach void close() { factory.close(); }
 

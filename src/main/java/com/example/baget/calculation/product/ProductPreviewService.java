@@ -8,7 +8,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
-import java.math.BigDecimal;
 
 @Service
 public class ProductPreviewService {
@@ -17,14 +16,19 @@ public class ProductPreviewService {
     private final MaterialPreviewService materials;
     private final PartPriceResolver prices;
     private final Validator validator;
+    private final UnderframePreviewComposer underframes;
+    private final MirrorAccessoriesComposer accessories;
 
     public ProductPreviewService(MirrorFrameRule rule, PartsRepository parts,
-            MaterialPreviewService materials, PartPriceResolver prices, Validator validator) {
+            MaterialPreviewService materials, PartPriceResolver prices, Validator validator,
+            UnderframePreviewComposer underframes, MirrorAccessoriesComposer accessories) {
         this.rule = rule;
         this.parts = parts;
         this.materials = materials;
         this.prices = prices;
         this.validator = validator;
+        this.underframes = underframes;
+        this.accessories = accessories;
     }
 
     @Transactional(readOnly = true)
@@ -33,9 +37,12 @@ public class ProductPreviewService {
         if (request == null || !validator.validate(request).isEmpty()) {
             throw new PreviewException(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Перевірте параметри виробу");
         }
+        validateSelection(request);
+        if (request.productType() == ProductPreviewRequest.ProductType.UNDERFRAME) {
+            return summarize(request, underframes.compose(request, auth));
+        }
         var components = rule.compose(request);
         var lines = new ArrayList<ProductPreviewResponse.Line>();
-        var amounts = new ArrayList<BigDecimal>();
         for (var component : components) {
             var part = parts.findById(component.partNo()).orElseThrow(() ->
                     new PreviewException(HttpStatus.UNPROCESSABLE_ENTITY, "COMPOSITION_PART_MISSING",
@@ -54,11 +61,28 @@ public class ProductPreviewService {
             var result = materials.preview(new MaterialPreviewRequest(component.partNo(),
                     request.widthMm(), request.heightMm(), request.productQuantity(), 1), auth);
             lines.add(new ProductPreviewResponse.Line(component.role(), component.source(), result));
-            amounts.add(result.totalConsumption().multiply(result.unitPrice()));
         }
-        var totals = ProductTotals.fromUnroundedAmounts(amounts);
+        if (request.backingPartNo() != null || request.suspension() != null)
+            lines.addAll(accessories.compose(request, auth));
+        return summarize(request, lines);
+    }
+
+    private static void validateSelection(ProductPreviewRequest r) {
+        boolean valid = switch (r.productType()) {
+            case MIRROR_IN_FRAME -> r.framePartNo() != null && r.mirrorPartNo() != null && r.underframePartNo() == null;
+            case UNDERFRAME -> r.underframePartNo() != null && r.framePartNo() == null && r.mirrorPartNo() == null
+                    && r.backingPartNo() == null && r.suspension() == null;
+        };
+        if (!valid) throw new PreviewException(HttpStatus.BAD_REQUEST, "INVALID_PRODUCT_SELECTION",
+                "Для MIRROR_IN_FRAME потрібні framePartNo + mirrorPartNo; ДВП й кріплення доступні лише для цього типу. Для UNDERFRAME — лише underframePartNo");
+    }
+
+    private static ProductPreviewResponse summarize(ProductPreviewRequest request,
+            java.util.List<ProductPreviewResponse.Line> lines) {
+        var raw = lines.stream().map(line -> line.calculation().totalConsumption()
+                .multiply(line.calculation().unitPrice())).toList();
+        var totals = ProductTotals.fromUnroundedAmounts(raw);
         return new ProductPreviewResponse(request.productType(), request.productQuantity(),
-                java.util.List.copyOf(lines), totals.linesSubtotal(), totals.roundingAdjustment(),
-                totals.total(), "UAH");
+                java.util.List.copyOf(lines), totals.linesSubtotal(), totals.roundingAdjustment(), totals.total(), "UAH");
     }
 }
