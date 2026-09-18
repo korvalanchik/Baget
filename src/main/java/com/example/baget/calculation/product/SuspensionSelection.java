@@ -9,5 +9,11 @@ public record SuspensionSelection(
         @Positive Long hangerPartNo,
         @Min(1) @Max(10000) Integer hangersPerProduct,
         @NotNull Boolean includePozzi,
-        @Min(1) @Max(10000) Integer pozziPerProduct
-) {}
+        @Min(1) @Max(10000) Integer pozziPerProduct,
+        Boolean includeCord
+) {
+    public SuspensionSelection(SuspensionRules.Mode hangerMode, Long hangerPartNo,
+            Integer hangersPerProduct, Boolean includePozzi, Integer pozziPerProduct) {
+        this(hangerMode, hangerPartNo, hangersPerProduct, includePozzi, pozziPerProduct, null);
+    }
+}

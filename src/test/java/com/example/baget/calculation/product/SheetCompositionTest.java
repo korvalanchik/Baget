@@ -353,5 +353,28 @@ class SheetCompositionTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.selection.hangerPartNo").value(14450))
                 .andExpect(jsonPath("$.selection.pozziPerProduct").value(2));
     }
+
+    @Test void explicitCordChoiceWorksThroughProductComposition() {
+        var noCord = new SuspensionSelection(SuspensionRules.Mode.AUTO, null, null, false, null, false);
+        var r = products.preview(grouped("300", "400", 2, null, null, null, null, noCord), auth("ROLE_LEVEL2"));
+        assertTrue(r.lines().stream().noneMatch(l -> l.role().equals("CORD")));
+        eq("4", line(r, "HANGER").totalConsumption());
+        verify(repository, never()).findById(28260L);
+        var withCord = new SuspensionSelection(SuspensionRules.Mode.AUTO, null, null, false, null, true);
+        var included = products.preview(grouped("300", "400", 2, null, null, null, null, withCord), auth("ROLE_LEVEL2"));
+        eq(".8", line(included, "CORD").totalConsumption());
+        assertEquals("INVALID_SUSPENSION_SELECTION", assertThrows(PreviewException.class, () -> products.preview(
+                grouped("300", "400", 1, null, List.of(sheet(27520,1)), null, null, withCord),
+                auth("ROLE_LEVEL2"))).getCode());
+    }
+
+    @Test void explicitCordExclusionIsDeserializedThroughEstimateHttp() throws Exception {
+        String product = example("mirror-layers.json").replace("\"hangerMode\": \"AUTO\"",
+                "\"hangerMode\": \"AUTO\", \"includeCord\": false");
+        mvc.perform(post("/api/calculations/estimate-preview").principal(auth("ROLE_LEVEL2"))
+                .contentType("application/json").content("{\"items\":[{\"clientItemId\":\"cord\",\"kind\":\"PRODUCT\",\"product\":" + product + "}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].product.lines[?(@.role == 'CORD')]").isEmpty());
+    }
 }
 

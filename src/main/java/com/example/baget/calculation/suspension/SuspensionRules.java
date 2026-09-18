@@ -53,6 +53,15 @@ public final class SuspensionRules {
         return new Plan(hanger, count, pozzi, cord);
     }
 
+    /** Null preserves automatic behavior; explicit true cannot bypass compatibility rules. */
+    public Plan withCord(Plan automatic, Boolean includeCord) {
+        if (includeCord == null) return automatic;
+        if (includeCord && !automatic.cordIncluded())
+            throw new IllegalArgumentException("Шнур дозволено лише з підвісами 099/силовими, крім дзеркала шириною понад 400 мм");
+        return new Plan(automatic.hangerPartNo(), automatic.hangersPerProduct(),
+                automatic.pozziPerProduct(), includeCord);
+    }
+
     private static boolean crocodile(long id) { return id == H01 || id == H04; }
     private static boolean gt(BigDecimal width, int boundary) { return width.compareTo(BigDecimal.valueOf(boundary)) > 0; }
     private static void quantity(Integer quantity) {

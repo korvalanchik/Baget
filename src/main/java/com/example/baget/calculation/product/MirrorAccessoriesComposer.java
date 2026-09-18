@@ -33,7 +33,7 @@ public class MirrorAccessoriesComposer {
             // Never accept another width, quantity or hasMirror/hasDvp from nested suspension JSON.
             var result = suspensions.preview(new SuspensionPreviewRequest(SheetComposition.width(r), r.productQuantity(),
                     SheetComposition.rigidBackingPartNo(r), SheetComposition.mirrorPartNo(r), choice.hangerMode(), choice.hangerPartNo(),
-                    choice.hangersPerProduct(), choice.includePozzi(), choice.pozziPerProduct()), auth);
+                    choice.hangersPerProduct(), choice.includePozzi(), choice.pozziPerProduct(), choice.includeCord()), auth);
             lines.addAll(result.lines());
         }
         return List.copyOf(lines);
