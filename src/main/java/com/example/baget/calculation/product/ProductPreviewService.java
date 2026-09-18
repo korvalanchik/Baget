@@ -38,8 +38,15 @@ public class ProductPreviewService {
             throw new PreviewException(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Перевірте параметри виробу");
         }
         validateSelection(request);
+        SheetComposition.validate(request);
         if (request.productType() == ProductPreviewRequest.ProductType.UNDERFRAME) {
             return summarize(request, underframes.compose(request, auth));
+        }
+        if (request.productType() == ProductPreviewRequest.ProductType.FRAMED_ARTWORK) {
+            var lines = SheetComposition.compose(request, parts, materials, rule, auth);
+            if (!SheetComposition.backings(request).isEmpty() || request.suspension() != null)
+                lines.addAll(accessories.compose(request, auth));
+            return summarize(request, lines);
         }
         var components = rule.compose(request);
         var lines = new ArrayList<ProductPreviewResponse.Line>();
@@ -62,19 +69,25 @@ public class ProductPreviewService {
                     request.widthMm(), request.heightMm(), request.productQuantity(), 1), auth);
             lines.add(new ProductPreviewResponse.Line(component.role(), component.source(), result));
         }
-        if (request.backingPartNo() != null || request.suspension() != null)
+        if (!SheetComposition.backings(request).isEmpty() || request.suspension() != null)
             lines.addAll(accessories.compose(request, auth));
         return summarize(request, lines);
     }
 
     private static void validateSelection(ProductPreviewRequest r) {
         boolean valid = switch (r.productType()) {
-            case MIRROR_IN_FRAME -> r.framePartNo() != null && r.mirrorPartNo() != null && r.underframePartNo() == null;
+            case MIRROR_IN_FRAME -> r.framePartNo() != null && r.mirrorPartNo() != null && r.underframePartNo() == null
+                    && r.glassPartNo() == null && r.glassLayers() == null && r.matPartNo() == null
+                    && r.matLayers() == null && r.matMargins() == null && r.glass() == null && r.mats() == null;
+            case FRAMED_ARTWORK -> r.framePartNo() != null && r.mirrorPartNo() == null && r.underframePartNo() == null;
             case UNDERFRAME -> r.underframePartNo() != null && r.framePartNo() == null && r.mirrorPartNo() == null
-                    && r.backingPartNo() == null && r.suspension() == null;
+                    && r.backingPartNo() == null && r.suspension() == null && r.backingLayers() == null
+                    && r.glassPartNo() == null && r.glassLayers() == null && r.matPartNo() == null
+                    && r.matLayers() == null && r.matMargins() == null
+                    && r.glass() == null && r.backings() == null && r.mats() == null;
         };
         if (!valid) throw new PreviewException(HttpStatus.BAD_REQUEST, "INVALID_PRODUCT_SELECTION",
-                "Для MIRROR_IN_FRAME потрібні framePartNo + mirrorPartNo; ДВП й кріплення доступні лише для цього типу. Для UNDERFRAME — лише underframePartNo");
+                "MIRROR_IN_FRAME: рама й дзеркало, опційно задник і підвіс; FRAMED_ARTWORK: рама, опційно скло, паспарту, задник і підвіс; UNDERFRAME: лише підрамник");
     }
 
     private static ProductPreviewResponse summarize(ProductPreviewRequest request,

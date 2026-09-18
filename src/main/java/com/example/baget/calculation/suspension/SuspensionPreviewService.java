@@ -29,9 +29,9 @@ public class SuspensionPreviewService {
         prices.requireAuthenticated(auth);
         if (r == null || !validator.validate(r).isEmpty())
             throw bad("INVALID_REQUEST", "Перевірте поля кріплення");
-        if ((r.backingPartNo() != null && r.backingPartNo() != SuspensionRules.DVP)
+        if ((r.backingPartNo() != null && !SuspensionRules.isRigidBacking(r.backingPartNo()))
                 || (r.mirrorPartNo() != null && r.mirrorPartNo() != SuspensionRules.MIRROR))
-            throw bad("UNSUPPORTED_SUSPENSION_CONTEXT", "Наразі підтримуються ДВП 4460 та дзеркало 27760");
+            throw bad("UNSUPPORTED_SUSPENSION_CONTEXT", "Підтримуються ДВП 4460, ПВХ 27520 та дзеркало 27760");
         SuspensionRules.Plan plan;
         try {
             plan = rules.resolve(r.widthMm(), r.backingPartNo() != null, r.mirrorPartNo() != null,

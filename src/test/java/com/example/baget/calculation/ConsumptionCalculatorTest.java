@@ -2,7 +2,7 @@ package com.example.baget.calculation;
 
 import com.example.baget.parts.CalculationMethod;
 import com.example.baget.parts.UnitType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -90,3 +90,4 @@ class ConsumptionCalculatorTest {
                 UnitType.PIECE, null, Map.of(), new CalculationContext(null, null, 1, n("1.5"))));
     }
 }
+

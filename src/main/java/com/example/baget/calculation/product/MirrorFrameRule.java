@@ -37,8 +37,12 @@ public class MirrorFrameRule {
         return List.of(
                 new ComponentLine(request.framePartNo(), "FRAME", "SELECTED"),
                 new ComponentLine(request.mirrorPartNo(), "MIRROR", "SELECTED"),
-                new ComponentLine(gluePartNo, "MIRROR_GLUE", "MIRROR_IN_FRAME_RULE")
+                glueComponent()
         );
+    }
+
+    public ComponentLine glueComponent() {
+        return new ComponentLine(gluePartNo, "MIRROR_GLUE", "MIRROR_IN_FRAME_RULE");
     }
 
     private static PreviewException invalid(String message) {

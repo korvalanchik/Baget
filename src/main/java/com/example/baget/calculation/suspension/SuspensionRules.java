@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 
 /** Pure composition rules. Thresholds use entered mm, without rounding. */
 public final class SuspensionRules {
-    public static final long DVP = 4460, MIRROR = 27760, CORD = 28260, POZZI = 23080;
+    public static final long DVP = 4460, PVC = 27520, MIRROR = 27760, CORD = 28260, POZZI = 23080;
+    public static boolean isRigidBacking(Long partNo) {
+        return partNo != null && (partNo == DVP || partNo == PVC);
+    }
     public static final long H01 = 27580, H04 = 14450, H099 = 14460, POWER = 29650;
     public enum Mode { AUTO, MANUAL, NONE }
     public record Plan(Long hangerPartNo, int hangersPerProduct, int pozziPerProduct, boolean cordIncluded) {}
 
-    public Plan resolve(BigDecimal widthMm, boolean hasDvp, boolean hasMirror, Mode mode,
+    public Plan resolve(BigDecimal widthMm, boolean hasRigidBacking, boolean hasMirror, Mode mode,
                         Long selectedPartNo, Integer hangerQuantity, boolean includePozzi, Integer pozziQuantity) {
         if (widthMm == null || widthMm.signum() <= 0 || mode == null)
             throw new IllegalArgumentException("Потрібні додатна ширина та режим підвісу");
@@ -22,7 +25,7 @@ public final class SuspensionRules {
             throw new IllegalArgumentException("Кількість лапок задана без увімкнення лапок");
 
         long automatic = hasMirror ? (gt(widthMm, 400) ? POWER : H099)
-                : !hasDvp ? (gt(widthMm, 800) ? POWER : H099)
+                : !hasRigidBacking ? (gt(widthMm, 800) ? POWER : H099)
                 : widthMm.compareTo(BigDecimal.valueOf(150)) < 0 ? H01 : H04;
         Long hanger = switch (mode) {
             case AUTO -> automatic;
@@ -35,15 +38,15 @@ public final class SuspensionRules {
             }
         };
         if (hanger != null) {
-            if (crocodile(hanger) && (!hasDvp || hasMirror))
-                throw new IllegalArgumentException("Крокодили дозволені лише з ДВП і без дзеркала");
-            if ((hasMirror || !hasDvp) && hanger != automatic)
-                throw new IllegalArgumentException("Для дзеркала або виробу без ДВП дотримуйтеся порога 400/800 мм");
+            if (crocodile(hanger) && (!hasRigidBacking || hasMirror))
+                throw new IllegalArgumentException("Крокодили дозволені лише з ДВП/ПВХ і без дзеркала");
+            if ((hasMirror || !hasRigidBacking) && hanger != automatic)
+                throw new IllegalArgumentException("Для дзеркала або виробу без ДВП/ПВХ дотримуйтеся порога 400/800 мм");
         }
         int count = hanger == null ? 0 : hangerQuantity != null ? hangerQuantity
                 : hanger == H01 ? 1 : hanger == H04 ? (gt(widthMm, 450) ? 2 : 1) : 2;
-        if (includePozzi && (!hasDvp || (hanger != null && !crocodile(hanger))))
-            throw new IllegalArgumentException("Лапки потребують ДВП та сумісні лише з крокодилами або без підвісів");
+        if (includePozzi && (!hasRigidBacking || (hanger != null && !crocodile(hanger))))
+            throw new IllegalArgumentException("Лапки потребують ДВП/ПВХ та сумісні лише з крокодилами або без підвісів");
         int pozzi = !includePozzi ? 0 : pozziQuantity != null ? pozziQuantity
                 : widthMm.compareTo(BigDecimal.valueOf(300)) >= 0 ? 2 : 1;
         boolean cord = hanger != null && !crocodile(hanger) && !(hasMirror && gt(widthMm, 400));
